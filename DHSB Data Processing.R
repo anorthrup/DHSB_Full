@@ -1,0 +1,245 @@
+#####Digital Health-Seeking Behaviors
+
+#####Read libraries
+library(tidyverse)
+library(sjlabelled)
+library(rio)
+
+#####Read data
+#import() doesn't read all missing values the same, must write to and read from CSV and specify NA strings
+#Need to save labels for codebook
+
+#00m
+data00mSAS <- import("X:/Projects & Programs/ETAC/Data merged across sites/acasibase.sas7bdat")
+##Save labels
+labels00m <- get_label(data00mSAS) %>% 
+  as.data.frame(., stringsAsFactors = FALSE) %>%
+  rownames_to_column("Variable") %>%
+  setNames(c("Variable", "Description"))
+##Write intermediate CSV
+write.csv(data00mSAS, "acasi00mSAS.csv", row.names = FALSE)
+##Read intermediate CSV
+data00mRaw <- read.csv("acasi00mSAS.csv", na.strings = c("", "NA"), 
+                       stringsAsFactors = FALSE)
+##Delete intermediate CSV
+unlink("acasi00mSAS.csv")
+
+#06m
+data06mSAS <- import("X:/Projects & Programs/ETAC/Data merged across sites/acasi06m.sas7bdat")
+##Save labels
+labels06m <- get_label(data06mSAS) %>% 
+  as.data.frame(., stringsAsFactors = FALSE) %>%
+  rownames_to_column("Variable") %>%
+  setNames(c("Variable", "Description"))
+##Write intermediate CSV
+write.csv(data06mSAS, "acasi06mSAS.csv", row.names = FALSE)
+##Read intermediate CSV
+data06mRaw <- read.csv("acasi06mSAS.csv", na.strings = c("", "NA"), 
+                       stringsAsFactors = FALSE)
+##Delete intermediate CSV
+unlink("acasi06mSAS.csv")
+
+#####Clean and combine data
+#Check for NAs, split NAs and complete cases into separate data friends
+acasi00mNa <- data00mRaw %>%
+  filter(is.na(MTUEX1))
+acasi06mNa <- data06mRaw %>%
+  filter(is.na(S56_1) | grepl("\\.\\.\\.\\.\\.", S56_2S))
+acasi00m <- data00mRaw %>%
+  filter(!is.na(MTUEX1)) %>%
+  mutate_all(funs(replace(., list = grep("\\.{5}", .), values = NA)))
+acasi06m <- data06mRaw %>%
+  filter(!(is.na(S56_1) | grepl("\\.\\.\\.\\.\\.", S56_2S))) %>%
+  mutate_all(funs(replace(., list = grep("\\.{5}", .), values = NA)))
+#Check whether NA cases are repeated in rest of acasi
+##First paste SITE1 and PID together, then check if in
+which(do.call(paste, c(acasi00m[, c("SITE1", "PID")], sep = "_")) %in%
+        do.call(paste, c(acasi00mNa[, c("SITE1", "PID")], sep = "_")))
+which(do.call(paste, c(acasi06m[, c("SITE1", "PID")], sep = "_")) %in%
+        do.call(paste, c(acasi06mNa[, c("SITE1", "PID")], sep = "_")))
+##None of NA cases are found in rest of acasi
+
+#Remove variables in 00m which have only missing values
+varRemove00m <- acasi00m %>%
+  summarize_all(funs(length(which(is.na(.))))) %>%
+  gather("Variable", "NumNA") %>%
+  filter(NumNA == nrow(acasi00m))
+acasi00m <- acasi00m %>%
+  select(colnames(acasi00m)[!colnames(acasi00m) %in% varRemove00m$Variable])
+
+#Order columns in each dataframe alphabetically
+##00m
+##Exclude SITE1, PID, T00M
+##Create list of root names of variables
+root00m <- c("ADAP", "AGE", "AIDSDIAG", "ALCOHOL", "AMPH", "ANTIA", "ART", 
+              "ASE", "BORNHIV", "CARE", "CARL", "CD4", "CNEED", "DIAGHIV",
+              "DISC", "DOB", "DRUG", "ELPTIME", "EMPLOY", "END_DATE", "GENDER",
+              "GETH", "GRADE", "HE", "INFECTN", "INJEC", "INSCHOOL", "INSURE",
+              "INTRVWER", "JAIL", "LANG", "LATINO", "LIVED", "MENTALH", "MONEY",
+              "MTU", "PID", "PRAC", "RACE", "RDAT", "RDCR", "RDCR", "RELSTAT",
+              "SCREEN", "SEXBRTH", "SEXWTH12", "SITE", "SSND", "SSUSE",
+              "STAY7D", "STIGMA", "surveylanguage", "T00m", "TIME", "TODAY",
+              "VERSION", "VIRAL")
+##Separate root names from sub-questions/options (branches) and sort
+names00m <- data.frame(Names = 
+                         colnames(acasi00m)[which(!colnames(acasi00m) %in%
+                                                    c("SITE1", "PID"))]) %>%
+  mutate(Root = gsub(paste0("(", paste(root00m, collapse = "|"), ")(_)?(.*)"), 
+                     "\\1",
+                     Names),
+         Branch = gsub(paste0("(", paste(root00m, collapse = "|"), ")(_)?(.*)"), 
+                       "\\3",
+                       Names),
+         First = gsub("([[:alpha:]]+)(\\d*)([[:alpha:]]*)|(\\d+)([[:alpha:]]*)(\\d*)",
+                      "\\1\\4",
+                      Branch),
+         Second = gsub("([[:alpha:]]+)(\\d*)([[:alpha:]]*)|(\\d+)([[:alpha:]]*)(\\d*)",
+                       "\\2\\5", 
+                       Branch),
+         Third = gsub("([[:alpha:]]+)(\\d*)([[:alpha:]]*)|(\\d+)([[:alpha:]]*)(\\d*)",
+                      "\\3\\6",
+                      Branch)) %>%
+  arrange(Root, First, Second, Third) %>%
+  select(-Branch)
+##Sort columns by root, etc.
+acasi00m <- acasi00m %>%
+  select(SITE1, PID, as.character(names00m$Names))
+
+##06m
+##Exclude SITE1, PID, T06M
+##Create list of root names of variables
+root06m <- c("ADAP", "ART", "CARE", "CD4LST", "CNEED", "DISC", "DRUG", "ELPTIME",
+           "EMPLOY", "END_DATE", "FOLLOWUP", "GENDER", "INJEC", "INSURE", "INTRVWER",
+           "LANG", "LIVED", "MENTAL", "MONEY", "ORIENT", "PIDCHECK", "PRAC", "RDAT", 
+           "RDCR", "S56", "SEXBRTH", "SEXWTHF", "SITE", "SSND", "SSUSE", "STAY",
+           "STIGMA", "surveylanguage", "T06m", "TIME", "TODAY", "VERSION", "VIRALLST")
+##Separate root names from sub-questions/options (branches) and sort
+names06m <- data.frame(Names = 
+                         colnames(acasi06m)[which(!colnames(acasi06m) %in%
+                                                    c("SITE1", "PID"))]) %>%
+  mutate(Root = gsub(paste0("(", paste(root06m, collapse = "|"), ")(_)?(.*)"), 
+                     "\\1",
+                     Names),
+         Branch = gsub(paste0("(", paste(root06m, collapse = "|"), ")(_)?(.*)"), 
+                       "\\3",
+                       Names),
+         First = gsub("([[:alpha:]]+)(\\d*)([[:alpha:]]*)|(\\d+)([[:alpha:]]*)(\\d*)",
+                      "\\1\\4",
+                      Branch),
+         Second = gsub("([[:alpha:]]+)(\\d*)([[:alpha:]]*)|(\\d+)([[:alpha:]]*)(\\d*)",
+                       "\\2\\5", 
+                       Branch),
+         Third = gsub("([[:alpha:]]+)(\\d*)([[:alpha:]]*)|(\\d+)([[:alpha:]]*)(\\d*)",
+                      "\\3\\6",
+                      Branch)) %>%
+  arrange(Root, First, Second, Third) %>%
+  select(-Branch)
+##Sort columns by root, etc.
+acasi06m <- acasi06m %>%
+  select(SITE1, PID, as.character(names06m$Names))
+
+#Consolidate answers from different versions of 06M survey 
+#  (differences in S56_24 and S56_24X series)
+##Survey1: no S56_24X series, all options were included in one screen; 
+##  S56_24 includes additional variables: s56_24L:S
+acasi06mSurvey1 <- acasi06m %>%
+  filter(!is.na(S56_24L)) %>%
+  mutate(S56_24XL = S56_24L,
+         S56_24XM = S56_24M,
+         S56_24XN = S56_24N,
+         S56_24XO = S56_24O,
+         S56_24XP = S56_24P,
+         S56_24XQ = S56_24Q,
+         S56_24XR = S56_24R,
+         S56_24XS = S56_24S)
+##Survey2: newer version, contains S56_24X series, but S56_24U, S56_24X, 
+##  and S56_24XV are NA
+##Lacks S56_24L:S56_24R, S56_24S
+acasi06mSurvey2 <- acasi06m %>% 
+  filter(is.na(S56_24L) & is.na(S56_24X)) %>%
+  bind_rows(acasi06mSurvey1) %>%
+  mutate(S56_24Sum = rowSums(select(., S56_24A:S56_24K), na.rm = TRUE),
+         S56_24U = if_else(S56_23 == 7, 9, if_else(S56_24Sum > 0, 0, 1)),
+         S56_24XSum = rowSums(select(., S56_24XL:S56_24XS), na.rm = TRUE),
+         S56_24XV = if_else(S56_23 == 7, 9, if_else(S56_24XSum > 0, 0, 1))) %>%
+  mutate(S56_24 = if_else(S56_24U == 1, 1, S56_24Sum),
+         S56_24X = if_else(S56_24XV == 1, 1, S56_24XSum)) %>%
+  select(-S56_24Sum, -S56_24XSum)
+##Survey3: latest version, contains all of
+##  S56_24X series, S56_24U, S56_24X, S56_24XV
+##Lacks S56_24L:S56_24R, S56_24S; this will remove these columns
+acasi06mSurvey3 <- acasi06m %>%
+  filter(is.na(S56_24L) & !is.na(S56_24X)) %>%
+  bind_rows(acasi06mSurvey2) %>%
+  select(-S56_24L:-S56_24R, -S56_24S)
+
+#####Remove unnecessary variables
+#Remove 00m variables
+acasi00mTrim <- acasi00m %>%
+  select(SITE1, PID,
+         surveylanguage, INTRVWER, SITE, #SES: Survey
+         SCREEN1, starts_with("AGE"), starts_with("DOB"), #SES: Age
+         SEXBRTH, starts_with("GENDER"), #SES: Gender
+         LATINO, starts_with("RACE"), #SES: Race
+         INSCHOOL, GRADE, #SES: Education
+         MONEY, starts_with("EMPLOY"), #SES: Employment
+         RELSTAT, #SES: Relationship
+         starts_with("ORIENT"), #SES: Orientation
+         starts_with("LIVED"), starts_with("STAY7"), #Housing
+         JAILL, JAILLX, JAIL6X, #Incarceration
+         BORNHIV, DIAGHIV, #Length with HIV: First HIV Diagnosis
+         matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
+         CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
+         starts_with("CAREHV"), #Healthcare utilization: Retention in care
+         ends_with("LST"), CD4LOW, INFECTN, AIDSDIAG, #Healthcare utilization: Quality of care
+         ARTPRESC, ARTL, ARTLAGE, ARTREC, ARTNOW, #Healthcare utilization: Treatment
+         ARTADHR, #Healthcare utilization: Adherence
+         starts_with("INSURE"), ADAP, #Healthcare utilization: Insurance
+         starts_with("HE"), #Youth Health Engagement scale
+         matches("CARE\\d{2}"), #Provider Empathy (CARE) scale
+         starts_with("SSND"), starts_with("SSUSE"), #Support services needed and used ###
+         starts_with("CNEED"), -CNEED3ES, -CNEED4, -CNEED5, CNEED3ES, CNEED4, CNEED5, #Competing needs ###
+         starts_with("DISC"), #Disclosure
+         starts_with("STIGMA"), #HIV-related stigma
+         starts_with("MENTALH"), #Mental health
+         matches("DRUG\\dL"), matches("DRUG\\d6"), #Substance use: non-injected
+         INJECTL, INJECT6, starts_with("INJEC6X"), #Substance use: injected
+         starts_with("SOCIALS"), #Social support
+         #Media Technology Usage and Attitudes Scale
+         starts_with("MTUEX"),
+         starts_with("MTUSPX"),
+         starts_with("MTUIX"),
+         starts_with("MTUSN"), -MTUSNJS, -starts_with("MTUSNX"), MTUSNJS, starts_with("MTUSNX"),
+         starts_with("MTUAX")) 
+
+#Remove 06m variables
+names06mS56 <- names06m %>%
+  filter(Names %in% colnames(acasi06mSurvey3)) %>%
+  filter(Root == "S56") %>%
+  mutate(First = as.numeric(First)) %>%
+  arrange(Root, First, Second, Third)
+acasi06mTrim <- acasi06mSurvey3 %>%
+  select(SITE1, PID,
+         as.character(names06mS56$Names))
+
+#####Combine data from 00m and 06m
+acasiJoinInner <- inner_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID"))
+acasiJoin00m <- anti_join(acasi00mTrim, acasi06mSurvey3, by = c("SITE1", "PID"))
+acasiJoin06m <- anti_join(acasi06mTrim, acasi00m, by = c("SITE1", "PID"))
+acasi <- bind_rows(acasiJoin00m, acasiJoin06m, acasiJoinInner) %>%
+  mutate(SITE1 = fct_recode(as.factor(SITE1),
+                            "CBW" = "1", "FRI" = "2", "NYSDA" = "3", 
+                            "HBHC" = "4", "MHS"  = "5", "PSU" = "6", 
+                            "PFC" = "7", "SFDPH" = "8", "WFU"  = "9", 
+                            "WUSL" = "10"))
+
+#####Create final label set
+# acasiLabels <- bind_rows(labels00m %>%
+#                            spread(Variable, Description) %>%
+#                            select(colnames(acasi00mTrim)) %>%
+#                            gather("Variable", "Description"),
+#                          labels06m %>%
+#                            spread(Variable, Description) %>%
+#                            select(colnames(acasi06mTrim), -SITE1, -PID) %>%
+#                            gather("Variable", "Description"))
+# write.csv(acasiLabels, "Codebook/acasiLabels.csv", row.names = FALSE)
