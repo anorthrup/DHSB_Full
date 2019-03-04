@@ -226,20 +226,17 @@ acasi06mTrim <- acasi06mSurvey3 %>%
 acasiJoinInner <- inner_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID"))
 acasiJoin00m <- anti_join(acasi00mTrim, acasi06mSurvey3, by = c("SITE1", "PID"))
 acasiJoin06m <- anti_join(acasi06mTrim, acasi00m, by = c("SITE1", "PID"))
-acasi <- bind_rows(acasiJoin00m, acasiJoin06m, acasiJoinInner) %>%
+#Do not include cases from 00m that do not exist in 06m
+acasi <- bind_rows(acasiJoin06m, acasiJoinInner) %>%
   mutate(SITE1 = fct_recode(as.factor(SITE1),
                             "CBW" = "1", "FRI" = "2", "NYSDA" = "3", 
                             "HBHC" = "4", "MHS"  = "5", "PSU" = "6", 
                             "PFC" = "7", "SFDPH" = "8", "WFU"  = "9", 
                             "WUSL" = "10"))
 
-#####Create final label set
-# acasiLabels <- bind_rows(labels00m %>%
-#                            spread(Variable, Description) %>%
-#                            select(colnames(acasi00mTrim)) %>%
-#                            gather("Variable", "Description"),
-#                          labels06m %>%
-#                            spread(Variable, Description) %>%
-#                            select(colnames(acasi06mTrim), -SITE1, -PID) %>%
-#                            gather("Variable", "Description"))
-# write.csv(acasiLabels, "Codebook/acasiLabels.csv", row.names = FALSE)
+#####Creation of new variables
+#####Collapse existing demographic variables and create scales
+
+#Demographic variables
+
+
