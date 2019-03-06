@@ -189,7 +189,7 @@ acasi00mTrim <- acasi00m %>%
          starts_with("ORIENT"), #SES: Orientation
          starts_with("LIVED"), starts_with("STAY7"), #Housing
          JAILL, JAILLX, JAIL6X, #Incarceration
-         BORNHIV, DIAGHIV, #Length with HIV: First HIV Diagnosis
+         BORNHIV, DIAGHIV, SCREEN5, #Length with HIV: First HIV Diagnosis
          matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
          CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
          starts_with("CAREHV"), #Healthcare utilization: Retention in care
