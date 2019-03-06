@@ -222,7 +222,7 @@ names06mS56 <- names06m %>%
   arrange(Root, First, Second, Third)
 names06mTrim <- c(
   colnames(acasi00mTrim)[colnames(acasi00mTrim) %in% colnames(acasi06mSurvey3)],
-  names06mS56$Names
+  as.character(names06mS56$Names)
 )
 
 acasi06mTrim <- acasi06mSurvey3 %>%
