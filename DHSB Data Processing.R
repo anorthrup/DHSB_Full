@@ -218,16 +218,20 @@ names06mS56 <- names06m %>%
   filter(Root == "S56") %>%
   mutate(First = as.numeric(First)) %>%
   arrange(Root, First, Second, Third)
+names06mTrim <- c(
+  colnames(acasi00mTrim)[colnames(acasi00mTrim) %in% colnames(acasi06mSurvey3)],
+  names06mS56$Names
+)
+
 acasi06mTrim <- acasi06mSurvey3 %>%
-  select(SITE1, PID,
-         as.character(names06mS56$Names))
+    select(names06mTrim)
 
 #####Combine data from 00m and 06m
 acasiJoinInner <- inner_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID"))
 acasiJoin00m <- anti_join(acasi00mTrim, acasi06mSurvey3, by = c("SITE1", "PID"))
 acasiJoin06m <- anti_join(acasi06mTrim, acasi00m, by = c("SITE1", "PID"))
 #Do not include cases from 00m that do not exist in 06m
-acasi <- bind_rows(acasiJoin06m, acasiJoinInner) %>%
+acasi <- bind_rows(acasiJoinInner, acasiJoin06m) %>%
   mutate(SITE1 = fct_recode(as.factor(SITE1),
                             "CBW" = "1", "FRI" = "2", "NYSDA" = "3", 
                             "HBHC" = "4", "MHS"  = "5", "PSU" = "6", 
