@@ -227,8 +227,11 @@ acasi06mTrim <- acasi06mSurvey3 %>%
     select(names06mTrim)
 
 #####Combine data from 00m and 06m
-acasiJoinInner <- inner_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID"))
-acasiJoin00m <- anti_join(acasi00mTrim, acasi06mSurvey3, by = c("SITE1", "PID"))
+acasiJoinInner <- inner_join(acasi00mTrim, 
+                             acasi06mTrim %>%
+                               select(SITE1, PID, starts_with("S56")),
+                             by = c("SITE1", "PID"))
+acasiJoin00m <- anti_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID"))
 acasiJoin06m <- anti_join(acasi06mTrim, acasi00m, by = c("SITE1", "PID"))
 #Do not include cases from 00m that do not exist in 06m
 acasi <- bind_rows(acasiJoinInner, acasiJoin06m) %>%
