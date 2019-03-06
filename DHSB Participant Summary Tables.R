@@ -26,7 +26,9 @@ demo <- acasi %>%
   select(-EMPLOY, -RACE,
          -starts_with("DRUG"), -starts_with("MTU"), -starts_with("S56")) %>%
   rename(Site = SITE1, Age = AGE) %>%
-  mutate(`Age Groups` = as.factor(ifelse(Age < 25, "13-24 Years", "25-34 Years")),
+  mutate(`Age Groups` = as.factor(case_when(Age < 18 ~ "Under 18 Years",
+                                            Age < 25 ~ "18-24 Years",
+                                            TRUE ~ "25 and older")),
          SCREEN5 = fct_recode(as.factor(SCREEN5),
                               "Within past 12 months" = "1", "More than 12 months ago" = "2",
                               "Don't know/Not sure"   = "7", "Refuse to answer"        = "8"),
