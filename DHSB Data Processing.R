@@ -241,7 +241,8 @@ acasi <- bind_rows(acasiJoinInner, acasiJoin06m) %>%
                             "CBW" = "1", "FRI" = "2", "NYSDA" = "3", 
                             "HBHC" = "4", "MHS"  = "5", "PSU" = "6", 
                             "PFC" = "7", "SFDPH" = "8", "WFU"  = "9", 
-                            "WUSL" = "10"))
+                            "WUSL" = "10")) %>%
+  arrange(SITE1)
 
 #####Creation of new variables
 #####Collapse existing demographic variables and create scales
