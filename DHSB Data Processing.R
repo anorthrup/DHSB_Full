@@ -264,5 +264,35 @@ acasi2 <- acasi %>%
                                 "Other orientation" = "4", 
                                 "Other orientation" = "5", 
                                 "Other orientation" = "7",
-                                "Refuse to answer"  = "8"))
-
+                                "Refuse to answer"  = "8"),
+         GRADE_RC = fct_recode(as.factor(GRADE),
+                               "High school, equivalent or less"  = "1", 
+                               "High school, equivalent or less"  = "2", 
+                               "High school, equivalent or less"  = "3", 
+                               "Some post-K12"                    = "4", 
+                               "Associate, trade cert, or higher" = "5", 
+                               "Associate, trade cert, or higher" = "6",
+                               "Associate, trade cert, or higher" = "7", 
+                               "Refuse to answer"                 = "8"),
+         STAY7D_RC = fct_recode(as.factor(STAY7D),
+                                "Rented house/apt/flat"     =  "1", 
+                                "Other's house/apt/flat"    =  "2",
+                                "Other's house/apt/flat"    =  "3", 
+                                "Other's house/apt/flat"    =  "4",
+                                "Hotel/Shelter/Rehab"       =  "5", 
+                                "Hotel/Shelter/Rehab"       =  "6",
+                                "Hotel/Shelter/Rehab"       =  "7", 
+                                "Hotel/Shelter/Rehab"       =  "8",
+                                "Hospital/Medical facility" =  "9", 
+                                "Jail/Juvenile detention"   = "10",
+                                "Other residence"           = "11", 
+                                "Refuse to answer"          = "12"),
+         RACE_RC = case_when(LATINO == 1 ~ "Latino",
+                             RACEC == 1 ~ "Black, Not Latino",
+                             RACEE == 1 & RACE > 1 ~ 
+                               "White Mixed-Race, Not Latino or Black",
+                             RACEE == 1 ~ "White, Not Latino",
+                             TRUE ~ "Other race"))
+acasi2 %>% 
+  select(LATINO, contains("RACE")) %>% 
+  filter(LATINO == 0, RACEC == 0, RACE > 1)
