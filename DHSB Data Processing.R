@@ -248,5 +248,21 @@ acasi <- bind_rows(acasiJoinInner, acasiJoin06m) %>%
 #####Collapse existing demographic variables and create scales
 
 #Demographic variables
-
+acasi2 <- acasi %>%
+  mutate(GENDER_RC = fct_recode(as.factor(GENDER),
+                                "Male (cis man)"     = "1", 
+                                "Female (cis woman)" = "2",
+                                "Trans person"       = "3", 
+                                "Trans person"       = "4",
+                                "Other gender"       = "5", 
+                                "Other gender"       = "6",
+                                "Refuse to answer"   = "8"),
+         ORIENT_RC = fct_recode(as.factor(ORIENT),
+                                "Straight"          = "1", 
+                                "Lesbian or gay"    = "2", 
+                                "Bisexual"          = "3",
+                                "Other orientation" = "4", 
+                                "Other orientation" = "5", 
+                                "Other orientation" = "7",
+                                "Refuse to answer"  = "8"))
 
