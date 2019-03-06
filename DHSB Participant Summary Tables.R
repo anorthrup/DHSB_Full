@@ -93,3 +93,48 @@ demo <- acasi %>%
          `Doctor's visit, HIV, past 6 months` = CAREHV06,
          `Doctor's visit, HIV, past 12 months` = CAREHV12,
          `Doctor's visit, HIV, lifetime` = CARELHIV)
+
+#####Create summary tables
+#####Table 1: participant characteristics summary
+#Number of participants
+tab1_n <- bind_rows(demo %>%
+                      summarize(`Number of Participants` = n()) %>%
+                      mutate(Site = "Overall"),
+                    demo %>%
+                      group_by(Site) %>%
+                      summarize(`Number of Participants` = n())) %>%
+  spread(Site, `Number of Participants`) %>%
+  mutate(Variable = "Number of Participants") %>%
+  select(Variable, Overall, everything())
+#Age groups
+tab1Multi <- function (x, varString) {
+  varName <- str_replace(varString, " ", ".")
+  bind_rows(x %>%
+              select(varString) %>%
+              table() %>%
+              as.data.frame() %>%
+              setNames(c(varName, "Freq")) %>%
+              mutate(Site = "Overall"),
+            x %>%
+              select(Site, !!sym(varString)) %>%
+              table() %>%
+              as.data.frame()) %>%
+    spread(Site, Freq) %>%
+    rename(Variable = !!sym(varName)) %>%
+    select(Variable, Overall, everything()) %>%
+    mutate(Variable = str_replace(Variable, "(.*)", "   \\1")) %>%
+    bind_rows(tibble(Variable = varString),
+              .)
+}
+tab1_age <- tab1Multi(demo, varString = "Age Groups") %>%
+  mutate(Variable = fct_relevel(as.factor(Variable), 
+                                "Age Groups",
+                                "   Under 18 Years")) %>%
+  arrange(Variable)
+#HIV Diagnosis
+tab1_HIV <- tab1Multi(demo, varString = "HIV Diagnosis") %>%
+  mutate(Variable = fct_relevel(as.factor(Variable), 
+                                "HIV Diagnosis",
+                                "   Within past 12 months",
+                                "   More than 12 months ago")) %>%
+  arrange(Variable)
