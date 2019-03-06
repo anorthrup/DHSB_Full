@@ -292,7 +292,8 @@ acasi2 <- acasi %>%
                              RACEE == 1 & RACE > 1 ~ 
                                "White Mixed-Race, Not Latino or Black",
                              RACEE == 1 ~ "White, Not Latino",
-                             TRUE ~ "Other race"))
+                             TRUE ~ "Other race"),
+         EMPLOYE_RC = if_else(EMPLOYE == 1 | EMPLOYF == 1, 1, 0))
 acasi2 %>% 
   select(LATINO, contains("RACE")) %>% 
   filter(LATINO == 0, RACEC == 0, RACE > 1)
