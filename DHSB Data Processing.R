@@ -68,6 +68,8 @@ acasi00m <- acasi00m %>%
   select(colnames(acasi00m)[!colnames(acasi00m) %in% varRemove00m$Variable])
 
 #Order columns in each dataframe alphabetically
+#This serves to order sub-questions alphabetically
+#Original SAS files have variables out of order
 ##00m
 ##Exclude SITE1, PID, T00M
 ##Create list of root names of variables
