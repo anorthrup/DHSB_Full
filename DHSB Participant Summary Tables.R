@@ -5,15 +5,27 @@
 library(tidyverse)
 library(sjlabelled)
 library(rio)
+library(openxlsx)
 
 #####Create data
 source("DHSB Data Processing.R")
+
+#####Print "Other" text for each demographic variable
+wb <- createWorkbook()
+for (i in c("GENDERS", "RACEFS", "ORIENTS", "LIVED6LS", "STAY7DS", 
+           "INSUREHS", "SSNDOS", "CNEED3ES", "DISCJS")) {
+  addWorksheet(wb, i)
+  writeData(wb, i, acasi %>%
+              select(SITE1, PID, i) %>%
+              filter(!!sym(i) != "[Skipped]"))
+}
+# saveWorkbook(wb, "ACASI Other Text.xlsx", overwrite = TRUE)
 
 #####Format variables and rename
 demo <- acasi %>%
   select(-EMPLOY, -RACE,
          -starts_with("DRUG"), -starts_with("MTU"), -starts_with("S56")) %>%
-  rename(Site = SITE1, Age = SCREEN1) %>%
+  rename(Site = SITE1, Age = AGE) %>%
   mutate(`Age Groups` = as.factor(ifelse(Age < 25, "13-24 Years", "25-34 Years")),
          SCREEN5 = fct_recode(as.factor(SCREEN5),
                               "Within past 12 months" = "1", "More than 12 months ago" = "2",
@@ -73,11 +85,9 @@ demo <- acasi %>%
          `Private or employer-provided` = INSURED, `Student insurance` = INSUREE, `Through parent` = INSUREF, 
          `Through partner`              = INSUREG, `Other insurance`   = INSUREH,
          `HIV Diagnosis` = SCREEN5,
-         `Doctor's visit, non-HIV, 7-12 months ago` = CARED6_00M, 
-         `ER or urgent care, non-HIV, 7-12 months ago` = CAREE6_00M,
-         `Hospital stay, non-HIV, 7-12 months ago` = CAREH6_00M, `Doctor's visit, HIV, lifetime` = CARELHIV,
-         `Doctor's visit, HIV, 7-12 months ago` = CAREHV06_00M, `Doctor's visit, HIV, 13-18 months ago` = CAREHV12,
-         `Doctor's visit, non-HIV, 0-6 months ago` = CARED6, 
-         `ER or urgent care, non-HIV, 0-6 months ago` = CAREE6,
-         `Hospital stay, non-HIV, 0-6 months ago` = CAREH6,
-         `Doctor's visit, HIV, 0-6 months ago` = CAREHV06)
+         `Doctor's visit, non-HIV, past 6 months` = CARED6, 
+         `ER or urgent care, non-HIV, past 6 months` = CAREE6,
+         `Hospital stay, non-HIV, past 6 months` = CAREH6,
+         `Doctor's visit, HIV, past 6 months` = CAREHV06,
+         `Doctor's visit, HIV, past 12 months` = CAREHV12,
+         `Doctor's visit, HIV, lifetime` = CARELHIV)
