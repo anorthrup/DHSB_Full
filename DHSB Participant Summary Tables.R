@@ -69,22 +69,8 @@ demo <- acasi2 %>%
 
 #####Create summary tables
 #####Table 1: participant characteristics summary
-#Number of participants
-tab1_n <- bind_rows(
-  demo %>%
-    summarize(Frequency = n()) %>%
-    mutate(Site = "Overall"),
-  demo %>%
-    group_by(Site) %>%
-    summarize(Frequency = n()) %>%
-    mutate(Site = as.character(Site))
-) %>%
-  mutate(Frequency = as.character(Frequency)) %>%
-  spread(Site, Frequency) %>%
-  mutate(Variable = "Number of Participants") %>%
-  select(Variable, Overall, everything())
-#Age groups
-tab1Multi <- function (x, varString) {
+#Functions
+tab1_OneFactor <- function (x, varString) {
   varName <- str_replace(varString, " ", ".")
   bind_rows(x %>%
               select(varString) %>%
@@ -105,44 +91,101 @@ tab1Multi <- function (x, varString) {
     spread(Site, Frequency) %>%
     select(Variable, Overall, everything())
 }
-tab1_age <- tab1Multi(demo, varString = "Age Groups") %>%
+
+tab1_ManyBinary <- function (x, ...) {
+  selectVars <- quos(...)
+  bind_rows(
+    x %>%
+      select(!!! selectVars) %>%
+      summarize_all(funs(N = length(which(. == "Yes")),
+                         P = length(which(. == "Yes")) / 
+                           length(which(!is.na(.))))) %>%
+                           {
+                             full_join(select(., -contains("_P")) %>%
+                                         gather("Variable", "N", contains("_N")) %>%
+                                         mutate(Variable = str_replace(Variable, "_N", "")),
+                                       select(., -contains("_N")) %>%
+                                         gather("Variable", "P", contains("_P")) %>%
+                                         mutate(Variable = str_replace(Variable, "_P", "")), 
+                                       by = "Variable")
+                           } %>%
+      mutate(Site = "Overall"),
+    x %>%
+      group_by(Site) %>%
+      select(Site, !!! selectVars) %>%
+      summarize_all(funs(N = length(which(. == "Yes")),
+                         P = length(which(. == "Yes")) /
+                           length(which(!is.na(.))))) %>%
+                           {
+                             full_join(select(., -contains("_P")) %>%
+                                         gather("Variable", "N", contains("_N")) %>%
+                                         mutate(Variable = str_replace(Variable, "_N", "")),
+                                       select(., -contains("_N")) %>%
+                                         gather("Variable", "P", contains("_P")) %>%
+                                         mutate(Variable = str_replace(Variable, "_P", "")),
+                                       by = c("Variable", "Site"))
+                           } %>%
+      mutate(Site = as.character(Site))) %>%
+    mutate(P = percent(P, accuracy = 0.1)) %>%
+    unite("Metric", N, P, sep = " (") %>%
+    mutate(Metric = str_replace(Metric, "(.*)", "\\1)")) %>%
+    spread(Site, Metric) %>%
+    select(Variable, Overall, everything())
+}
+
+#Number of participants
+tab1_n <- bind_rows(
+  demo %>%
+    summarize(Frequency = n()) %>%
+    mutate(Site = "Overall"),
+  demo %>%
+    group_by(Site) %>%
+    summarize(Frequency = n()) %>%
+    mutate(Site = as.character(Site))
+) %>%
+  mutate(Frequency = as.character(Frequency)) %>%
+  spread(Site, Frequency) %>%
+  mutate(Variable = "Number of Participants") %>%
+  select(Variable, Overall, everything())
+#Age groups
+tab1_age <- tab1_OneFactor(demo, varString = "Age Groups") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
                                 "Under 18 Years")) %>%
   arrange(Variable)
 #HIV Diagnosis
-tab1_HIV <- tab1Multi(demo, varString = "HIV Diagnosis") %>%
+tab1_HIV <- tab1_OneFactor(demo, varString = "HIV Diagnosis") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
                                 "Within past 12 months",
                                 "More than 12 months ago")) %>%
   arrange(Variable)
 #Sex at birth
-tab1_sex <- tab1Multi(demo, varString = "Sex at Birth") %>%
+tab1_sex <- tab1_OneFactor(demo, varString = "Sex at Birth") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
                                 "Male")) %>%
   arrange(Variable)
 #Gender
-tab1_gender <- tab1Multi(demo, varString = "Gender") %>%
+tab1_gender <- tab1_OneFactor(demo, varString = "Gender") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
                                 "Male (cis man)",
                                 "Female (cis woman)",
                                 "Trans person")) %>%
   arrange(Variable)
 #Orientation
-tab1_orientation <- tab1Multi(demo, varString = "Orientation") %>%
+tab1_orientation <- tab1_OneFactor(demo, varString = "Orientation") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
                                 "Straight",
                                 "Lesbian or gay",
                                 "Bisexual")) %>%
   arrange(Variable)
 #Relationship Status
-tab1_relationship <- tab1Multi(demo, varString = "Relationship Status") %>%
+tab1_relationship <- tab1_OneFactor(demo, varString = "Relationship Status") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
                                 "Single",
                                 "Dating",
                                 "Partnered/Married")) %>%
   arrange(Variable)
 #Education
-tab1_education <- tab1Multi(demo, varString = "Education") %>%
+tab1_education <- tab1_OneFactor(demo, varString = "Education") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
                                 "High school, equivalent or less",
                                 "Some post-K12")) %>%
@@ -174,7 +217,7 @@ tab1_income <- bind_rows(
   mutate(Variable = "Income, Last Month") %>%
   select(Variable, Overall, everything())
 #Residence
-tab1_residence <- tab1Multi(demo, varString = "Residence, Last 7 Days") %>%
+tab1_residence <- tab1_OneFactor(demo, varString = "Residence, Last 7 Days") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
                                 "Rented house/apt/flat",
                                 "Other's house/apt/flat",
@@ -182,11 +225,11 @@ tab1_residence <- tab1Multi(demo, varString = "Residence, Last 7 Days") %>%
                                 "Hospital/Medical facility")) %>%
   arrange(Variable)
 #Jailed
-tab1_jail <- tab1Multi(demo, varString = "Ever Jailed") %>%
+tab1_jail <- tab1_OneFactor(demo, varString = "Ever Jailed") %>%
   filter(Variable == "Yes") %>%
   mutate(Variable = str_replace(Variable, "Yes", "Ever Jailed"))
 #Ethnicity/Race
-tab1_race <- tab1Multi(demo, varString = "Race") %>%
+tab1_race <- tab1_OneFactor(demo, varString = "Race") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
                                 "Latino",
                                 "Black, Not Latino",
@@ -194,42 +237,10 @@ tab1_race <- tab1Multi(demo, varString = "Race") %>%
                                 "White Mixed-Race, Not Latino or Black")) %>%
   arrange(Variable)
 #Employment
-tab1_employ <- bind_rows(
-  demo %>%
-    select(Student, `Full-time employed`, `Part-time employed`, 
-           Disabled, Unemployed) %>%
-    summarize_all(funs(N = length(which(. == "Yes")),
-                       P = length(which(. == "Yes")) / 
-                         length(which(!is.na(.))))) %>%
-     {
-       full_join(select(., -contains("_P")) %>%
-                   gather("Variable", "N", contains("_N")) %>%
-                   mutate(Variable = str_replace(Variable, "_N", "")),
-                 select(., -contains("_N")) %>%
-                   gather("Variable", "P", contains("_P")) %>%
-                   mutate(Variable = str_replace(Variable, "_P", "")), 
-                 by = "Variable")
-     } %>%
-    mutate(Site = "Overall"),
-  demo %>%
-    group_by(Site) %>%
-    select(Site, Student, `Full-time employed`, `Part-time employed`, 
-           Disabled, Unemployed) %>%
-    summarize_all(funs(N = length(which(. == "Yes")),
-                       P = length(which(. == "Yes")) / 
-                         length(which(!is.na(.))))) %>%
-    {
-      full_join(select(., -contains("_P")) %>%
-                  gather("Variable", "N", contains("_N")) %>%
-                  mutate(Variable = str_replace(Variable, "_N", "")),
-                select(., -contains("_N")) %>%
-                  gather("Variable", "P", contains("_P")) %>%
-                  mutate(Variable = str_replace(Variable, "_P", "")), 
-                by = c("Variable", "Site"))
-    } %>%
-    mutate(Site = as.character(Site))) %>%
-    mutate(P = percent(P, accuracy = 0.1)) %>%
-    unite("Metric", N, P, sep = " (") %>%
-    mutate(Metric = str_replace(Metric, "(.*)", "\\1)")) %>%
-    spread(Site, Metric) %>%
-    select(Variable, Overall, everything())
+tab1_employ <- tab1_ManyFactors(demo, Student, `Full-time employed`, 
+                                `Part-time employed`, Disabled, Unemployed) %>%
+  mutate(Variable = fct_relevel(as.factor(Variable),
+                                "Student",
+                                "Full-time employed",
+                                "Part-time employed")) %>%
+  arrange(Variable)
