@@ -305,3 +305,5 @@ acasi2 <- acasi %>%
 acasi2 %>% 
   select(LATINO, contains("RACE")) %>% 
   filter(LATINO == 0, RACEC == 0, RACE > 1)
+
+save(acasi, acasi2, file = "acasi.RData")
