@@ -68,7 +68,6 @@ demo <- acasi2 %>%
          `Doctor's visit, HIV, lifetime` = CARELHIV)
 
 #####Create summary tables
-#####Table 1: participant characteristics summary
 #Functions
 tab1_OneFactor <- function (x, varString) {
   varName <- str_replace(varString, " ", ".")
@@ -133,6 +132,7 @@ tab1_ManyBinary <- function (x, ...) {
     select(Variable, Overall, everything())
 }
 
+#####Table 1: participant characteristics summary
 #Number of participants
 tab1_n <- bind_rows(
   demo %>%
@@ -243,4 +243,25 @@ tab1_employ <- tab1_ManyFactors(demo, Student, `Full-time employed`,
                                 "Student",
                                 "Full-time employed",
                                 "Part-time employed")) %>%
+  arrange(Variable)
+
+#####Table 2: participant health care summary
+#Insurance
+tab2_insure <- tab1_ManyFactors(
+  demo %>%
+    mutate(INSURE = replace(INSURE, which(INSURE == 97), "Yes")) %>%
+    rename(`Don't know/Not Sure` = INSURE), 
+  `Don't know/Not Sure`, `No insurance`, Medicaid, Medicare, 
+  `Private or employer-provided`, `Student insurance`, `Through parent`, 
+  `Through partner`, `Other insurance`
+) %>%
+  mutate(Variable = fct_relevel(as.factor(Variable),
+                                "No insurance",
+                                "Medicaid",
+                                "Medicare",
+                                "Private or employer-provided",
+                                "Student insurance",
+                                "Through parent",
+                                "Through partner",
+                                "Other insurance")) %>%
   arrange(Variable)
