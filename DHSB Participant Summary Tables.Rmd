@@ -105,14 +105,14 @@ tab1_OneFactor <- function (x, varString) {
     select(Variable, Overall, everything())
 }
 
-tab1_ManyBinary <- function (x, ...) {
+tab1_ManyBinary <- function (x, ..., response = "Yes") {
   selectVars <- quos(...)
   selectStrings <- gsub("~|`", "", as.character(selectVars))
   bind_rows(
     x %>%
       select(!!! selectVars) %>%
-      summarize_all(funs(N = length(which(. == "Yes")),
-                         P = length(which(. == "Yes")) /
+      summarize_all(funs(N = length(which(. == response)),
+                         P = length(which(. == response)) /
                            length(which(!is.na(.))))) %>%
                            {
                              full_join(select(., -contains("_P")) %>%
@@ -127,8 +127,8 @@ tab1_ManyBinary <- function (x, ...) {
     x %>%
       group_by(Site) %>%
       select(Site, !!! selectVars) %>%
-      summarize_all(funs(N = length(which(. == "Yes")),
-                         P = length(which(. == "Yes")) /
+      summarize_all(funs(N = length(which(. == response)),
+                         P = length(which(. == response)) /
                            length(which(!is.na(.))))) %>%
                            {
                              full_join(select(., -contains("_P")) %>%
@@ -267,10 +267,43 @@ tab2_insure <- tab1_ManyBinary(
   `Student insurance`, `Through parent`, `Through partner`, `Other insurance`, 
   `Don't know/Not Sure`
 )
+#Health care history, 6 months
+tab2_care <- bind_rows(
+  tab1_ManyBinary(
+    demo,
+    `Doctor's visit, non-HIV, past 6 months`, 
+    `ER or urgent care, non-HIV, past 6 months`,
+    `Hospital stay, non-HIV, past 6 months`,
+    `Doctor's visit, HIV, past 6 months`,
+    `Doctor's visit, HIV, past 12 months`,
+    `Doctor's visit, HIV, lifetime`
+  ),
+  tab1_ManyBinary(
+    demo,
+    `Doctor's visit, non-HIV, past 6 months`, 
+    `ER or urgent care, non-HIV, past 6 months`,
+    `Hospital stay, non-HIV, past 6 months`,
+    `Doctor's visit, HIV, past 6 months`,
+    `Doctor's visit, HIV, past 12 months`,
+    `Doctor's visit, HIV, lifetime`,
+    response = "Refuse to answer"
+  )
+) %>%
+  arrange(Variable) %>%
+  group_by(Variable) %>%
+  mutate(Seq = 1:n()) %>%
+  ungroup() %>%
+  mutate(Variable = replace(as.character(Variable),
+                            which(Seq == 2), 
+                            "   Refuse to answer")) %>%
+  select(-Seq) %>%
+  filter(Overall != "0 (0.0%)")
 ```
 
+### Table 1
 ```{r include = TRUE}
-#Build table
+#####Build tables
+#Table 1
 kable(bind_rows(tab1_n, tab1_age, tab1_HIV, tab1_sex, tab1_gender,
                 tab1_orientation, tab1_relationship, tab1_education,
                 tab1_income, tab1_residence, tab1_jail, tab1_race,
@@ -287,5 +320,15 @@ kable(bind_rows(tab1_n, tab1_age, tab1_HIV, tab1_sex, tab1_gender,
   group_rows("Residence, Last 7 Days, N (%)", 26, 32) %>%
   group_rows("Ethnicity and Race, N (%)", 33, 37) %>%
   group_rows("Employment, N (%)", 38, 43)
+```
+
+### Table 2
+```{r include = TRUE}
+#Table 2
+kable(bind_rows(tab2_insure, tab2_care)) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+  group_rows("Insurance, N (%)", 1, 9) %>%
+  group_rows("Recent Health Care, N (%)", 10, 18) %>%
+  add_indent(c(12, 15, 17))
 ```
 
