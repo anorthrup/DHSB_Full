@@ -7,12 +7,6 @@ output: html_document
 ```{r include = FALSE}
 knitr::opts_chunk$set(echo = FALSE, include = FALSE, 
                       warning = FALSE, message = FALSE)
-```
-
-```{r}
-#####Digital Health-Seeking Behaviors
-#####Creation of Participant Summary Tables
-
 #####Read libraries
 library(tidyverse)
 library(sjlabelled)
@@ -24,7 +18,9 @@ library(kableExtra)
 #####Load data
 setwd("C:/Users/ANorthrup/Documents/ETAC_DHSB")
 load("acasi.RData")
+```
 
+```{r}
 #####Print "Other" text for each demographic variable
 # wb <- createWorkbook()
 # for (i in c("GENDERS", "RACEFS", "ORIENTS", "LIVED6LS", "STAY7DS", 
@@ -40,7 +36,7 @@ load("acasi.RData")
 demo <- acasi2 %>%
   select(-EMPLOY, -RACE,
          -starts_with("DRUG"), -starts_with("MTU"), -starts_with("S56")) %>%
-  rename(Site = SITE1, Age = AGE) %>%
+  rename(Site = SITE_RC, Age = AGE) %>%
   mutate(`Age Groups` = as.factor(case_when(Age < 18 ~ "Under 18 Years",
                                             Age < 25 ~ "18-24 Years",
                                             TRUE ~ "25 and older")),
@@ -80,7 +76,9 @@ demo <- acasi2 %>%
          `Doctor's visit, HIV, past 6 months` = CAREHV06,
          `Doctor's visit, HIV, past 12 months` = CAREHV12,
          `Doctor's visit, HIV, lifetime` = CARELHIV)
+```
 
+```{r}
 #####Create summary tables
 #Functions
 tab1_OneFactor <- function (x, varString) {
@@ -102,7 +100,7 @@ tab1_OneFactor <- function (x, varString) {
     unite("Frequency", N, Percent, sep = " (") %>%
     mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)")) %>%
     spread(Site, Frequency) %>%
-    select(Variable, Overall, everything())
+    select(Variable, Overall, levels(x$Site))
 }
 
 tab1_ManyBinary <- function (x, ..., response = "Yes") {
@@ -144,11 +142,13 @@ tab1_ManyBinary <- function (x, ..., response = "Yes") {
     unite("Metric", N, P, sep = " (") %>%
     mutate(Metric = str_replace(Metric, "(.*)", "\\1)")) %>%
     spread(Site, Metric) %>%
-    select(Variable, Overall, everything()) %>%
+    select(Variable, Overall, levels(x$Site)) %>%
     mutate(Variable = factor(Variable, levels = selectStrings)) %>%
     arrange(Variable)
 }
+```
 
+```{r}
 #####Table 1: participant characteristics summary
 #Number of participants
 tab1_n <- bind_rows(
@@ -163,7 +163,7 @@ tab1_n <- bind_rows(
   mutate(Frequency = as.character(Frequency)) %>%
   spread(Site, Frequency) %>%
   mutate(Variable = "Number of Participants") %>%
-  select(Variable, Overall, everything())
+  select(Variable, Overall, levels(demo$Site))
 #Age groups
 tab1_age <- tab1_OneFactor(demo, varString = "Age Groups") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
@@ -232,7 +232,7 @@ tab1_income <- bind_rows(
     mutate(Site = as.character(Site))) %>%
   spread(Site, Metric) %>%
   mutate(Variable = "Income, Last Month") %>%
-  select(Variable, Overall, everything())
+  select(Variable, Overall, levels(demo$Site))
 #Residence
 tab1_residence <- tab1_OneFactor(demo, varString = "Residence, Last 7 Days") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
