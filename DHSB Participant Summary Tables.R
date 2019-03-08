@@ -35,11 +35,6 @@ demo <- acasi2 %>%
                               "Don't know/Not sure"   = "7", "Refuse to answer"        = "8"),
          SEXBRTH = fct_recode(as.factor(SEXBRTH),
                               "Male" = "1", "Female" = "2", "Refuse to answer" = "8"),
-         RELSTAT = fct_recode(as.factor(RELSTAT),
-                              "Single"                                 = "1", "Dating, open relationship"            = "2", 
-                              "Dating, closed relationship"            = "3", "Partnered/Married, open relationship" = "4",
-                              "Partnered/Married, closed relationship" = "5", "Other relationship status"          = "6",
-                              "Refuse to answer" = "8"),
          MONEY = ifelse(MONEY %in% c(99997, 99998), NA, MONEY)) %>%
   mutate_at(vars(matches("EMPLOY|LATINO|RACE|INSURE|CARELHIV"), JAILL, -RACEFS, -INSURE, -INSUREHS), 
             funs(as.factor)) %>%
