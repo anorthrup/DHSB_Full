@@ -1,3 +1,15 @@
+---
+title: "Digital Health-Seeking Behaviors Tables"
+author: "Adam Northrup, Data Manager, ETAC"
+date: "March 8, 2019"
+output: html_document
+---
+```{r include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = FALSE, 
+                      warning = FALSE, message = FALSE)
+```
+
+```{r}
 #####Digital Health-Seeking Behaviors
 #####Creation of Participant Summary Tables
 
@@ -9,8 +21,9 @@ library(openxlsx)
 library(scales)
 library(kableExtra)
 
-#####Create data
-source("DHSB Data Processing.R")
+#####Load data
+setwd("C:/Users/ANorthrup/Documents/ETAC_DHSB")
+load("acasi.RData")
 
 #####Print "Other" text for each demographic variable
 # wb <- createWorkbook()
@@ -243,6 +256,20 @@ tab1_race <- tab1_OneFactor(demo, varString = "Race") %>%
 #Employment
 tab1_employ <- tab1_ManyBinary(demo, Student, `Full-time employed`, 
                                 `Part-time employed`, Disabled, Unemployed)
+
+#####Table 2: participant health care summary
+#Insurance
+tab2_insure <- tab1_ManyBinary(
+  demo %>%
+    mutate(INSURE = replace(INSURE, which(INSURE == 97), "Yes")) %>%
+    rename(`Don't know/Not Sure` = INSURE), 
+  `No insurance`, Medicaid, Medicare, `Private or employer-provided`, 
+  `Student insurance`, `Through parent`, `Through partner`, `Other insurance`, 
+  `Don't know/Not Sure`
+)
+```
+
+```{r include = TRUE}
 #Build table
 kable(bind_rows(tab1_n, tab1_age, tab1_HIV, tab1_sex, tab1_gender,
                 tab1_orientation, tab1_relationship, tab1_education,
@@ -260,14 +287,5 @@ kable(bind_rows(tab1_n, tab1_age, tab1_HIV, tab1_sex, tab1_gender,
   group_rows("Residence, Last 7 Days, N (%)", 26, 32) %>%
   group_rows("Ethnicity and Race, N (%)", 33, 37) %>%
   group_rows("Employment, N (%)", 38, 43)
+```
 
-#####Table 2: participant health care summary
-#Insurance
-tab2_insure <- tab1_ManyBinary(
-  demo %>%
-    mutate(INSURE = replace(INSURE, which(INSURE == 97), "Yes")) %>%
-    rename(`Don't know/Not Sure` = INSURE), 
-  `No insurance`, Medicaid, Medicare, `Private or employer-provided`, 
-  `Student insurance`, `Through parent`, `Through partner`, `Other insurance`, 
-  `Don't know/Not Sure`
-)
