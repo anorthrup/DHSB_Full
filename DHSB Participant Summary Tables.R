@@ -123,3 +123,17 @@ tab1_sex <- tab1Multi(demo, varString = "Sex at Birth") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
                                 "   Male")) %>%
   arrange(Variable)
+#Gender
+tab1_gender <- tab1Multi(demo, varString = "Gender") %>%
+  mutate(Variable = fct_relevel(as.factor(Variable), 
+                                "   Male (cis man)",
+                                "   Female (cis woman)",
+                                "   Trans person")) %>%
+  arrange(Variable)
+#Orientation
+tab1_orientation <- tab1Multi(demo, varString = "Orientation") %>%
+  mutate(Variable = fct_relevel(as.factor(Variable), 
+                                "   Straight",
+                                "   Lesbian or gay",
+                                "   Bisexual")) %>%
+  arrange(Variable)
