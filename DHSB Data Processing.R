@@ -249,7 +249,13 @@ acasi <- bind_rows(acasiJoinInner, acasiJoin06m) %>%
 
 #Demographic variables
 acasi2 <- acasi %>%
-  mutate(GENDER_RC = fct_recode(as.factor(GENDER),
+  mutate(SITE_RC = fct_recode(as.factor(SITE1),
+                            "Corpus Christi" = "CBW", "Los Angeles" = "FRI", 
+                            "New York" = "NYSDA", "Chicago" = "HBHC", 
+                            "Cleveland"  = "MHS", "Hershey" = "PSU", 
+                            "Philadelphia" = "PFC", "San Francisco" = "SFDPH", 
+                            "Winston-Salem"  = "WFU", "St. Louis" = "WUSL"),
+         GENDER_RC = fct_recode(as.factor(GENDER),
                                 "Male (cis man)"     = "1", 
                                 "Female (cis woman)" = "2",
                                 "Trans person"       = "3", 
