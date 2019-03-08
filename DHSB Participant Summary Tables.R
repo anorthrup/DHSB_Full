@@ -53,6 +53,7 @@ demo <- acasi2 %>%
          `Income, Last Month` = MONEY,
          `Residence, Last 7 Days` = STAY7D_RC,
          `Ever Jailed` = JAILL,
+         Race = RACE_RC,
          Student  = EMPLOYA, `Full-time employed`  = EMPLOYB, `Part-time employed`      = EMPLOYC,
          Disabled = EMPLOYD, `Unemployed` = EMPLOYE_RC,
          `No insurance`                 = INSUREA, Medicaid            = INSUREB, Medicare         = INSUREC, 
@@ -172,3 +173,25 @@ tab1_income <- bind_rows(
   spread(Site, Metric) %>%
   mutate(Variable = "Income, Last Month") %>%
   select(Variable, Overall, everything())
+#Residence
+tab1_residence <- tab1Multi(demo, varString = "Residence, Last 7 Days") %>%
+  mutate(Variable = fct_relevel(as.factor(Variable), 
+                                "Rented house/apt/flat",
+                                "Other's house/apt/flat",
+                                "Hotel/Shelter/Rehab",
+                                "Hospital/Medical facility")) %>%
+  arrange(Variable)
+#Jailed
+tab1_jail <- tab1Multi(demo, varString = "Ever Jailed") %>%
+  filter(Variable == "Yes") %>%
+  mutate(Variable = str_replace(Variable, "Yes", "Ever Jailed"))
+#Ethnicity/Race
+tab1_race <- tab1Multi(demo, varString = "Race") %>%
+  mutate(Variable = fct_relevel(as.factor(Variable), 
+                                "Latino",
+                                "Black, Not Latino",
+                                "White, Not Latino",
+                                "White Mixed-Race, Not Latino or Black")) %>%
+  arrange(Variable)
+#Employment
+
