@@ -54,7 +54,7 @@ demo <- acasi2 %>%
          `Residence, Last 7 Days` = STAY7D_RC,
          `Ever Jailed` = JAILL,
          Race = RACE_RC,
-         Student  = EMPLOYA, `Full-time employed`  = EMPLOYB, `Part-time employed`      = EMPLOYC,
+         Student = EMPLOYA, `Full-time employed` = EMPLOYB, `Part-time employed` = EMPLOYC,
          Disabled = EMPLOYD, `Unemployed` = EMPLOYE_RC,
          `No insurance`                 = INSUREA, Medicaid            = INSUREB, Medicare         = INSUREC, 
          `Private or employer-provided` = INSURED, `Student insurance` = INSUREE, `Through parent` = INSUREF, 
@@ -194,4 +194,42 @@ tab1_race <- tab1Multi(demo, varString = "Race") %>%
                                 "White Mixed-Race, Not Latino or Black")) %>%
   arrange(Variable)
 #Employment
-
+tab1_employ <- bind_rows(
+  demo %>%
+    select(Student, `Full-time employed`, `Part-time employed`, 
+           Disabled, Unemployed) %>%
+    summarize_all(funs(N = length(which(. == "Yes")),
+                       P = length(which(. == "Yes")) / 
+                         length(which(!is.na(.))))) %>%
+     {
+       full_join(select(., -contains("_P")) %>%
+                   gather("Variable", "N", contains("_N")) %>%
+                   mutate(Variable = str_replace(Variable, "_N", "")),
+                 select(., -contains("_N")) %>%
+                   gather("Variable", "P", contains("_P")) %>%
+                   mutate(Variable = str_replace(Variable, "_P", "")), 
+                 by = "Variable")
+     } %>%
+    mutate(Site = "Overall"),
+  demo %>%
+    group_by(Site) %>%
+    select(Site, Student, `Full-time employed`, `Part-time employed`, 
+           Disabled, Unemployed) %>%
+    summarize_all(funs(N = length(which(. == "Yes")),
+                       P = length(which(. == "Yes")) / 
+                         length(which(!is.na(.))))) %>%
+    {
+      full_join(select(., -contains("_P")) %>%
+                  gather("Variable", "N", contains("_N")) %>%
+                  mutate(Variable = str_replace(Variable, "_N", "")),
+                select(., -contains("_N")) %>%
+                  gather("Variable", "P", contains("_P")) %>%
+                  mutate(Variable = str_replace(Variable, "_P", "")), 
+                by = c("Variable", "Site"))
+    } %>%
+    mutate(Site = as.character(Site))) %>%
+    mutate(P = percent(P, accuracy = 0.1)) %>%
+    unite("Metric", N, P, sep = " (") %>%
+    mutate(Metric = str_replace(Metric, "(.*)", "\\1)")) %>%
+    spread(Site, Metric) %>%
+    select(Variable, Overall, everything())
