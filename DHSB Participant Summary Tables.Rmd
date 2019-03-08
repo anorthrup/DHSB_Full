@@ -39,7 +39,7 @@ demo <- acasi2 %>%
   rename(Site = SITE_RC, Age = AGE) %>%
   mutate(`Age Groups` = as.factor(case_when(Age < 18 ~ "Under 18 Years",
                                             Age < 25 ~ "18-24 Years",
-                                            TRUE ~ "25 and older")),
+                                            Age >= 25 ~ "25 and older")),
          SCREEN5 = fct_recode(as.factor(SCREEN5),
                               "Within past 12 months" = "1", "More than 12 months ago" = "2",
                               "Don't know/Not sure"   = "7", "Refuse to answer"        = "8"),
@@ -98,7 +98,8 @@ tab1_OneFactor <- function (x, varString) {
               group_by(Site) %>%
               mutate(Percent = percent(N / sum(N), accuracy = 0.1))) %>%
     unite("Frequency", N, Percent, sep = " (") %>%
-    mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)")) %>%
+    mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)"),
+           Variable = as.character(Variable)) %>%
     spread(Site, Frequency) %>%
     select(Variable, Overall, levels(x$Site))
 }
@@ -144,131 +145,135 @@ tab1_ManyBinary <- function (x, ..., response = "Yes") {
     spread(Site, Metric) %>%
     select(Variable, Overall, levels(x$Site)) %>%
     mutate(Variable = factor(Variable, levels = selectStrings)) %>%
-    arrange(Variable)
+    arrange(Variable) %>%
+    mutate(Variable = as.character(Variable))
 }
 ```
 
 ```{r}
 #####Table 1: participant characteristics summary
-#Number of participants
-tab1_n <- bind_rows(
-  demo %>%
-    summarize(Frequency = n()) %>%
-    mutate(Site = "Overall"),
-  demo %>%
-    group_by(Site) %>%
-    summarize(Frequency = n()) %>%
-    mutate(Site = as.character(Site))
-) %>%
-  mutate(Frequency = as.character(Frequency)) %>%
-  spread(Site, Frequency) %>%
-  mutate(Variable = "Number of Participants") %>%
-  select(Variable, Overall, levels(demo$Site))
-#Age groups
-tab1_age <- tab1_OneFactor(demo, varString = "Age Groups") %>%
-  mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "Under 18 Years")) %>%
-  arrange(Variable)
-#HIV Diagnosis
-tab1_HIV <- tab1_OneFactor(demo, varString = "HIV Diagnosis") %>%
-  mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "Within past 12 months",
-                                "More than 12 months ago")) %>%
-  arrange(Variable)
-#Sex at birth
-tab1_sex <- tab1_OneFactor(demo, varString = "Sex at Birth") %>%
-  mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "Male")) %>%
-  arrange(Variable)
-#Gender
-tab1_gender <- tab1_OneFactor(demo, varString = "Gender") %>%
-  mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "Male (cis man)",
-                                "Female (cis woman)",
-                                "Trans person")) %>%
-  arrange(Variable)
-#Orientation
-tab1_orientation <- tab1_OneFactor(demo, varString = "Orientation") %>%
-  mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "Straight",
-                                "Lesbian or gay",
-                                "Bisexual")) %>%
-  arrange(Variable)
-#Relationship Status
-tab1_relationship <- tab1_OneFactor(demo, varString = "Relationship Status") %>%
-  mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "Single",
-                                "Dating",
-                                "Partnered/Married")) %>%
-  arrange(Variable)
-#Education
-tab1_education <- tab1_OneFactor(demo, varString = "Education") %>%
-  mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "High school, equivalent or less",
-                                "Some post-K12")) %>%
-  arrange(Variable)
-#Income
-tab1_income <- bind_rows(
-  demo %>%
-    summarize(Metric = as.character(
-      paste0(
-        median(`Income, Last Month`, na.rm = TRUE), " [",
-        paste(quantile(`Income, Last Month`, c(0.25, 0.75), na.rm = TRUE),
-              collapse = ", "),
-        "]"
-      ))
-    ) %>%
-    mutate(Site = "Overall"),
-  demo %>%
-    group_by(Site) %>%
-    summarize(Metric = as.character(
-      paste0(
-        median(`Income, Last Month`, na.rm = TRUE), " [",
-        paste(quantile(`Income, Last Month`, c(0.25, 0.75), na.rm = TRUE),
-              collapse = ", "),
-        "]"
-      ))
-    ) %>%
-    mutate(Site = as.character(Site))) %>%
-  spread(Site, Metric) %>%
-  mutate(Variable = "Income, Last Month") %>%
-  select(Variable, Overall, levels(demo$Site))
-#Residence
-tab1_residence <- tab1_OneFactor(demo, varString = "Residence, Last 7 Days") %>%
-  mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "Rented house/apt/flat",
-                                "Other's house/apt/flat",
-                                "Hotel/Shelter/Rehab",
-                                "Hospital/Medical facility")) %>%
-  arrange(Variable)
-#Jailed
-tab1_jail <- tab1_OneFactor(demo, varString = "Ever Jailed") %>%
-  filter(Variable == "Yes") %>%
-  mutate(Variable = str_replace(Variable, "Yes", "Ever Jailed"))
-#Ethnicity/Race
-tab1_race <- tab1_OneFactor(demo, varString = "Race") %>%
-  mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "Latino",
-                                "Black, Not Latino",
-                                "White, Not Latino",
-                                "White Mixed-Race, Not Latino or Black")) %>%
-  arrange(Variable)
-#Employment
-tab1_employ <- tab1_ManyBinary(demo, Student, `Full-time employed`, 
-                                `Part-time employed`, Disabled, Unemployed)
+table1 <- bind_rows(
+  #Number of participants
+  bind_rows(
+    demo %>%
+      summarize(Frequency = n()) %>%
+      mutate(Site = "Overall"),
+    demo %>%
+      group_by(Site) %>%
+      summarize(Frequency = n()) %>%
+      mutate(Site = as.character(Site))
+  ) %>%
+    mutate(Frequency = as.character(Frequency)) %>%
+    spread(Site, Frequency) %>%
+    mutate(Variable = "Number of Participants") %>%
+    select(Variable, Overall, levels(demo$Site)),
+  #Age groups
+  tab1_OneFactor(demo, varString = "Age Groups") %>%
+    mutate(Variable = fct_relevel(as.factor(Variable), 
+                                  "Under 18 Years")) %>%
+    arrange(Variable),
+  #HIV Diagnosis
+  tab1_OneFactor(demo, varString = "HIV Diagnosis") %>%
+    mutate(Variable = fct_relevel(as.factor(Variable), 
+                                  "Within past 12 months",
+                                  "More than 12 months ago")) %>%
+    arrange(Variable),
+  #Sex at birth
+  tab1_OneFactor(demo, varString = "Sex at Birth") %>%
+    mutate(Variable = fct_relevel(as.factor(Variable), 
+                                  "Male")) %>%
+    arrange(Variable),
+  #Gender
+  tab1_OneFactor(demo, varString = "Gender") %>%
+    mutate(Variable = fct_relevel(as.factor(Variable), 
+                                  "Male (cis man)",
+                                  "Female (cis woman)",
+                                  "Trans person")) %>%
+    arrange(Variable),
+  #Orientation
+  tab1_OneFactor(demo, varString = "Orientation") %>%
+    mutate(Variable = fct_relevel(as.factor(Variable), 
+                                  "Straight",
+                                  "Lesbian or gay",
+                                  "Bisexual")) %>%
+    arrange(Variable),
+  #Relationship Status
+  tab1_OneFactor(demo, varString = "Relationship Status") %>%
+    mutate(Variable = fct_relevel(as.factor(Variable), 
+                                  "Single",
+                                  "Dating",
+                                  "Partnered/Married")) %>%
+    arrange(Variable),
+  #Education
+  tab1_OneFactor(demo, varString = "Education") %>%
+    mutate(Variable = fct_relevel(as.factor(Variable), 
+                                  "High school, equivalent or less",
+                                  "Some post-K12")) %>%
+    arrange(Variable),
+  #Income
+  bind_rows(
+    demo %>%
+      summarize(Metric = as.character(
+        paste0(
+          median(`Income, Last Month`, na.rm = TRUE), " [",
+          paste(quantile(`Income, Last Month`, c(0.25, 0.75), na.rm = TRUE),
+                collapse = ", "),
+          "]"
+        ))
+      ) %>%
+      mutate(Site = "Overall"),
+    demo %>%
+      group_by(Site) %>%
+      summarize(Metric = as.character(
+        paste0(
+          median(`Income, Last Month`, na.rm = TRUE), " [",
+          paste(quantile(`Income, Last Month`, c(0.25, 0.75), na.rm = TRUE),
+                collapse = ", "),
+          "]"
+        ))
+      ) %>%
+      mutate(Site = as.character(Site))) %>%
+    spread(Site, Metric) %>%
+    mutate(Variable = "Income, Last Month") %>%
+    select(Variable, Overall, levels(demo$Site)),
+  #Residence
+  tab1_OneFactor(demo, varString = "Residence, Last 7 Days") %>%
+    mutate(Variable = fct_relevel(as.factor(Variable), 
+                                  "Rented house/apt/flat",
+                                  "Other's house/apt/flat",
+                                  "Hotel/Shelter/Rehab",
+                                  "Hospital/Medical facility")) %>%
+    arrange(Variable),
+  #Jailed
+  tab1_OneFactor(demo, varString = "Ever Jailed") %>%
+    filter(Variable == "Yes") %>%
+    mutate(Variable = str_replace(Variable, "Yes", "Ever Jailed")),
+  #Ethnicity/Race
+  tab1_OneFactor(demo, varString = "Race") %>%
+    mutate(Variable = fct_relevel(as.factor(Variable), 
+                                  "Latino",
+                                  "Black, Not Latino",
+                                  "White, Not Latino",
+                                  "White Mixed-Race, Not Latino or Black")) %>%
+    arrange(Variable),
+  #Employment
+  tab1_ManyBinary(demo, Student, `Full-time employed`, 
+                  `Part-time employed`, Disabled, Unemployed)
+)
 
 #####Table 2: participant health care summary
-#Insurance
-tab2_insure <- tab1_ManyBinary(
-  demo %>%
-    mutate(INSURE = replace(INSURE, which(INSURE == 97), "Yes")) %>%
-    rename(`Don't know/Not Sure` = INSURE), 
-  `No insurance`, Medicaid, Medicare, `Private or employer-provided`, 
-  `Student insurance`, `Through parent`, `Through partner`, `Other insurance`, 
-  `Don't know/Not Sure`
-)
-#Health care history, 6 months
-tab2_care <- bind_rows(
+table2 <- bind_rows(
+  #Insurance
+  tab1_ManyBinary(
+    demo %>%
+      mutate(INSURE = replace(INSURE, which(INSURE == 97), "Yes")) %>%
+      rename(`Don't know/Not Sure` = INSURE), 
+    `No insurance`, Medicaid, Medicare, `Private or employer-provided`, 
+    `Student insurance`, `Through parent`, `Through partner`, `Other insurance`, 
+    `Don't know/Not Sure`
+  ),
+  #Health care history, 6 months
+bind_rows(
   tab1_ManyBinary(
     demo,
     `Doctor's visit, non-HIV, past 6 months`, 
@@ -298,16 +303,19 @@ tab2_care <- bind_rows(
                             "   Refuse to answer")) %>%
   select(-Seq) %>%
   filter(Overall != "0 (0.0%)")
+)
+
 ```
+Note that responses from participants with no baseline survey were replaced with 6 month survey. "Past 6 months" refers to 6 months prior to 6 month survey. If no data was available for a given question (participant had no baseline survey, and question wasn't asked in 6 month survey), the participant was not included in the denominator.  
 
 ### Table 1
 ```{r include = TRUE}
-#####Build tables
-#Table 1
-kable(bind_rows(tab1_n, tab1_age, tab1_HIV, tab1_sex, tab1_gender,
-                tab1_orientation, tab1_relationship, tab1_education,
-                tab1_income, tab1_residence, tab1_jail, tab1_race,
-                tab1_employ)) %>%
+wb <- createWorkbook()
+addWorksheet(wb, "Table 1")
+writeData(wb, sheet = "Table 1", table1)
+setColWidths(wb, sheet = "Table 1", cols = 1:ncol(table1), widths = "auto")
+saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
+kable(table1) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows("Age Group, N (%)", 2, 4) %>%
   group_rows("HIV Diagnosis, N (%)", 5, 7) %>%
@@ -324,11 +332,13 @@ kable(bind_rows(tab1_n, tab1_age, tab1_HIV, tab1_sex, tab1_gender,
 
 ### Table 2
 ```{r include = TRUE}
-#Table 2
-kable(bind_rows(tab2_insure, tab2_care)) %>%
+addWorksheet(wb, "Table 2")
+writeData(wb, sheet = "Table 2", table2)
+setColWidths(wb, sheet = "Table 2", cols = 1:ncol(table2), widths = "auto")
+saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
+kable(table2) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows("Insurance, N (%)", 1, 9) %>%
   group_rows("Recent Health Care, N (%)", 10, 18) %>%
   add_indent(c(12, 15, 17))
 ```
-
