@@ -48,7 +48,7 @@ demo <- acasi2 %>%
   rename(Gender = GENDER_RC,
          `Sex at Birth` = SEXBRTH,
          Orientation = ORIENT_RC,
-         `Relationship Status` = RELSTAT,
+         `Relationship Status` = RELSTAT_RC,
          Education = GRADE_RC,
          `Income, Last Month` = MONEY,
          `Residence, Last 7 Days` = STAY7D_RC,
@@ -69,13 +69,15 @@ demo <- acasi2 %>%
 #####Create summary tables
 #####Table 1: participant characteristics summary
 #Number of participants
-tab1_n <- bind_rows(demo %>%
-                      summarize(Frequency = n()) %>%
-                      mutate(Site = "Overall"),
-                    demo %>%
-                      group_by(Site) %>%
-                      summarize(Frequency = n()) %>%
-                      mutate(Site = as.character(Site))) %>%
+tab1_n <- bind_rows(
+  demo %>%
+    summarize(Frequency = n()) %>%
+    mutate(Site = "Overall"),
+  demo %>%
+    group_by(Site) %>%
+    summarize(Frequency = n()) %>%
+    mutate(Site = as.character(Site))
+) %>%
   mutate(Frequency = as.character(Frequency)) %>%
   spread(Site, Frequency) %>%
   mutate(Variable = "Number of Participants") %>%
@@ -100,35 +102,73 @@ tab1Multi <- function (x, varString) {
     unite("Frequency", N, Percent, sep = " (") %>%
     mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)")) %>%
     spread(Site, Frequency) %>%
-    select(Variable, Overall, everything()) %>%
-    mutate(Variable = str_replace(Variable, "(.*)", "   \\1"))
+    select(Variable, Overall, everything())
 }
 tab1_age <- tab1Multi(demo, varString = "Age Groups") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "   Under 18 Years")) %>%
+                                "Under 18 Years")) %>%
   arrange(Variable)
 #HIV Diagnosis
 tab1_HIV <- tab1Multi(demo, varString = "HIV Diagnosis") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "   Within past 12 months",
-                                "   More than 12 months ago")) %>%
+                                "Within past 12 months",
+                                "More than 12 months ago")) %>%
   arrange(Variable)
 #Sex at birth
 tab1_sex <- tab1Multi(demo, varString = "Sex at Birth") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "   Male")) %>%
+                                "Male")) %>%
   arrange(Variable)
 #Gender
 tab1_gender <- tab1Multi(demo, varString = "Gender") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "   Male (cis man)",
-                                "   Female (cis woman)",
-                                "   Trans person")) %>%
+                                "Male (cis man)",
+                                "Female (cis woman)",
+                                "Trans person")) %>%
   arrange(Variable)
 #Orientation
 tab1_orientation <- tab1Multi(demo, varString = "Orientation") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "   Straight",
-                                "   Lesbian or gay",
-                                "   Bisexual")) %>%
+                                "Straight",
+                                "Lesbian or gay",
+                                "Bisexual")) %>%
   arrange(Variable)
+#Relationship Status
+tab1_relationship <- tab1Multi(demo, varString = "Relationship Status") %>%
+  mutate(Variable = fct_relevel(as.factor(Variable), 
+                                "Single",
+                                "Dating",
+                                "Partnered/Married")) %>%
+  arrange(Variable)
+#Education
+tab1_education <- tab1Multi(demo, varString = "Education") %>%
+  mutate(Variable = fct_relevel(as.factor(Variable), 
+                                "High school, equivalent or less",
+                                "Some post-K12")) %>%
+  arrange(Variable)
+#Income
+tab1_income <- bind_rows(
+  demo %>%
+    summarize(Metric = as.character(
+      paste0(
+        median(`Income, Last Month`, na.rm = TRUE), " [",
+        paste(quantile(`Income, Last Month`, c(0.25, 0.75), na.rm = TRUE),
+              collapse = ", "),
+        "]"
+      ))
+    ) %>%
+    mutate(Site = "Overall"),
+  demo %>%
+    group_by(Site) %>%
+    summarize(Metric = as.character(
+      paste0(
+        median(`Income, Last Month`, na.rm = TRUE), " [",
+        paste(quantile(`Income, Last Month`, c(0.25, 0.75), na.rm = TRUE),
+              collapse = ", "),
+        "]"
+      ))
+    ) %>%
+    mutate(Site = as.character(Site))) %>%
+  spread(Site, Metric) %>%
+  mutate(Variable = "Income, Last Month") %>%
+  select(Variable, Overall, everything())
