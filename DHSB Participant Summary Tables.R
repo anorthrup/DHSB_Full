@@ -94,11 +94,12 @@ tab1_OneFactor <- function (x, varString) {
 
 tab1_ManyBinary <- function (x, ...) {
   selectVars <- quos(...)
+  selectStrings <- gsub("~|`", "", as.character(selectVars))
   bind_rows(
     x %>%
       select(!!! selectVars) %>%
       summarize_all(funs(N = length(which(. == "Yes")),
-                         P = length(which(. == "Yes")) / 
+                         P = length(which(. == "Yes")) /
                            length(which(!is.na(.))))) %>%
                            {
                              full_join(select(., -contains("_P")) %>%
@@ -106,7 +107,7 @@ tab1_ManyBinary <- function (x, ...) {
                                          mutate(Variable = str_replace(Variable, "_N", "")),
                                        select(., -contains("_N")) %>%
                                          gather("Variable", "P", contains("_P")) %>%
-                                         mutate(Variable = str_replace(Variable, "_P", "")), 
+                                         mutate(Variable = str_replace(Variable, "_P", "")),
                                        by = "Variable")
                            } %>%
       mutate(Site = "Overall"),
@@ -130,7 +131,9 @@ tab1_ManyBinary <- function (x, ...) {
     unite("Metric", N, P, sep = " (") %>%
     mutate(Metric = str_replace(Metric, "(.*)", "\\1)")) %>%
     spread(Site, Metric) %>%
-    select(Variable, Overall, everything())
+    select(Variable, Overall, everything()) %>%
+    mutate(Variable = factor(Variable, levels = selectStrings)) %>%
+    arrange(Variable)
 }
 
 #####Table 1: participant characteristics summary
@@ -238,13 +241,8 @@ tab1_race <- tab1_OneFactor(demo, varString = "Race") %>%
                                 "White Mixed-Race, Not Latino or Black")) %>%
   arrange(Variable)
 #Employment
-tab1_employ <- tab1_ManyFactors(demo, Student, `Full-time employed`, 
-                                `Part-time employed`, Disabled, Unemployed) %>%
-  mutate(Variable = fct_relevel(as.factor(Variable),
-                                "Student",
-                                "Full-time employed",
-                                "Part-time employed")) %>%
-  arrange(Variable)
+tab1_employ <- tab1_ManyBinary(demo, Student, `Full-time employed`, 
+                                `Part-time employed`, Disabled, Unemployed)
 #Build table
 kable(bind_rows(tab1_n, tab1_age, tab1_HIV, tab1_sex, tab1_gender,
                 tab1_orientation, tab1_relationship, tab1_education,
@@ -265,21 +263,11 @@ kable(bind_rows(tab1_n, tab1_age, tab1_HIV, tab1_sex, tab1_gender,
 
 #####Table 2: participant health care summary
 #Insurance
-tab2_insure <- tab1_ManyFactors(
+tab2_insure <- tab1_ManyBinary(
   demo %>%
     mutate(INSURE = replace(INSURE, which(INSURE == 97), "Yes")) %>%
     rename(`Don't know/Not Sure` = INSURE), 
-  `Don't know/Not Sure`, `No insurance`, Medicaid, Medicare, 
-  `Private or employer-provided`, `Student insurance`, `Through parent`, 
-  `Through partner`, `Other insurance`
-) %>%
-  mutate(Variable = fct_relevel(as.factor(Variable),
-                                "No insurance",
-                                "Medicaid",
-                                "Medicare",
-                                "Private or employer-provided",
-                                "Student insurance",
-                                "Through parent",
-                                "Through partner",
-                                "Other insurance")) %>%
-  arrange(Variable)
+  `No insurance`, Medicaid, Medicare, `Private or employer-provided`, 
+  `Student insurance`, `Through parent`, `Through partner`, `Other insurance`, 
+  `Don't know/Not Sure`
+)
