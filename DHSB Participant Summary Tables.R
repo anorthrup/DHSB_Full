@@ -7,6 +7,7 @@ library(sjlabelled)
 library(rio)
 library(openxlsx)
 library(scales)
+library(kableExtra)
 
 #####Create data
 source("DHSB Data Processing.R")
@@ -244,6 +245,23 @@ tab1_employ <- tab1_ManyFactors(demo, Student, `Full-time employed`,
                                 "Full-time employed",
                                 "Part-time employed")) %>%
   arrange(Variable)
+#Build table
+kable(bind_rows(tab1_n, tab1_age, tab1_HIV, tab1_sex, tab1_gender,
+                tab1_orientation, tab1_relationship, tab1_education,
+                tab1_income, tab1_residence, tab1_jail, tab1_race,
+                tab1_employ)) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+  group_rows("Age Group, N (%)", 2, 4) %>%
+  group_rows("HIV Diagnosis, N (%)", 5, 7) %>%
+  group_rows("Sex at Birth, N (%)", 8, 9) %>%
+  group_rows("Gender, N (%)", 10, 13) %>%
+  group_rows("Sexual Orientation, N (%)", 14, 17) %>%
+  group_rows("Relationship Status, N (%)", 18, 21) %>%
+  group_rows("Education, N (%)", 22, 24) %>%
+  group_rows("Income, Median [IQR]", 25, 25) %>%
+  group_rows("Residence, Last 7 Days, N (%)", 26, 32) %>%
+  group_rows("Ethnicity and Race, N (%)", 33, 37) %>%
+  group_rows("Employment, N (%)", 38, 43)
 
 #####Table 2: participant health care summary
 #Insurance
