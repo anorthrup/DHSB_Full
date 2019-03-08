@@ -6,23 +6,24 @@ library(tidyverse)
 library(sjlabelled)
 library(rio)
 library(openxlsx)
+library(scales)
 
 #####Create data
 source("DHSB Data Processing.R")
 
 #####Print "Other" text for each demographic variable
-wb <- createWorkbook()
-for (i in c("GENDERS", "RACEFS", "ORIENTS", "LIVED6LS", "STAY7DS", 
-           "INSUREHS", "SSNDOS", "CNEED3ES", "DISCJS")) {
-  addWorksheet(wb, i)
-  writeData(wb, i, acasi %>%
-              select(SITE1, PID, i) %>%
-              filter(!!sym(i) != "[Skipped]"))
-}
+# wb <- createWorkbook()
+# for (i in c("GENDERS", "RACEFS", "ORIENTS", "LIVED6LS", "STAY7DS", 
+#            "INSUREHS", "SSNDOS", "CNEED3ES", "DISCJS")) {
+#   addWorksheet(wb, i)
+#   writeData(wb, i, acasi %>%
+#               select(SITE1, PID, i) %>%
+#               filter(!!sym(i) != "[Skipped]"))
+# }
 # saveWorkbook(wb, "ACASI Other Text.xlsx", overwrite = TRUE)
 
 #####Format variables and rename
-demo <- acasi %>%
+demo <- acasi2 %>%
   select(-EMPLOY, -RACE,
          -starts_with("DRUG"), -starts_with("MTU"), -starts_with("S56")) %>%
   rename(Site = SITE1, Age = AGE) %>%
@@ -58,10 +59,7 @@ demo <- acasi %>%
          `Residence, Last 7 Days` = STAY7D_RC,
          `Ever Jailed` = JAILL,
          Student  = EMPLOYA, `Full-time employed`  = EMPLOYB, `Part-time employed`      = EMPLOYC,
-         Disabled = EMPLOYD, `Unemployed, looking` = EMPLOYE, `Unemployed, not looking` = EMPLOYF,
-         Latino = LATINO,
-         `American Indian/Alaska Native`    = RACEA, Asian = RACEB, `Black/African American` = RACEC,
-         `Native Hawaiian/Pacific Islander` = RACED, White = RACEE, `Other race`             = RACEF,
+         Disabled = EMPLOYD, `Unemployed` = EMPLOYE_RC,
          `No insurance`                 = INSUREA, Medicaid            = INSUREB, Medicare         = INSUREC, 
          `Private or employer-provided` = INSURED, `Student insurance` = INSUREE, `Through parent` = INSUREF, 
          `Through partner`              = INSUREG, `Other insurance`   = INSUREH,
@@ -77,12 +75,14 @@ demo <- acasi %>%
 #####Table 1: participant characteristics summary
 #Number of participants
 tab1_n <- bind_rows(demo %>%
-                      summarize(`Number of Participants` = n()) %>%
+                      summarize(Frequency = n()) %>%
                       mutate(Site = "Overall"),
                     demo %>%
                       group_by(Site) %>%
-                      summarize(`Number of Participants` = n())) %>%
-  spread(Site, `Number of Participants`) %>%
+                      summarize(Frequency = n()) %>%
+                      mutate(Site = as.character(Site))) %>%
+  mutate(Frequency = as.character(Frequency)) %>%
+  spread(Site, Frequency) %>%
   mutate(Variable = "Number of Participants") %>%
   select(Variable, Overall, everything())
 #Age groups
@@ -91,29 +91,35 @@ tab1Multi <- function (x, varString) {
   bind_rows(x %>%
               select(varString) %>%
               table() %>%
-              as.data.frame() %>%
-              setNames(c(varName, "Freq")) %>%
-              mutate(Site = "Overall"),
+              as.data.frame(., stringsAsFactors = FALSE) %>%
+              setNames(c("Variable", "N")) %>%
+              mutate(Percent = percent(N / sum(N), accuracy = 0.1),
+                     Site = "Overall"),
             x %>%
               select(Site, !!sym(varString)) %>%
               table() %>%
-              as.data.frame()) %>%
-    spread(Site, Freq) %>%
-    rename(Variable = !!sym(varName)) %>%
+              as.data.frame(., stringsAsFactors = FALSE) %>%
+              setNames(c("Site", "Variable", "N")) %>%
+              group_by(Site) %>%
+              mutate(Percent = percent(N / sum(N), accuracy = 0.1))) %>%
+    unite("Frequency", N, Percent, sep = " (") %>%
+    mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)")) %>%
+    spread(Site, Frequency) %>%
     select(Variable, Overall, everything()) %>%
-    mutate(Variable = str_replace(Variable, "(.*)", "   \\1")) %>%
-    bind_rows(tibble(Variable = varString),
-              .)
+    mutate(Variable = str_replace(Variable, "(.*)", "   \\1"))
 }
 tab1_age <- tab1Multi(demo, varString = "Age Groups") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "Age Groups",
                                 "   Under 18 Years")) %>%
   arrange(Variable)
 #HIV Diagnosis
 tab1_HIV <- tab1Multi(demo, varString = "HIV Diagnosis") %>%
   mutate(Variable = fct_relevel(as.factor(Variable), 
-                                "HIV Diagnosis",
                                 "   Within past 12 months",
                                 "   More than 12 months ago")) %>%
+  arrange(Variable)
+#Sex at birth
+tab1_sex <- tab1Multi(demo, varString = "Sex at Birth") %>%
+  mutate(Variable = fct_relevel(as.factor(Variable), 
+                                "   Male")) %>%
   arrange(Variable)
