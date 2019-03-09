@@ -81,9 +81,15 @@ demo <- acasi2 %>%
 ```{r}
 #####Create summary tables
 #Functions
-tab1_OneFactor <- function (x, varString, addHeader = TRUE) {
+tab1_OneFactor <- function (x, varString, varRelevel = NULL) {
   varName <- str_replace(varString, " ", ".")
-  output <- bind_rows(
+  if (!is.null(varRelevel)) {
+    varRelevel <- c(paste0(varString, ", N (%)"), 
+                    paste0("   ", varRelevel))
+  } else {
+    varRelevel <- c(paste0(varString, ", N (%)"))
+  }
+  bind_rows(
     x %>%
       select(varString) %>%
       table() %>%
@@ -103,20 +109,23 @@ tab1_OneFactor <- function (x, varString, addHeader = TRUE) {
     mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)"),
            Variable = as.character(Variable)) %>%
     spread(Site, Frequency) %>%
-    select(Variable, Overall, levels(x$Site))
-  if(addHeader) {
-    output <- bind_rows(
-      tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
-              ~`New York`, ~Chicago, ~Cleveland, ~Hershey, ~Philadelphia,
-              ~`San Francisco`, ~`Winston-Salem`, ~`St. Louis`,
-              paste0(varString, ", N (%)"), 
-              NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-      output
-    )
-  }
+    select(Variable, Overall, levels(x$Site)) %>%
+    {
+      bind_rows(
+        tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
+                ~`New York`, ~Chicago, ~Cleveland, ~Hershey, ~Philadelphia,
+                ~`San Francisco`, ~`Winston-Salem`, ~`St. Louis`,
+                paste0(varString, ", N (%)"), 
+                NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+        mutate(., Variable = gsub("(.*)", "   \\1", Variable))
+      )
+    } %>%
+    mutate(Variable = fct_relevel(as.factor(Variable), varRelevel)) %>%
+    arrange(Variable) %>%
+    mutate(Variable = as.character(Variable))
 }
 
-tab1_ManyBinary <- function (x, ..., response = "Yes") {
+tab1_ManyBinary <- function (x, ..., header = NULL, response = "Yes") {
   selectVars <- quos(...)
   selectStrings <- gsub("~|`", "", as.character(selectVars))
   bind_rows(
@@ -158,7 +167,17 @@ tab1_ManyBinary <- function (x, ..., response = "Yes") {
     select(Variable, Overall, levels(x$Site)) %>%
     mutate(Variable = factor(Variable, levels = selectStrings)) %>%
     arrange(Variable) %>%
-    mutate(Variable = as.character(Variable))
+    mutate(Variable = as.character(Variable)) %>%
+    {
+      bind_rows(
+        tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
+                ~`New York`, ~Chicago, ~Cleveland, ~Hershey, ~Philadelphia,
+                ~`San Francisco`, ~`Winston-Salem`, ~`St. Louis`,
+                paste0(header, ", N (%)"), 
+                NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+        mutate(., Variable = gsub("(.*)", "   \\1", Variable))
+      )
+    }
 }
 ```
 
@@ -180,55 +199,34 @@ table1 <- bind_rows(
     mutate(Variable = "Number of Participants") %>%
     select(Variable, Overall, levels(demo$Site)),
   #Age groups
-  tab1_OneFactor(demo, varString = "Age Groups") %>%
-    mutate(Variable = fct_relevel(as.factor(Variable), 
-                                  "Age Groups, N (%)",
-                                  "Under 18 Years")) %>%
-    arrange(Variable),
+  tab1_OneFactor(demo, varString = "Age Groups", 
+                 varRelevel = c("Under 18 Years")),
   #HIV Diagnosis
-  tab1_OneFactor(demo, varString = "HIV Diagnosis") %>%
-    mutate(Variable = fct_relevel(as.factor(Variable), 
-                                  "Age Groups, N (%)",
-                                  "Within past 12 months",
-                                  "More than 12 months ago")) %>%
-    arrange(Variable),
+  tab1_OneFactor(demo, varString = "HIV Diagnosis",
+                 varRelevel = c("Within past 12 months",
+                                "More than 12 months ago")),
   #Sex at birth
-  tab1_OneFactor(demo, varString = "Sex at Birth") %>%
-    mutate(Variable = fct_relevel(as.factor(Variable), 
-                                  "Age Groups, N (%)",
-                                  "Male")) %>%
-    arrange(Variable),
+  tab1_OneFactor(demo, varString = "Sex at Birth",
+                 varRelevel = c("Male")),
   #Gender
-  tab1_OneFactor(demo, varString = "Gender") %>%
-    mutate(Variable = fct_relevel(as.factor(Variable), 
-                                  "Age Groups, N (%)",
-                                  "Male (cis man)",
-                                  "Female (cis woman)",
-                                  "Trans person")) %>%
-    arrange(Variable),
+  tab1_OneFactor(demo, varString = "Gender",
+                 varRelevel = c("Male (cis man)",
+                                "Female (cis woman)",
+                                "Trans person")),
   #Orientation
-  tab1_OneFactor(demo, varString = "Orientation") %>%
-    mutate(Variable = fct_relevel(as.factor(Variable), 
-                                  "Age Groups, N (%)",
-                                  "Straight",
-                                  "Lesbian or gay",
-                                  "Bisexual")) %>%
-    arrange(Variable),
+  tab1_OneFactor(demo, varString = "Sexual Orientation",
+                 varRelevel = c("Straight",
+                                "Lesbian or gay",
+                                "Bisexual")),
   #Relationship Status
-  tab1_OneFactor(demo, varString = "Relationship Status") %>%
-    mutate(Variable = fct_relevel(as.factor(Variable), 
-                                  "Age Groups, N (%)",
-                                  "Single",
-                                  "Dating",
-                                  "Partnered/Married")) %>%
-    arrange(Variable),
+  tab1_OneFactor(demo, varString = "Relationship Status", 
+                 varRelevel = c("Single",
+                                "Dating",
+                                "Partnered/Married")),
   #Education
-  tab1_OneFactor(demo, varString = "Education") %>%
-    mutate(Variable = fct_relevel(as.factor(Variable), 
-                                  "Age Groups, N (%)",
-                                  "High school, equivalent or less",
-                                  "Some post-K12")) %>%
-    arrange(Variable),
+  tab1_OneFactor(demo, varString = "Education", 
+                 varRelevel = c("High school, equivalent or less",
+                                "Some post-K12")),
   #Income
   bind_rows(
     demo %>%
@@ -253,32 +251,37 @@ table1 <- bind_rows(
       ) %>%
       mutate(Site = as.character(Site))) %>%
     spread(Site, Metric) %>%
-    mutate(Variable = "Income, Last Month") %>%
-    select(Variable, Overall, levels(demo$Site)),
+    mutate(Variable = "   Income") %>%
+    select(Variable, Overall, levels(demo$Site)) %>%
+    {
+      bind_rows(
+        tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
+              ~`New York`, ~Chicago, ~Cleveland, ~Hershey, ~Philadelphia,
+              ~`San Francisco`, ~`Winston-Salem`, ~`St. Louis`,
+              "Income, Last Month, N (%)", 
+              NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+        select(., everything())
+      )
+    },
   #Residence
-  tab1_OneFactor(demo, varString = "Residence, Last 7 Days") %>%
-    mutate(Variable = fct_relevel(as.factor(Variable), 
-                                  "Age Groups, N (%)",
-                                  "Rented house/apt/flat",
-                                  "Other's house/apt/flat",
-                                  "Hotel/Shelter/Rehab",
-                                  "Hospital/Medical facility")) %>%
-    arrange(Variable),
+  tab1_OneFactor(demo, varString = "Residence, Last 7 Days", 
+                 varRelevel = c("Rented house/apt/flat",
+                                "Other's house/apt/flat",
+                                "Hotel/Shelter/Rehab",
+                                "Hospital/Medical facility")),
   #Jailed
   tab1_OneFactor(demo, varString = "Ever Jailed") %>%
     filter(Variable %in% c("Yes", "Ever Jailed, N (%)")) %>%
     mutate(Variable = str_replace(Variable, "Yes", "Ever Jailed")),
   #Ethnicity/Race
-  tab1_OneFactor(demo, varString = "Race") %>%
-    mutate(Variable = fct_relevel(as.factor(Variable), 
-                                  "Age Groups, N (%)",
-                                  "Latino",
-                                  "Black, Not Latino",
-                                  "White, Not Latino",
-                                  "White Mixed-Race, Not Latino or Black")) %>%
-    arrange(Variable),
+  tab1_OneFactor(demo, varString = "Race", 
+                 varRelevel = c("Latino",
+                                "Black, Not Latino",
+                                "White, Not Latino",
+                                "White Mixed-Race, Not Latino or Black")),
   #Employment
-  tab1_ManyBinary(demo, Student, `Full-time employed`, 
+  tab1_ManyBinary(demo, header = "Employment",
+                  Student, `Full-time employed`, 
                   `Part-time employed`, Disabled, Unemployed)
 )
 
@@ -289,41 +292,47 @@ table2 <- bind_rows(
     demo %>%
       mutate(INSURE = replace(INSURE, which(INSURE == 97), "Yes")) %>%
       rename(`Don't know/Not Sure` = INSURE), 
+    header = "Insurance",
     `No insurance`, Medicaid, Medicare, `Private or employer-provided`, 
     `Student insurance`, `Through parent`, `Through partner`, `Other insurance`, 
     `Don't know/Not Sure`
   ),
   #Health care history, 6 months
-bind_rows(
-  tab1_ManyBinary(
-    demo,
-    `Doctor's visit, non-HIV, past 6 months`, 
-    `ER or urgent care, non-HIV, past 6 months`,
-    `Hospital stay, non-HIV, past 6 months`,
-    `Doctor's visit, HIV, past 6 months`,
-    `Doctor's visit, HIV, past 12 months`,
-    `Doctor's visit, HIV, lifetime`
-  ),
-  tab1_ManyBinary(
-    demo,
-    `Doctor's visit, non-HIV, past 6 months`, 
-    `ER or urgent care, non-HIV, past 6 months`,
-    `Hospital stay, non-HIV, past 6 months`,
-    `Doctor's visit, HIV, past 6 months`,
-    `Doctor's visit, HIV, past 12 months`,
-    `Doctor's visit, HIV, lifetime`,
-    response = "Refuse to answer"
-  )
-) %>%
-  arrange(Variable) %>%
-  group_by(Variable) %>%
-  mutate(Seq = 1:n()) %>%
-  ungroup() %>%
-  mutate(Variable = replace(as.character(Variable),
-                            which(Seq == 2), 
-                            "   Refuse to answer")) %>%
-  select(-Seq) %>%
-  filter(Overall != "0 (0.0%)")
+  bind_rows(
+    tab1_ManyBinary(
+      demo, header = "Recent Health Care",
+      `Doctor's visit, non-HIV, past 6 months`, 
+      `ER or urgent care, non-HIV, past 6 months`,
+      `Hospital stay, non-HIV, past 6 months`,
+      `Doctor's visit, HIV, past 6 months`,
+      `Doctor's visit, HIV, past 12 months`,
+      `Doctor's visit, HIV, lifetime`
+    ),
+    tab1_ManyBinary(
+      demo,
+      `Doctor's visit, non-HIV, past 6 months`, 
+      `ER or urgent care, non-HIV, past 6 months`,
+      `Hospital stay, non-HIV, past 6 months`,
+      `Doctor's visit, HIV, past 6 months`,
+      `Doctor's visit, HIV, past 12 months`,
+      `Doctor's visit, HIV, lifetime`,
+      response = "Refuse to answer"
+    ) %>%
+      filter(!is.na(Overall))
+  ) %>%
+    arrange(Variable) %>%
+    group_by(Variable) %>%
+    mutate(Seq = 1:n()) %>%
+    ungroup() %>%
+    mutate(Variable = replace(as.character(Variable),
+                              which(Seq == 2), 
+                              "      Refuse to answer")) %>%
+    select(-Seq) %>%
+    filter(!(!is.na(Overall) & Overall == "0 (0.0%)")) %>%
+    {
+      bind_rows(filter(., is.na(Overall)),
+                filter(., !is.na(Overall)))
+    }
 )
 
 ```
@@ -336,7 +345,8 @@ addWorksheet(wb, "Table 1")
 writeData(wb, sheet = "Table 1", table1)
 setColWidths(wb, sheet = "Table 1", cols = 1:ncol(table1), widths = "auto")
 saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
-kable(table1) %>%
+kable(table1 %>%
+        filter(!is.na(Overall))) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows("Age Group, N (%)", 2, 4) %>%
   group_rows("HIV Diagnosis, N (%)", 5, 7) %>%
@@ -357,7 +367,8 @@ addWorksheet(wb, "Table 2")
 writeData(wb, sheet = "Table 2", table2)
 setColWidths(wb, sheet = "Table 2", cols = 1:ncol(table2), widths = "auto")
 saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
-kable(table2) %>%
+kable(table2 %>%
+        filter(!is.na(Overall))) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows("Insurance, N (%)", 1, 9) %>%
   group_rows("Recent Health Care, N (%)", 10, 18) %>%
