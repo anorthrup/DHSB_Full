@@ -1,0 +1,27 @@
+---
+title: "DHSB Technology Tables"
+author: "Adam Northrup, Data Manager, ETAC"
+date: "March 11, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = FALSE, 
+                      warning = FALSE, message = FALSE)
+#####Read libraries
+library(tidyverse)
+library(sjlabelled)
+library(rio)
+library(openxlsx)
+library(kableExtra)
+
+#####Load data
+setwd("C:/Users/ANorthrup/Documents/ETAC_DHSB")
+load("acasi.RData")
+```
+
+```{r}
+tech <- acasi2 %>%
+  select(SITE1, SITE_RC, PID, starts_with("MTU"), starts_with("S56"))
+```
+
