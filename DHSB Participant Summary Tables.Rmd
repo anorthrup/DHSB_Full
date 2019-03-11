@@ -81,13 +81,13 @@ demo <- acasi2 %>%
 ```{r}
 #####Create summary tables
 #Functions
-tab1_OneFactor <- function (x, varString, varRelevel = NULL) {
+tab1_OneFactor <- function (x, varString, header = varString, varRelevel = NULL) {
   varName <- str_replace(varString, " ", ".")
   if (!is.null(varRelevel)) {
-    varRelevel <- c(paste0(varString, ", N (%)"), 
+    varRelevel <- c(paste0(header, ", N (%)"), 
                     paste0("   ", varRelevel))
   } else {
-    varRelevel <- c(paste0(varString, ", N (%)"))
+    varRelevel <- c(paste0(header, ", N (%)"))
   }
   bind_rows(
     x %>%
@@ -115,7 +115,7 @@ tab1_OneFactor <- function (x, varString, varRelevel = NULL) {
         tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
                 ~`New York`, ~Chicago, ~Cleveland, ~Hershey, ~Philadelphia,
                 ~`San Francisco`, ~`Winston-Salem`, ~`St. Louis`,
-                paste0(varString, ", N (%)"), 
+                paste0(header, ", N (%)"), 
                 NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
         mutate(., Variable = gsub("(.*)", "   \\1", Variable))
       )
@@ -270,9 +270,9 @@ table1 <- bind_rows(
                                 "Hotel/Shelter/Rehab",
                                 "Hospital/Medical facility")),
   #Jailed
-  tab1_OneFactor(demo, varString = "Ever Jailed") %>%
-    filter(Variable %in% c("   Yes", "Ever Jailed, N (%)")) %>%
-    mutate(Variable = str_replace(Variable, "   Yes", "Ever Jailed")),
+  tab1_OneFactor(demo, varString = "Ever Jailed", header = "Incarceration") %>%
+    filter(Variable %in% c("   Yes", "Incarceration, N (%)")) %>%
+    mutate(Variable = str_replace(Variable, "   Yes", "   Ever Jailed")),
   #Ethnicity/Race
   tab1_OneFactor(demo, varString = "Ethnicity and Race", 
                  varRelevel = c("Latino",
