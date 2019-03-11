@@ -63,7 +63,7 @@ demo <- acasi2 %>%
          `Income, Last Month` = MONEY,
          `Residence, Last 7 Days` = STAY7D_RC,
          `Ever Jailed` = JAILL,
-         Race = RACE_RC,
+         `Ethnicity and Race` = RACE_RC,
          Student = EMPLOYA, `Full-time employed` = EMPLOYB, `Part-time employed` = EMPLOYC,
          Disabled = EMPLOYD, `Unemployed` = EMPLOYE_RC,
          `No insurance`                 = INSUREA, Medicaid            = INSUREB, Medicare         = INSUREC, 
@@ -271,10 +271,10 @@ table1 <- bind_rows(
                                 "Hospital/Medical facility")),
   #Jailed
   tab1_OneFactor(demo, varString = "Ever Jailed") %>%
-    filter(Variable %in% c("Yes", "Ever Jailed, N (%)")) %>%
-    mutate(Variable = str_replace(Variable, "Yes", "Ever Jailed")),
+    filter(Variable %in% c("   Yes", "Ever Jailed, N (%)")) %>%
+    mutate(Variable = str_replace(Variable, "   Yes", "Ever Jailed")),
   #Ethnicity/Race
-  tab1_OneFactor(demo, varString = "Race", 
+  tab1_OneFactor(demo, varString = "Ethnicity and Race", 
                  varRelevel = c("Latino",
                                 "Black, Not Latino",
                                 "White, Not Latino",
@@ -320,21 +320,17 @@ table2 <- bind_rows(
     ) %>%
       filter(!is.na(Overall))
   ) %>%
-    arrange(Variable) %>%
     group_by(Variable) %>%
     mutate(Seq = 1:n()) %>%
     ungroup() %>%
+    mutate(Variable = factor(Variable, levels = unique(Variable))) %>%
+    arrange(Variable) %>%
     mutate(Variable = replace(as.character(Variable),
                               which(Seq == 2), 
                               "      Refuse to answer")) %>%
     select(-Seq) %>%
-    filter(!(!is.na(Overall) & Overall == "0 (0.0%)")) %>%
-    {
-      bind_rows(filter(., is.na(Overall)),
-                filter(., !is.na(Overall)))
-    }
+    filter(!(!is.na(Overall) & Overall == "0 (0.0%)"))
 )
-
 ```
 Note that responses from participants with no baseline survey were replaced with 6 month survey. "Past 6 months" refers to 6 months prior to 6 month survey. If no data was available for a given question (participant had no baseline survey, and question wasn't asked in 6 month survey), the participant was not included in the denominator.  
 
@@ -344,7 +340,6 @@ wb <- createWorkbook()
 addWorksheet(wb, "Table 1")
 writeData(wb, sheet = "Table 1", table1)
 setColWidths(wb, sheet = "Table 1", cols = 1:ncol(table1), widths = "auto")
-saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 kable(table1 %>%
         filter(!is.na(Overall))) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
@@ -357,8 +352,9 @@ kable(table1 %>%
   group_rows("Education, N (%)", 22, 24) %>%
   group_rows("Income, Median [IQR]", 25, 25) %>%
   group_rows("Residence, Last 7 Days, N (%)", 26, 32) %>%
-  group_rows("Ethnicity and Race, N (%)", 33, 37) %>%
-  group_rows("Employment, N (%)", 38, 43)
+  group_rows("Incarceration, N (%)", 33, 33) %>%
+  group_rows("Ethnicity and Race, N (%)", 34, 38) %>%
+  group_rows("Employment, N (%)", 39, 43)
 ```
 
 ### Table 2
