@@ -26,24 +26,33 @@ tech <- acasi2 %>%
 ```
 
 ```{r}
-x <- tech %>%
-  select(SITE1, matches("S56_1[[:alpha:]]+"), -S56_1S)
-devices <- tibble(Text = c("Cell phone", "Tablet", "Other mobile device", 
-                           "Laptop", "Desktop computer", "Other", 
-                           "Not applicable"),
-                  Variable = names(x))
-freqCols <- x %>% 
-  select(-SITE1) %>%
+tableTech <- function (x, varStrings, n) { 
+  ##varStings must be in same order as columns
+  ##n = number of names to keep, rest will be lumped into 'Other'
+  
+  #Save variable names
+  variables <- x %>%
+    select(-SITE_RC) %>%
+    names()
+  #List responses in descending ranked order
+  freqCols <- x %>% 
+  select(-SITE_RC) %>%
   map_int(sum) %>%
   sort(., decreasing = TRUE) %>%
   names()
-x <- x %>%
-  mutate(Other = rowSums(select(., freqCols[4:length(freqCols)]))) %>%
-  mutate(Other = if_else(Other > 0, 1L, 0L))
-tableTech <- function (y) {
+  #Combine lower ranked responses if there are more than (n + 1)
+  if (length(freqCols) > (n + 1)){
+    x <- x %>%
+      mutate(Other = rowSums(select(., freqCols[(n + 1):length(freqCols)]))) %>%
+      mutate(Other = if_else(Other > 0, 1L, 0L)) %>%
+      select(SITE_RC, freqCols[1:n], Other)
+    freqCols <- c(freqCols[1:n], "Other")
+  }
+  #Summarize responses overall and by site
   full_join(
+    #Summarize overall
     x %>% 
-      select(-SITE1) %>%
+      select(-SITE_RC) %>%
     {
       bind_cols(map_int(., sum) %>% 
                   as.data.frame() %>%
@@ -53,12 +62,13 @@ tableTech <- function (y) {
     } %>%
       setNames(c("Variable", "Sum", "Mean")) %>%
       mutate(Mean = scales::percent(Mean, accuracy = 0.1)) %>%
-      unite("Value", Sum, Mean, sep = " (") %>%
-      mutate(Value = gsub("(.*)", "\\1)", Value)),
+      unite("Overall", Sum, Mean, sep = " (") %>%
+      mutate(Overall = gsub("(.*)", "\\1)", Overall)),
+    #Summarize by site
     x %>%
-      group_by(SITE1) %>%
+      group_by(SITE_RC) %>%
       summarize_all(funs(sum, mean)) %>%
-      gather("Key", "Value", -SITE1) %>%
+      gather("Key", "Value", -SITE_RC) %>%
       {
         full_join(filter(., str_detect(Key, "_sum")) %>%
                     rename(Sum = Value) %>%
@@ -66,34 +76,25 @@ tableTech <- function (y) {
                   filter(., str_detect(Key, "_mean")) %>%
                     rename(Mean = Value) %>%
                     mutate(Key = gsub("_mean", "", Key)),
-                  by = c("SITE1", "Key"))
+                  by = c("SITE_RC", "Key"))
       } %>%
       rename(Variable = Key) %>%
       mutate(Mean = scales::percent(Mean, accuracy = 0.1)) %>%
       unite("Value", Sum, Mean, sep = " (") %>%
       mutate(Value = gsub("(.*)", "\\1)", Value)) %>%
-      spread(SITE1, Value),
+      spread(SITE_RC, Value),
     by = "Variable"
-  )
+  ) %>%
+    #Overwrite variable names with readable names
+    mutate(Variable = c(
+      varStrings[map_int(Variable[1:n], ~which(variables %in% .))],
+      "Other"))
 }
-x %>%
-  group_by(SITE1) %>%
-  tableTech()
-x %>% 
-  select(freqCols[1:3], Other) %>% 
-  {
-    bind_cols(map_int(., sum) %>% 
-                as.data.frame() %>%
-                rownames_to_column("Variable"),
-              map_dbl(., mean) %>%
-                as.data.frame())
-  } %>%
-  setNames(c("Variable", "Count", "Percent")) %>%
-  mutate(Percent = scales::percent(Percent, accuracy = 0.1)) %>%
-  unite("Value", Count, Percent, sep = " (") %>%
-  mutate(Value = paste0(Value, ")")) %>%
-  mutate(Variable = c(devices$Text[
-           map_int(Variable[1:3], ~which(devices$Variable %in% .))
-           ],
-           "Other"))
+
+tableTech(tech %>%
+            select(SITE_RC, matches("S56_1[[:alpha:]]+"), -S56_1S),
+          varStrings = c("Cell phone", "Tablet", "Other mobile device", 
+                           "Laptop", "Desktop computer", "Other", 
+                           "Not applicable"),
+          n = 3)
 ```
