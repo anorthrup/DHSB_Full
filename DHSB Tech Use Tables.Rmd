@@ -20,13 +20,13 @@ setwd("C:/Users/ANorthrup/Documents/ETAC_DHSB")
 load("acasi.RData")
 ```
 
-```{r}
+```{r processData}
 tech <- acasi2 %>%
   select(SITE1, SITE_RC, PID, starts_with("MTU"), starts_with("S56"))
 ```
 
-```{r}
-tableTech <- function (x, varStrings, n) { 
+```{r techSummaryFunction}
+tableTech <- function (x, n, header, varStrings) { 
   ##varStings must be in same order as columns
   ##n = number of names to keep, rest will be lumped into 'Other'
   
@@ -88,13 +88,29 @@ tableTech <- function (x, varStrings, n) {
     #Overwrite variable names with readable names
     mutate(Variable = c(
       varStrings[map_int(Variable[1:n], ~which(variables %in% .))],
-      "Other"))
+      "Other")) %>%
+    #Add header row
+      {
+        bind_rows(
+          tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
+                ~`New York`, ~Chicago, ~Cleveland, ~Hershey, ~Philadelphia,
+                ~`San Francisco`, ~`Winston-Salem`, ~`St. Louis`,
+                paste0(header, ", N (%)"), 
+                NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+          select(., everything())
+        )
+      }
 }
-
-tableTech(tech %>%
-            select(SITE_RC, matches("S56_1[[:alpha:]]+"), -S56_1S),
-          varStrings = c("Cell phone", "Tablet", "Other mobile device", 
-                           "Laptop", "Desktop computer", "Other", 
-                           "Not applicable"),
-          n = 3)
 ```
+
+```{r techSummary}
+table3 <- bind_rows(
+  tableTech(tech %>%
+              select(SITE_RC, matches("S56_1[[:alpha:]]+"), -S56_1S),
+            n = 3, header = "Device Use",
+            varStrings = c("Cell phone", "Tablet", "Other mobile device", 
+                           "Laptop", "Desktop computer", "Other", 
+                           "Not applicable"))
+)
+```
+
