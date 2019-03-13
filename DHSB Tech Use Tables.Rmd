@@ -22,7 +22,26 @@ load("acasi.RData")
 
 ```{r processData}
 tech <- acasi2 %>%
-  select(SITE1, SITE_RC, PID, starts_with("MTU"), starts_with("S56"))
+  select(SITE1, SITE_RC, PID, starts_with("MTU"), starts_with("S56")) %>%
+  mutate(S56_3 = fct_recode(as.factor(S56_3),
+                            "Have cell phone, minutes, and data"    = "1",
+                            "Have cell phone, minutes, and no data" = "2",
+                            "Have cell phone, data, and no minutes" = "3",
+                            "I share a phone"                       = "4",
+                            "Don't have own cell, can borrow one"   = "5",
+                            "Don't have own cell, can't borrow one" = "6",
+                            "Refuse to answer"                      = "8")) %>%
+  mutate_at(vars(one_of("S56_4", "S56_7", "S56_13", "S56_16", "S56_21")), 
+            funs(as.factor)) %>%
+  mutate_at(vars(one_of("S56_4", "S56_7", "S56_13", "S56_16", "S56_21")), 
+            funs(fct_recode),
+            "Several times a day"       = "1",
+            "Once a day"                = "2",
+            "Once every couple of days" = "3",
+            "About once a week"         = "4",
+            "Less than once a week"     = "5",
+            "Never"                     = "6",
+            "Refuse to answer"          = "8")
 ```
 
 ```{r techSummaryFunction}
@@ -124,6 +143,59 @@ table_ManyBinary_Lump <- function (x, n, header, variables) {
       } %>%
     add_row(Variable = paste0(header, ", N (%)"), .before = 1)
 }
+
+table_OneFactor_Lump <- function (x, n, varString, header = varString) {
+  varName <- str_replace(varString, " ", ".")
+  x %>%
+    select(SITE_RC, varString) %>%
+    mutate_at(vars(one_of(varString)), funs(fct_lump(., n = n))) %>%
+    {
+      bind_rows(
+        select(., varString) %>%
+          table() %>%
+          as.data.frame(., stringsAsFactors = FALSE) %>%
+          setNames(c("Variable", "N")) %>%
+          mutate(Percent = percent(N / sum(N), accuracy = 0.1),
+                 Site = "Overall"),
+        select(., SITE_RC, !!sym(varString)) %>%
+          table() %>%
+          as.data.frame(., stringsAsFactors = FALSE) %>%
+          setNames(c("Site", "Variable", "N")) %>%
+          group_by(Site) %>%
+          mutate(Percent = percent(N / sum(N), accuracy = 0.1))
+      )
+    } %>%
+    unite("Frequency", N, Percent, sep = " (") %>%
+    mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)"),
+           Variable = as.character(Variable)) %>%
+    spread(Site, Frequency) %>%
+    {
+      bind_rows(
+        x %>%
+        {
+          bind_cols(
+            summarize(., Overall = paste0(n(), " (100.0%)")),
+            group_by(., SITE_RC) %>%
+              summarize(N = paste0(n(), " (100.0%)")) %>%
+              spread(SITE_RC, N)
+          )
+        } %>%
+          mutate(Variable = "   Total") %>%
+          select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
+                 Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
+                 `Winston-Salem`, `St. Louis`),
+        mutate(., Variable = gsub("(.*)", "   \\1", Variable))
+      )
+    } %>%
+    separate(Overall, c("Overall_N", "Overall_P"), sep = " ", 
+             remove = FALSE) %>%
+    mutate(Variable = fct_reorder(as.factor(Variable), 
+                                  as.integer(Overall_N), .desc = TRUE)) %>%
+    arrange(Variable) %>%
+    mutate(Variable = as.character(Variable)) %>%
+    select(-Overall_N, -Overall_P) %>%
+    add_case(Variable = paste0(header, ", N (%)"), .before = 1)
+}
 ```
 
 ```{r techSummary}
@@ -147,5 +219,8 @@ table3 <- bind_rows(
                                       "S56_2H" = "Work", 
                                       "S56_2I" = "Other"))
 )
+table_OneFactor_Lump(tech, n = 3, varString = "S56_3",
+                     header = "Cell Phone Access") %>%
+  View(.)
 ```
 
