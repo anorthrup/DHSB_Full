@@ -26,20 +26,31 @@ tech <- acasi2 %>%
 ```
 
 ```{r techSummaryFunction}
-tableTech <- function (x, n, header, varStrings) { 
-  ##varStings must be in same order as columns
+tableTech <- function (x, n, header, varNames, varStrings) { 
+  ##varStings must be in same order as varNames
   ##n = number of names to keep, rest will be lumped into 'Other'
   
-  #Save variable names
-  variables <- x %>%
-    select(-SITE_RC) %>%
-    names()
+  #Document non-binary values
+  y <- x %>% 
+    select(varNames) %>%
+    map(~unique(.[!. %in% c(0, 1)])) %>%
+    unlist()
+  if (any(y > 0)) {
+    print("Rows with the following values in the listed columns were removed:")
+    print(y)
+  }
+  
+  x <- x %>%
+    #Narrow x to only necessary columns
+    select(SITE_RC, varNames) %>%
+    #Remove rows with non-binary values (refused to answer, skipped)
+    filter_if(is.numeric, all_vars(. %in% c(0, 1)))
   #List responses in descending ranked order
   freqCols <- x %>% 
-  select(-SITE_RC) %>%
-  map_int(sum) %>%
-  sort(., decreasing = TRUE) %>%
-  names()
+    select(-SITE_RC) %>%
+    map_int(sum) %>%
+    sort(., decreasing = TRUE) %>%
+    names()
   #Combine lower ranked responses if there are more than (n + 1)
   if (length(freqCols) > (n + 1)){
     x <- x %>%
@@ -87,7 +98,7 @@ tableTech <- function (x, n, header, varStrings) {
   ) %>%
     #Overwrite variable names with readable names
     mutate(Variable = c(
-      varStrings[map_int(Variable[1:n], ~which(variables %in% .))],
+      varStrings[map_int(Variable[1:n], ~which(varNames %in% .))],
       "Other")) %>%
     #Add header row
       {
@@ -105,12 +116,19 @@ tableTech <- function (x, n, header, varStrings) {
 
 ```{r techSummary}
 table3 <- bind_rows(
-  tableTech(tech %>%
-              select(SITE_RC, matches("S56_1[[:alpha:]]+"), -S56_1S),
-            n = 3, header = "Device Use",
+  tableTech(tech, n = 3, header = "Device Use",
+            varNames = c("S56_1A", "S56_1B", "S56_1C", "S56_1D", "S56_1E", 
+                         "S56_1F", "S56_1G"),
             varStrings = c("Cell phone", "Tablet", "Other mobile device", 
                            "Laptop", "Desktop computer", "Other", 
-                           "Not applicable"))
+                           "Not applicable")),
+  tableTech(tech, n = 3, header = "Device Use Locations",
+            varNames = c("S56_2A", "S56_2B", "S56_2C", "S56_2D", "S56_2E", 
+                         "S56_2F", "S56_2G", "S56_2H", "S56_2I"),
+            varStrings = c("Home", "Where I'm staying", 
+                           "Other's house/apartment", "Public place with WiFi",
+                           "Internet cafe", "Library", "School", "Work", 
+                           "Other"))
 )
 ```
 
