@@ -146,18 +146,28 @@ table_ManyBinary_Lump <- function (x, n, header, variables) {
 
 table_OneFactor_Lump <- function (x, n, varString, header = varString) {
   varName <- str_replace(varString, " ", ".")
+  #Print 'Refuse to answer' values
+  y <- x %>% 
+    select(varString) %>%
+    map(~which(. == "Refuse to answer")) %>%
+    unlist()
+  if (any(y > 0)) {
+    print("The following rows contain response 'Refuse to answer':")
+    print(y)
+  }
+  
   x %>%
     select(SITE_RC, varString) %>%
     mutate_at(vars(one_of(varString)), funs(fct_lump(., n = n))) %>%
-    {
+    { #Create two data frames and bind them together: summary of overall, summary by site
       bind_rows(
-        select(., varString) %>%
+        select(., varString) %>% #Overall summary
           table() %>%
           as.data.frame(., stringsAsFactors = FALSE) %>%
           setNames(c("Variable", "N")) %>%
           mutate(Percent = percent(N / sum(N), accuracy = 0.1),
                  Site = "Overall"),
-        select(., SITE_RC, !!sym(varString)) %>%
+        select(., SITE_RC, varString) %>% #Summary by site
           table() %>%
           as.data.frame(., stringsAsFactors = FALSE) %>%
           setNames(c("Site", "Variable", "N")) %>%
@@ -170,29 +180,31 @@ table_OneFactor_Lump <- function (x, n, varString, header = varString) {
            Variable = as.character(Variable)) %>%
     spread(Site, Frequency) %>%
     {
-      bind_rows(
+      bind_rows( #Create totals row and bind to previous summary table
         x %>%
         {
-          bind_cols(
+          bind_cols( #Must summarize overall totals and totals by site separately
             summarize(., Overall = paste0(n(), " (100.0%)")),
             group_by(., SITE_RC) %>%
               summarize(N = paste0(n(), " (100.0%)")) %>%
               spread(SITE_RC, N)
           )
         } %>%
-          mutate(Variable = "   Total") %>%
+          mutate(Variable = "Total") %>%
           select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
                  Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
                  `Winston-Salem`, `St. Louis`),
-        mutate(., Variable = gsub("(.*)", "   \\1", Variable))
+        select(., everything()) #Previous summary table
       )
     } %>%
     separate(Overall, c("Overall_N", "Overall_P"), sep = " ", 
              remove = FALSE) %>%
     mutate(Variable = fct_reorder(as.factor(Variable), 
-                                  as.integer(Overall_N), .desc = TRUE)) %>%
+                                  as.integer(Overall_N), .desc = TRUE),
+           Variable = fct_relevel(Variable, "Other", 
+                                  after = length(levels(Variable)) - 1)) %>%
     arrange(Variable) %>%
-    mutate(Variable = as.character(Variable)) %>%
+    mutate(Variable = str_replace(as.character(Variable), "(.*)", "   \\1")) %>%
     select(-Overall_N, -Overall_P) %>%
     add_case(Variable = paste0(header, ", N (%)"), .before = 1)
 }
@@ -217,10 +229,9 @@ table3 <- bind_rows(
                                       "S56_2F" = "Public library", 
                                       "S56_2G" = "School", 
                                       "S56_2H" = "Work", 
-                                      "S56_2I" = "Other"))
+                                      "S56_2I" = "Other")),
+  table_OneFactor_Lump(tech, n = 3, varString = "S56_3",
+                     header = "Cell Phone Access")
 )
-table_OneFactor_Lump(tech, n = 3, varString = "S56_3",
-                     header = "Cell Phone Access") %>%
-  View(.)
 ```
 
