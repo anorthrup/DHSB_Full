@@ -263,8 +263,51 @@ table3 <- bind_rows(
                                       "S56_2H" = "Work", 
                                       "S56_2I" = "Other")),
   table_OneFactor_Lump(tech, n = 3, varString = "S56_3",
-                     header = "Cell Phone Access", 
-                     keep = "Don't have own cell, can't borrow one")
+                       header = "Cell Phone Access", 
+                       keep = "Don't have own cell, can't borrow one"),
+  table_OneFactor_Lump(tech, n = 3, varString = "S56_4",
+                       header = "Frequency of Sending/Receiving Texts",
+                       keep = "Never") %>%
+    add_row(Variable = "Text Messaging", .before = 1),
+  table_ManyBinary_Lump(tech, n = 3, header = "Who You Text",
+                        variables = c(
+                          "S56_5A" = "Parents",
+                          "S56_5B" = "Siblings, cousins, other family",
+                          "S56_5C" = "Spouse/Boyfriend/Girlfriend",
+                          "S56_5D" = "Casual sex partner, hook up, etc.",
+                          "S56_5E" = "LGBTQ friends, community",
+                          "S56_5F" = "Non-LGBTQ friends",
+                          "S56_5G" = "People from home",
+                          "S56_5H" = "People from online",
+                          "S56_5I" = "Medical/Social service providers/staff",
+                          "S56_5J" = "Co-workers",
+                          "S56_5K" = "Teachers or school staff",
+                          "S56_5L" = "Classmates/Friends from school",
+                          "S56_5M" = "Banks/Billing/Utility companies",
+                          "S56_5N" = "Client or dates for sex exchange",
+                          "S56_5O" = "Other"
+                        )),
+  table_ManyBinary_Lump(tech, n = 3, header = "What You Text About",
+                        variables = c(
+                          "S56_6A" = "Music, movies, TV",
+                          "S56_6B" = "Work",
+                          "S56_6C" = "School",
+                          "S56_6D" = "Drinking, drugs, partying",
+                          "S56_6E" = "Happy/Fun things w/ friends/family",
+                          "S56_6F" = "Problems/Drama w/ friends/family",
+                          "S56_6G" = "Social services",
+                          "S56_6H" = "Love/Relationships",
+                          "S56_6I" = "Sex",
+                          "S56_6J" = "Sex work",
+                          "S56_6K" = "Safe sex",
+                          "S56_6L" = "Sexual identity/attraction",
+                          "S56_6M" = "HIV status/care",
+                          "S56_6N" = "Videos on LGBTQ topics",
+                          "S56_6O" = "Videos on non-LGBTQ topics",
+                          "S56_6P" = "Hormone therapy",
+                          "S56_6Q" = "Other gender identity topics",
+                          "S56_6R" = "Other"
+                        ))
 )
 ```
 
