@@ -122,12 +122,7 @@ tableTech <- function (x, n, header, variables) {
           select(., everything())
         )
       } %>%
-    add_row(Variable = paste0(header, ", N (%)"),
-            Overall = NA, `Corpus Christi` = NA, `Los Angeles` = NA, 
-            `New York` = NA, Chicago = NA, Cleveland = NA, Hershey = NA, 
-            Philadelphia = NA, `San Francisco` = NA, `Winston-Salem` = NA, 
-            `St. Louis` = NA,
-            .before = 1)
+    add_row(Variable = paste0(header, ", N (%)"), .before = 1)
 }
 ```
 
