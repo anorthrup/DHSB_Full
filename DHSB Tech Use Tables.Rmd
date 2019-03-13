@@ -149,7 +149,8 @@ table_ManyBinary_Lump <- function (x, n, header, variables, keep = NULL) {
     add_row(Variable = paste0(header, ", N (%)"), .before = 1)
 }
 
-table_OneFactor_Lump <- function (x, n, varString, header = varString) {
+table_OneFactor_Lump <- function (x, n, varString, header = varString, 
+                                  keep = NULL) {
   varName <- str_replace(varString, " ", ".")
   #Print 'Refuse to answer' values
   y <- x %>% 
@@ -160,10 +161,23 @@ table_OneFactor_Lump <- function (x, n, varString, header = varString) {
     print("The following rows contain response 'Refuse to answer':")
     print(y)
   }
-  
+  freqLevels <- x %>%
+    select(varString) %>%
+    table() %>%
+    names()
+  if (!is.null(keep)) {
+    freqLevels <- freqLevels[which(freqLevels != keep)]
+  }
+  if(length(freqLevels) > (n + 1)){
+    levRecode <- freqLevels[(n + 1):length(freqLevels)]
+    names(levRecode) <- rep("Other", length(levRecode))
+  } else {
+    levRecode <- NULL
+  }
   x %>%
     select(SITE_RC, varString) %>%
-    mutate_at(vars(one_of(varString)), funs(fct_lump(., n = n))) %>%
+    mutate_at(vars(one_of(varString)), funs(fct_recode(., !!!levRecode))) %>%
+    mutate_at(vars(one_of(varString)), funs(fct_relevel(., keep, after = length(freqLevels)))) %>%
     { #Create two data frames and bind them together: summary of overall, summary by site
       bind_rows(
         select(., varString) %>% #Overall summary
@@ -236,7 +250,8 @@ table3 <- bind_rows(
                                       "S56_2H" = "Work", 
                                       "S56_2I" = "Other")),
   table_OneFactor_Lump(tech, n = 3, varString = "S56_3",
-                     header = "Cell Phone Access")
+                     header = "Cell Phone Access", 
+                     keep = "Don't have own cell, can't borrow one")
 )
 ```
 
