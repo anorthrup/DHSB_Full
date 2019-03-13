@@ -45,7 +45,7 @@ tech <- acasi2 %>%
 ```
 
 ```{r techSummaryFunction}
-table_ManyBinary_Lump <- function (x, n, header, variables) {
+table_ManyBinary_Lump <- function (x, n, header, variables, keep = NULL) {
   ##variables = named vector with names as column names, values as strings
   ##n = number of names to keep, rest will be lumped into 'Other'
   varNames <- names(variables)
@@ -67,17 +67,23 @@ table_ManyBinary_Lump <- function (x, n, header, variables) {
     filter_if(is.numeric, all_vars(. %in% c(0, 1)))
   #List responses in descending ranked order
   freqCols <- x %>% 
-    select(-SITE_RC) %>%
-    map_int(sum) %>%
-    sort(., decreasing = TRUE) %>%
-    names()
+      select(-SITE_RC) %>%
+      map_int(sum) %>%
+      sort(., decreasing = TRUE) %>%
+      names()
+  if (!is.null(keep)) freqCols <- freqCols[which(freqCols != keep)]
   #Combine lower ranked responses if there are more than (n + 1)
   if (length(freqCols) > (n + 1)){
     x <- x %>%
       mutate(Other = rowSums(select(., freqCols[(n + 1):length(freqCols)]))) %>%
-      mutate(Other = if_else(Other > 0, 1L, 0L)) %>%
-      select(SITE_RC, freqCols[1:n], Other)
-    freqCols <- c(freqCols[1:n], "Other")
+      mutate(Other = if_else(Other > 0, 1L, 0L))
+    if (!is.null(keep)) {
+      freqCols <- c(freqCols[1:n], "Other", keep)
+    } else {
+      freqCols <- c(freqCols[1:n], "Other")
+    }
+    x <- x %>%
+      select(SITE_RC, freqCols)
   }
   #Summarize responses overall and by site
   full_join( #Create two data frames and join them together: summary of overall, summary by site
@@ -119,14 +125,15 @@ table_ManyBinary_Lump <- function (x, n, header, variables) {
     #Overwrite variable names with readable names
     mutate(Variable = c(
       variables[map_int(Variable[1:n], ~which(varNames %in% .))],
-      "Other")) %>%
+      "Other", 
+      variables[which(names(variables) == keep)])) %>%
     #Add totals row
       {
         bind_rows( #Bind total participants row to previous table
           { #Calculate total participants
             bind_cols( #Calculate totals for overall and by site separately
-              summarize(., Overall = paste0(n(), " (100.0%)")), #Overall
-              group_by(., SITE_RC) %>% #By site
+              summarize(x, Overall = paste0(n(), " (100.0%)")), #Overall
+              group_by(x, SITE_RC) %>% #By site
                 summarize(N = paste0(n(), " (100.0%)")) %>%
                 spread(SITE_RC, N)
             )
@@ -210,7 +217,7 @@ table_OneFactor_Lump <- function (x, n, varString, header = varString) {
 
 ```{r techSummary}
 table3 <- bind_rows(
-  table_ManyBinary_Lump(tech, n = 3, header = "Device Use",
+  table_ManyBinary_Lump(tech, n = 3, header = "Device Use", keep = "S56_1G",
                         variables = c("S56_1A" = "Cell Phone", 
                                       "S56_1B" = "Tablet", 
                                       "S56_1C" = "Other mobile device",
