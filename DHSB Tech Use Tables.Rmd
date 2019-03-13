@@ -58,6 +58,24 @@ table_ManyBinary_Lump <- function (x, n, header, variables, keep = NULL) {
   if (any(y > 0)) {
     print("Rows with the following values in the listed columns were removed:")
     print(y)
+    #Count number of skipped/refused
+    nonbinary <- x %>%
+      select(SITE_RC, varNames) %>%
+      mutate_at(
+        vars(one_of(varNames)), 
+        funs(replace(., which(!. %in% c(0, 1)), NA))) %>%
+      mutate(NumNA = if_else(rowSums(is.na(.)) > 0, 1, 0)) %>%
+        {
+          bind_cols(
+            summarize(., Overall = as.character(sum(NumNA))),
+            group_by(., SITE_RC) %>%
+              summarize(N = as.character(sum(NumNA))) %>%
+              spread(SITE_RC, N)
+          )
+        } %>%
+      mutate(Variable = "Skipped/Refused/Missing")
+  } else {
+    nonbinary <- NULL
   }
   
   x <- x %>%
@@ -127,24 +145,16 @@ table_ManyBinary_Lump <- function (x, n, header, variables, keep = NULL) {
       variables[map_int(Variable[1:n], ~which(varNames %in% .))],
       "Other", 
       variables[which(names(variables) == keep)])) %>%
-    #Add totals row
+    #Row containing number of skipped/refused/missing
       {
-        bind_rows( #Bind total participants row to previous table
-          { #Calculate total participants
-            bind_cols( #Calculate totals for overall and by site separately
-              summarize(x, Overall = paste0(n(), " (100.0%)")), #Overall
-              group_by(x, SITE_RC) %>% #By site
-                summarize(N = paste0(n(), " (100.0%)")) %>%
-                spread(SITE_RC, N)
-            )
-          } %>%
-            mutate(Variable = "Total") %>%
-            select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
-                   Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
-                   `Winston-Salem`, `St. Louis`),
+        bind_rows(
+          nonbinary,
           select(., everything()) #Previous table
         )
       } %>%
+    select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
+           Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
+           `Winston-Salem`, `St. Louis`) %>%
     mutate(Variable = str_replace(Variable, "(.*)", "   \\1")) %>%
     add_row(Variable = paste0(header, ", N (%)"), .before = 1)
 }
