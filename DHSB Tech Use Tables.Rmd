@@ -46,6 +46,20 @@ tableTech <- function (x, n, header, variables) {
     select(SITE_RC, varNames) %>%
     #Remove rows with non-binary values (refused to answer, skipped)
     filter_if(is.numeric, all_vars(. %in% c(0, 1)))
+  #Column totals
+  siteN <- x %>%
+    {
+      bind_cols(
+        summarize(., Overall = paste0(n(), " (100.0%)")),
+        group_by(., SITE_RC) %>%
+          summarize(N = paste0(n(), " (100.0%)")) %>%
+          spread(SITE_RC, N)
+      )
+    } %>%
+    mutate(Variable = "Total") %>%
+    select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
+           Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
+           `Winston-Salem`, `St. Louis`)
   #List responses in descending ranked order
   freqCols <- x %>% 
     select(-SITE_RC) %>%
@@ -101,17 +115,19 @@ tableTech <- function (x, n, header, variables) {
     mutate(Variable = c(
       variables[map_int(Variable[1:n], ~which(varNames %in% .))],
       "Other")) %>%
-    #Add header row
+    #Add totals row
       {
         bind_rows(
-          tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
-                ~`New York`, ~Chicago, ~Cleveland, ~Hershey, ~Philadelphia,
-                ~`San Francisco`, ~`Winston-Salem`, ~`St. Louis`,
-                paste0(header, ", N (%)"), 
-                NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
+          siteN,
           select(., everything())
         )
-      }
+      } %>%
+    add_row(Variable = paste0(header, ", N (%)"),
+            Overall = NA, `Corpus Christi` = NA, `Los Angeles` = NA, 
+            `New York` = NA, Chicago = NA, Cleveland = NA, Hershey = NA, 
+            Philadelphia = NA, `San Francisco` = NA, `Winston-Salem` = NA, 
+            `St. Louis` = NA,
+            .before = 1)
 }
 ```
 
@@ -126,12 +142,15 @@ table3 <- bind_rows(
                           "S56_1F" = "Other", 
                           "S56_1G" = "No devices")),
   tableTech(tech, n = 3, header = "Device Use Locations",
-            varNames = c("S56_2A", "S56_2B", "S56_2C", "S56_2D", "S56_2E", 
-                         "S56_2F", "S56_2G", "S56_2H", "S56_2I"),
-            varStrings = c("Home", "Where I'm staying", 
-                           "Other's house/apartment", "Public place with WiFi",
-                           "Internet cafe", "Library", "School", "Work", 
-                           "Other"))
+            variables = c("S56_2A" = "Home", 
+                          "S56_2B" = "Where I'm staying", 
+                          "S56_2C" = "Other's house/apartment", 
+                          "S56_2D" = "Public place with WiFi", 
+                          "S56_2E" = "Internet cafe", 
+                          "S56_2F" = "Public library", 
+                          "S56_2G" = "School", 
+                          "S56_2H" = "Work", 
+                          "S56_2I" = "Other"))
 )
 ```
 
