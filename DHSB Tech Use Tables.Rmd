@@ -165,12 +165,30 @@ table_OneFactor_Lump <- function (x, n, varString, header = varString,
   #Print 'Refuse to answer' values
   y <- x %>% 
     select(varString) %>%
-    map(~which(. == "Refuse to answer")) %>%
+    map(~which(. == "Refuse to answer" | is.na(.))) %>%
     unlist()
   if (any(y > 0)) {
-    print("The following rows contain response 'Refuse to answer':")
+    print("The following rows contain contain 'Refuse to answer' or 'NA':")
     print(y)
+    nonbinary <- x %>%
+      select(SITE_RC, varName) %>%
+      mutate_at(
+        vars(one_of(varName)), 
+        funs(replace(., which(. == "Refuse to answer"), NA))) %>%
+      mutate(NumNA = if_else(rowSums(is.na(.)) > 0, 1, 0)) %>%
+        {
+          bind_cols(
+            summarize(., Overall = as.character(sum(NumNA))),
+            group_by(., SITE_RC) %>%
+              summarize(N = as.character(sum(NumNA))) %>%
+              spread(SITE_RC, N)
+          )
+        } %>%
+      mutate(Variable = "Refused/Missing")
+  } else {
+    nonbinary <- NULL
   }
+  
   freqLevels <- x %>%
     select(varString) %>%
     table() %>%
@@ -189,52 +207,37 @@ table_OneFactor_Lump <- function (x, n, varString, header = varString,
     mutate_at(vars(one_of(varString)), funs(fct_recode(., !!!levRecode))) %>%
     mutate_at(vars(one_of(varString)), funs(fct_relevel(., keep, after = length(freqLevels)))) %>%
     { #Create two data frames and bind them together: summary of overall, summary by site
-      bind_rows(
+      full_join(
         select(., varString) %>% #Overall summary
           table() %>%
           as.data.frame(., stringsAsFactors = FALSE) %>%
           setNames(c("Variable", "N")) %>%
-          mutate(Percent = percent(N / sum(N), accuracy = 0.1),
-                 Site = "Overall"),
+          mutate(Percent = percent(N / sum(N), accuracy = 0.1)),
         select(., SITE_RC, varString) %>% #Summary by site
           table() %>%
           as.data.frame(., stringsAsFactors = FALSE) %>%
           setNames(c("Site", "Variable", "N")) %>%
           group_by(Site) %>%
-          mutate(Percent = percent(N / sum(N), accuracy = 0.1))
+          mutate(Percent = percent(N / sum(N), accuracy = 0.1)) %>%
+          unite("Frequency", N, Percent, sep = " (") %>%
+          mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)"),
+                 Variable = as.character(Variable)) %>%
+          spread(Site, Frequency),
+        by = "Variable"
       )
     } %>%
-    unite("Frequency", N, Percent, sep = " (") %>%
-    mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)"),
-           Variable = as.character(Variable)) %>%
-    spread(Site, Frequency) %>%
+    unite("Overall", N, Percent, sep = " (") %>%
+    mutate(Overall = str_replace(Overall, "(.*)", "\\1)")) %>%
     {
       bind_rows( #Create totals row and bind to previous summary table
-        x %>%
-        {
-          bind_cols( #Must summarize overall totals and totals by site separately
-            summarize(., Overall = paste0(n(), " (100.0%)")),
-            group_by(., SITE_RC) %>%
-              summarize(N = paste0(n(), " (100.0%)")) %>%
-              spread(SITE_RC, N)
-          )
-        } %>%
-          mutate(Variable = "Total") %>%
-          select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
-                 Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
-                 `Winston-Salem`, `St. Louis`),
+        nonbinary,
         select(., everything()) #Previous summary table
       )
     } %>%
-    separate(Overall, c("Overall_N", "Overall_P"), sep = " ", 
-             remove = FALSE) %>%
-    mutate(Variable = fct_reorder(as.factor(Variable), 
-                                  as.integer(Overall_N), .desc = TRUE),
-           Variable = fct_relevel(Variable, "Other", 
-                                  after = length(levels(Variable)) - 1)) %>%
-    arrange(Variable) %>%
     mutate(Variable = str_replace(as.character(Variable), "(.*)", "   \\1")) %>%
-    select(-Overall_N, -Overall_P) %>%
+    select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
+           Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
+           `Winston-Salem`, `St. Louis`) %>%
     add_case(Variable = paste0(header, ", N (%)"), .before = 1)
 }
 ```
