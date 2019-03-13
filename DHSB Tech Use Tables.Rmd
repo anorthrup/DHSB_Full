@@ -307,6 +307,49 @@ table3 <- bind_rows(
                           "S56_6P" = "Hormone therapy",
                           "S56_6Q" = "Other gender identity topics",
                           "S56_6R" = "Other"
+                        )),
+  table_OneFactor_Lump(tech, n = 3, varString = "S56_7",
+                       header = "Frequency of Checking Email",
+                       keep = "Never") %>%
+    add_row(Variable = "Email", .before = 1),
+  table_ManyBinary_Lump(tech, n = 3, header = "Who You Text",
+                        variables = c(
+                          "S56_8A" = "Parents",
+                          "S56_8B" = "Siblings, cousins, other family",
+                          "S56_8C" = "Spouse/Boyfriend/Girlfriend",
+                          "S56_8D" = "Casual sex partner, hook up, etc.",
+                          "S56_8E" = "LGBTQ friends, community",
+                          "S56_8F" = "Non-LGBTQ friends",
+                          "S56_8G" = "People from home",
+                          "S56_8H" = "People from online",
+                          "S56_8I" = "Medical/Social service providers/staff",
+                          "S56_8J" = "Co-workers",
+                          "S56_8K" = "Teachers or school staff",
+                          "S56_8L" = "Classmates/Friends from school",
+                          "S56_8M" = "Banks/Billing/Utility companies",
+                          "S56_8N" = "Client or dates for sex exchange",
+                          "S56_8O" = "Other"
+                        )),
+  table_ManyBinary_Lump(tech, n = 3, header = "What You Text About",
+                        variables = c(
+                          "S56_9A" = "Music, movies, TV",
+                          "S56_9B" = "Work",
+                          "S56_9C" = "School",
+                          "S56_9D" = "Drinking, drugs, partying",
+                          "S56_9E" = "Happy/Fun things w/ friends/family",
+                          "S56_9F" = "Problems/Drama w/ friends/family",
+                          "S56_9G" = "Social services",
+                          "S56_9H" = "Love/Relationships",
+                          "S56_9I" = "Sex",
+                          "S56_9J" = "Sex work",
+                          "S56_9K" = "Safe sex",
+                          "S56_9L" = "Sexual identity/attraction",
+                          "S56_9M" = "HIV status/care",
+                          "S56_9N" = "Videos on LGBTQ topics",
+                          "S56_9O" = "Videos on non-LGBTQ topics",
+                          "S56_9P" = "Hormone therapy",
+                          "S56_9Q" = "Other gender identity topics",
+                          "S56_9R" = "Other"
                         ))
 )
 ```
