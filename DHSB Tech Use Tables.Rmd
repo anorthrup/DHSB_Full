@@ -59,14 +59,17 @@ tech <- acasi2 %>%
 ```
 
 ```{r techSummaryFunction}
-table_ManyBinary_Lump <- function (x, n, header, variables, keep = NULL) {
+table_ManyBinary_Lump <- function (x, n = NULL, header, variables, keep = NULL) {
   ##variables = named vector with names as column names, values as strings
   ##n = number of names to keep, rest will be lumped into 'Other'
-  varNames <- names(variables)
+  if (is.null(n) & !is.null(keep)) {
+    print("'keep' is unnecessary when 'n' is not supplied")
+    keep = NULL
+  }
   
   #Document non-binary values
   y <- x %>% 
-    select(varNames) %>%
+    select(names(variables)) %>%
     map(~unique(.[!. %in% c(0, 1)])) %>%
     unlist()
   if (any(y > 0)) {
@@ -74,9 +77,9 @@ table_ManyBinary_Lump <- function (x, n, header, variables, keep = NULL) {
     print(y)
     #Count number of skipped/refused
     nonbinary <- x %>%
-      select(SITE_RC, varNames) %>%
+      select(SITE_RC, names(variables)) %>%
       mutate_at(
-        vars(one_of(varNames)), 
+        vars(one_of(names(variables))), 
         funs(replace(., which(!. %in% c(0, 1)), NA))) %>%
       mutate(NumNA = if_else(rowSums(is.na(.)) > 0, 1, 0)) %>%
         {
@@ -94,7 +97,7 @@ table_ManyBinary_Lump <- function (x, n, header, variables, keep = NULL) {
   
   x <- x %>%
     #Narrow x to only necessary columns
-    select(SITE_RC, varNames) %>%
+    select(SITE_RC, names(variables)) %>%
     #Remove rows with non-binary values (refused to answer, skipped)
     filter_if(is.numeric, all_vars(. %in% c(0, 1)))
   #List responses in descending ranked order
@@ -103,20 +106,33 @@ table_ManyBinary_Lump <- function (x, n, header, variables, keep = NULL) {
       map_int(sum) %>%
       sort(., decreasing = TRUE) %>%
       names()
-  if (!is.null(keep)) freqCols <- freqCols[which(freqCols != keep)]
   #Combine lower ranked responses if there are more than (n + 1)
-  if (length(freqCols) > (n + 1)){
-    x <- x %>%
-      mutate(Other = rowSums(select(., freqCols[(n + 1):length(freqCols)]))) %>%
-      mutate(Other = if_else(Other > 0, 1L, 0L))
-    if (!is.null(keep)) {
-      freqCols <- c(freqCols[1:n], "Other", keep)
-    } else {
-      freqCols <- c(freqCols[1:n], "Other")
+  if (!is.null(n)){
+    #If n is set, remove 'keep' from freqCols so that it doesn't get lumped into 'Other'
+    if (!is.null(keep)) freqCols <- freqCols[which(freqCols != keep)]
+    #Lump low frequency variables into 'Other' when freqCols has more than one variable to lump
+    if (length(freqCols) > (n + 1)) {
+      x <- x %>%
+        mutate(Other = rowSums(select(., freqCols[(n + 1):length(freqCols)]))) %>%
+        mutate(Other = if_else(Other > 0, 1L, 0L))
+      if (!is.null(keep)) {
+        freqCols <- c(freqCols[1:n], "Other", keep)
+      } else {
+        freqCols <- c(freqCols[1:n], "Other")
+      }
+      x <- x %>%
+        select(SITE_RC, freqCols)
     }
-    x <- x %>%
-      select(SITE_RC, freqCols)
+  } else {
+    n <- length(freqCols)
   }
+  variables <- c(
+    variables[which(names(variables) %in% freqCols)],
+    freqCols[which(!freqCols %in% names(variables))]
+  )
+  if("Other" %in% variables & 
+     names(variables)[which(variables == "Other")] == "") 
+    names(variables)[which(variables == "Other")] <- "Other"
   #Summarize responses overall and by site
   full_join( #Create two data frames and join them together: summary of overall, summary by site
     #Summarize overall
@@ -155,10 +171,9 @@ table_ManyBinary_Lump <- function (x, n, header, variables, keep = NULL) {
     by = "Variable"
   ) %>%
     #Overwrite variable names with readable names
-    mutate(Variable = c(
-      variables[map_int(Variable[1:n], ~which(varNames %in% .))],
-      "Other", 
-      variables[which(names(variables) == keep)])) %>%
+    mutate(Variable = variables[
+      map_int(Variable, ~which(names(variables) %in% .))
+      ]) %>%
     #Row containing number of skipped/refused/missing
       {
         bind_rows(
