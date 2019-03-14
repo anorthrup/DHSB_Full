@@ -55,7 +55,8 @@ tech <- acasi2 %>%
                              "Tumblr"             = "9",
                              "Pinterest"          = "10",
                              "Other"              = "11",
-                             "Refuse to answer"   = "98"))
+                             "Refuse to answer"   = "98",
+                             "Skipped"            = "99"))
 ```
 
 ```{r techSummaryFunction}
@@ -194,16 +195,19 @@ table_OneFactor_Lump <- function (x, n, varString, header = varString,
   #Print 'Refuse to answer' values
   y <- x %>% 
     select(varString) %>%
-    map(~which(. == "Refuse to answer" | is.na(.))) %>%
-    unlist()
+    map(~which(. == "Refuse to answer" | . == "Skipped" | is.na(.))) %>%
+    unlist() %>%
+    unname()
   if (any(y > 0)) {
-    print("The following rows contain contain 'Refuse to answer' or 'NA':")
+    print("The following rows contain contain 'Refuse to answer', 'Skipped' or 'NA':")
     print(y)
     nonbinary <- x %>%
       select(SITE_RC, varName) %>%
       mutate_at(
         vars(one_of(varName)), 
-        funs(replace(., which(. == "Refuse to answer"), NA))) %>%
+        funs(replace(., 
+                     which(. == "Refuse to answer" | . == "Skipped"), 
+                     NA))) %>%
       mutate(NumNA = if_else(rowSums(is.na(.)) > 0, 1, 0)) %>%
         {
           bind_cols(
