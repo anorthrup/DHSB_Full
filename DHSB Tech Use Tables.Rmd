@@ -189,8 +189,14 @@ table_ManyBinary_Lump <- function (x, n = NULL, header, variables, keep = NULL) 
     add_row(Variable = paste0(header, ", N (%)"), .before = 1)
 }
 
-table_OneFactor_Lump <- function (x, n, varString, header = varString, 
+table_OneFactor_Lump <- function (x, n = NULL, varString, header = varString, 
                                   keep = NULL) {
+  if (is.null(n) & !is.null(keep)) {
+    print("'keep' is unnecessary when 'n' is not supplied")
+    keep = NULL
+  }
+  
+  varQuo <- quo(!!sym(varString))
   varName <- str_replace(varString, " ", ".")
   #Print 'Refuse to answer' values
   y <- x %>% 
@@ -201,7 +207,7 @@ table_OneFactor_Lump <- function (x, n, varString, header = varString,
   if (any(y > 0)) {
     print("The following rows contain contain 'Refuse to answer', 'Skipped' or 'NA':")
     print(y)
-    nonbinary <- x %>%
+    missing <- x %>%
       select(SITE_RC, varName) %>%
       mutate_at(
         vars(one_of(varName)), 
@@ -217,41 +223,53 @@ table_OneFactor_Lump <- function (x, n, varString, header = varString,
               spread(SITE_RC, N)
           )
         } %>%
-      mutate(Variable = "Refused/Missing")
+      mutate(Variable = "Skipped/Refused/Missing")
   } else {
-    nonbinary <- NULL
+    missing <- NULL
   }
+  
+  x <- x %>%
+    select(SITE_RC, varString) %>%
+    filter(!!varQuo != "Skipped" & !!varQuo != "Refused to answer") %>%
+    mutate_at(vars(one_of(varString)), funs(factor))
   
   freqLevels <- x %>%
     select(varString) %>%
     table() %>%
+    sort(., decreasing = TRUE) %>%
     names()
-  if (!is.null(keep)) {
-    freqLevels <- freqLevels[which(freqLevels != keep)]
-  }
-  if(length(freqLevels) > (n + 1)){
-    levRecode <- freqLevels[(n + 1):length(freqLevels)]
-    names(levRecode) <- rep("Other", length(levRecode))
+  
+  if (!is.null(n)) {
+    if (!is.null(keep)) {
+      freqLevels <- freqLevels[which(freqLevels != keep)]
+    }
+    if(length(freqLevels) > (n + 1)){
+      levRecode <- freqLevels[(n + 1):length(freqLevels)]
+      names(levRecode) <- rep("Other", length(levRecode))
+    } else {
+      levRecode <- NULL
+    }
   } else {
     levRecode <- NULL
   }
+  
   x %>%
-    select(SITE_RC, varString) %>%
-    mutate_at(vars(one_of(varString)), funs(fct_recode(., !!!levRecode))) %>%
-    mutate_at(vars(one_of(varString)), funs(fct_relevel(., keep, after = length(freqLevels)))) %>%
+    mutate_at(vars(one_of(varString)), 
+              funs(fct_recode(factor(., levels = c(freqLevels, keep)),
+                              !!!levRecode))) %>%
     { #Create two data frames and bind them together: summary of overall, summary by site
       full_join(
         select(., varString) %>% #Overall summary
           table() %>%
           as.data.frame(., stringsAsFactors = FALSE) %>%
           setNames(c("Variable", "N")) %>%
-          mutate(Percent = percent(N / sum(N), accuracy = 0.1)),
+          mutate(Percent = scales::percent(N / sum(N), accuracy = 0.1)),
         select(., SITE_RC, varString) %>% #Summary by site
           table() %>%
           as.data.frame(., stringsAsFactors = FALSE) %>%
           setNames(c("Site", "Variable", "N")) %>%
           group_by(Site) %>%
-          mutate(Percent = percent(N / sum(N), accuracy = 0.1)) %>%
+          mutate(Percent = scales::percent(N / sum(N), accuracy = 0.1)) %>%
           unite("Frequency", N, Percent, sep = " (") %>%
           mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)"),
                  Variable = as.character(Variable)) %>%
@@ -263,7 +281,7 @@ table_OneFactor_Lump <- function (x, n, varString, header = varString,
     mutate(Overall = str_replace(Overall, "(.*)", "\\1)")) %>%
     {
       bind_rows( #Create totals row and bind to previous summary table
-        nonbinary,
+        missing,
         select(., everything()) #Previous summary table
       )
     } %>%
