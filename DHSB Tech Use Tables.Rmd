@@ -312,7 +312,7 @@ table3 <- bind_rows(
                        header = "Frequency of Checking Email",
                        keep = "Never") %>%
     add_row(Variable = "Email", .before = 1),
-  table_ManyBinary_Lump(tech, n = 3, header = "Who You Text",
+  table_ManyBinary_Lump(tech, n = 3, header = "Who You Email",
                         variables = c(
                           "S56_8A" = "Parents",
                           "S56_8B" = "Siblings, cousins, other family",
@@ -330,7 +330,7 @@ table3 <- bind_rows(
                           "S56_8N" = "Client or dates for sex exchange",
                           "S56_8O" = "Other"
                         )),
-  table_ManyBinary_Lump(tech, n = 3, header = "What You Text About",
+  table_ManyBinary_Lump(tech, n = 3, header = "What You Email About",
                         variables = c(
                           "S56_9A" = "Music, movies, TV",
                           "S56_9B" = "Work",
@@ -352,5 +352,21 @@ table3 <- bind_rows(
                           "S56_9R" = "Other"
                         ))
 )
+```
+
+```{r techTables, include = TRUE}
+kable(table3 %>%
+        filter(!is.na(Overall))) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+  group_rows("Device Use, N (%)", 1, 5) %>%
+  group_rows("Device Use Locations, N (%)", 6, 10) %>%
+  group_rows("Cell Phone Access, N (%)", 11, 15) %>%
+  group_rows("Text Messaging:\nFrequency of Sending/Receiving Texts, N (%)", 
+             16, 20) %>%
+  group_rows("Text Messaging:\nWho You Text, N (%)", 21, 25) %>%
+  group_rows("Text Messaging:\nWhat You Text About, N (%)", 26, 30) %>%
+  group_rows("Email:\nFrequency of Checking Email, N (%)", 31, 35) %>%
+  group_rows("Email:\nWho You Email, N (%)", 36, 40) %>%
+  group_rows("Email:\nWhat You Email About, N (%)", 41, 45)
 ```
 
