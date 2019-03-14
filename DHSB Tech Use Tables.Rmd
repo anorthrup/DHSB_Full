@@ -41,7 +41,21 @@ tech <- acasi2 %>%
             "About once a week"         = "4",
             "Less than once a week"     = "5",
             "Never"                     = "6",
-            "Refuse to answer"          = "8")
+            "Refuse to answer"          = "8") %>%
+  mutate(S56_11 = fct_recode(as.factor(S56_11),
+                             "Facebook"           = "0",
+                             "Facebook Messenger" = "1",
+                             "Twitter"            = "2",
+                             "Instagram"          = "3",
+                             "Snapchat"           = "4",
+                             "WhatsApp"           = "5",
+                             "Skype"              = "6",
+                             "Kik"                = "7",
+                             "Vine"               = "8",
+                             "Tumblr"             = "9",
+                             "Pinterest"          = "10",
+                             "Other"              = "11",
+                             "Refuse to answer"   = "98"))
 ```
 
 ```{r techSummaryFunction}
@@ -243,7 +257,7 @@ table_OneFactor_Lump <- function (x, n, varString, header = varString,
 ```
 
 ```{r techSummary}
-table3 <- bind_rows(
+table3a <- bind_rows(
   table_ManyBinary_Lump(tech, n = 3, header = "Device Use", keep = "S56_1G",
                         variables = c("S56_1A" = "Cell Phone", 
                                       "S56_1B" = "Tablet", 
@@ -352,10 +366,31 @@ table3 <- bind_rows(
                           "S56_9R" = "Other"
                         ))
 )
+table3b <- bind_rows(
+  table_ManyBinary_Lump(x = tech, n = 3, header = "Social Networking Apps",
+                        keep = "S56_10M",
+                        variables = c(
+                          "S56_10A" = "Facebook",
+                          "S56_10B" = "Facebook Messenger",
+                          "S56_10C" = "Twitter",
+                          "S56_10D" = "Instagram",
+                          "S56_10E" = "Snapchat",
+                          "S56_10F" = "WhatsApp",
+                          "S56_10G" = "Skype",
+                          "S56_10H" = "Kik",
+                          "S56_10I" = "Vine",
+                          "S56_10J" = "Tumblr",
+                          "S56_10K" = "Pinterest",
+                          "S56_10L" = "Other",
+                          "S56_10M" = "None"
+                        )),
+  table_OneFactor_Lump(x = tech, n = 3, header = "App Used Most Often",
+                        varString = "S56_11")
+)
 ```
 
 ```{r techTables, include = TRUE}
-kable(table3 %>%
+kable(table3a %>%
         filter(!is.na(Overall))) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows("Device Use, N (%)", 1, 5) %>%
