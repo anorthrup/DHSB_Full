@@ -136,16 +136,16 @@ table_ManyBinary_Lump <- function (x, n = NULL, header, variables, keep = NULL) 
   #Combine lower ranked responses if there are more than (n + 1)
   if (!is.null(n)){
     #If n is set, remove 'keep' from freqCols so that it doesn't get lumped into 'Other'
-    if (!is.null(keep)) freqCols <- freqCols[which(freqCols != keep)]
+    if (!is.null(keep)) freqCols <- freqCols[which(!freqCols %in% keep)]
     #Lump low frequency variables into 'Other' when freqCols has more than one variable to lump
     if (length(freqCols) > (n + 1)) {
       x <- x %>%
         mutate(Other = rowSums(select(., freqCols[(n + 1):length(freqCols)]))) %>%
         mutate(Other = if_else(Other > 0, 1L, 0L))
       if (!is.null(keep)) {
-        freqCols <- c(freqCols[1:n], "Other", keep)
+        freqCols <- c(freqCols[0:n], "Other", keep)
       } else {
-        freqCols <- c(freqCols[1:n], "Other")
+        freqCols <- c(freqCols[0:n], "Other")
       }
       x <- x %>%
         select(SITE_RC, freqCols)
@@ -605,7 +605,7 @@ table3b <- bind_rows(
                        keep = "Never") %>%
     add_row(Variable = "Use Internet Other Than Messaging, Email, Social Networking, Dating",
             .before = 1),
-  table_ManyBinary_Lump(x = tech, n = 2, header = "Ever Used the Internet to...",
+  table_ManyBinary_Lump(x = tech, n = 0, header = "Ever Used the Internet to...",
                         keep = c("S56_24XL", "S56_24XM", "S56_24XN", "S56_24XO",
                                  "S56_24XV"),
                         variables = c(
@@ -629,10 +629,12 @@ table3b <- bind_rows(
                           "S56_24XR" = "Look up transgender/identity legal information",
                           "S56_24XS" = "Other",
                           "S56_24XV" = "None"
-                        ))
+                        )) %>%
+    mutate(Variable = fct_relevel(factor(Variable, levels = unique(Variable)),
+                                  "   Other", after = length(Variable) - 2)) %>%
+    arrange(Variable) %>%
+    mutate(Variable = as.character(Variable))
 )
-
-
 ```
 
 ```{r techTables, include = TRUE}
@@ -661,7 +663,12 @@ kable(table3b %>%
   group_rows("Communicate About on SN Apps", 26, 30) %>%
   group_rows("PM Use Frequency, N (%)", 31, 35) %>%
   group_rows("Communicate With Whom on PM Apps", 36, 40) %>%
-  group_rows("Communicate About on PM Apps", 41, 45)
-  
+  group_rows("Communicate About on PM Apps", 41, 45) %>%
+  group_rows("Dating/Hookup Apps Used", 46, 50) %>%
+  group_rows("Dating/Hookup App Used Most Often", 51, 55) %>%
+  group_rows("Dating/Hookup App Use Frequency", 56, 60) %>%
+  group_rows("Dating/Hookup App Activities", 61, 65) %>%
+  group_rows("Frequency of Other Uses of Internet", 66, 70) %>%
+  group_rows("Ever Used the Internet to...", 71, 77)
 ```
 
