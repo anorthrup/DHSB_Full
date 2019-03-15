@@ -267,7 +267,7 @@ table_OneFactor_Lump <- function (x, n = NULL, varString, header = varString,
   
   if (!is.null(n)) {
     if (!is.null(keep)) {
-      freqLevels <- freqLevels[which(freqLevels != keep)]
+      freqLevels <- freqLevels[which(!freqLevels %in% keep)]
     }
     if(length(freqLevels) > (n + 1)){
       levRecode <- freqLevels[(n + 1):length(freqLevels)]
