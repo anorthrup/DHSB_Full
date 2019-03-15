@@ -57,7 +57,32 @@ tech <- acasi2 %>%
                              "Pinterest"          = "10",
                              "Other"              = "11",
                              "Refuse to answer"   = "98",
-                             "Skipped"            = "99"))
+                             "Skipped"            = "99"),
+         S56_20 = fct_recode(as.factor(S56_20),
+                             "Tinder"               = "1",
+                             "Grindr"               = "2",
+                             "Growler"              = "3",
+                             "Jack'd"               = "4",
+                             "Scruff"               = "5",
+                             "Badoo"                = "6",
+                             "Craigslist"           = "7",
+                             "Plenty of Fish (POF)" = "8",
+                             "Adam4Adam (A4a)"      = "9",
+                             "Hinge"                = "10",
+                             "Bumble"               = "11",
+                             "Other"                = "12",
+                             "Refuse to answer"     = "98",
+                             "Skipped" = "99"),
+         S56_23 = fct_recode(as.factor(S56_23),
+                             "Every day, more than 1 hour" = "1",
+                             "Every day, less than 1 hour" = "2",
+                             "Almost every day"            = "3",
+                             "A couple times a week"       = "4",
+                             "Once a week"                 = "5",
+                             "Less than once a week"       = "6",
+                             "Never"                       = "7",
+                             "Refuse to answer"            = "8"),
+         S56_24XV = as.integer(S56_24XV))
 ```
 
 ```{r techSummaryFunction}
@@ -422,7 +447,7 @@ table3b <- bind_rows(
                           "S56_10L" = "Other",
                           "S56_10M" = "None"
                         )) %>%
-    add_row(Variable = "General Social Networking (SN) Apps"),
+    add_row(Variable = "General Social Networking (SN) Apps", .before = 1),
   table_OneFactor_Lump(x = tech, n = 3, header = "SN Used Most Often",
                         varString = "S56_11"),
   table_OneFactor_Lump(tech, n = 3, header = "SN Use Frequency",
@@ -435,20 +460,20 @@ table3b <- bind_rows(
                           "S56_12D" = "Send/Receive private messages",
                           "S56_12E" = "Send/Receive public messages",
                           "S56_12F" = "Share pictures/video that you took",
-                          "S56_12G" = "Share links, other media",
+                          "S56_12G" = "Share links/memes/GIFs/other media",
                           "S56_12H" = "Write shared notes",
                           "S56_12I" = "Comment/Like/Emoji friends' content",
                           "S56_12J" = "Browse profiles/newsfeed/ticker",
                           "S56_12K" = "Maintain privacy or other settings",
-                          "S56_12L" = "Create or maintain alternate profiles",
+                          "S56_12L" = "Create/Maintain alternate profiles",
                           "S56_12M" = "Support LGBTQ groups/causes",
                           "S56_12N" = "Search hormone therapies",
-                          "S56_12O" = "Search gender surgeries/procedures",
+                          "S56_12O" = "Search gender-related surgeries/procedures",
                           "S56_12P" = "Search HIV information",
                           "S56_12Q" = "Play games",
                           "S56_12R" = "Other"
                         )),
-  table_ManyBinary_Lump(tech, n = 3, header = "Who Do You Communicate With on SNs",
+  table_ManyBinary_Lump(tech, n = 3, header = "Communicate With Whom on SN Apps",
                         variables = c(
                           "S56_14A" = "Parents",
                           "S56_14B" = "Siblings, cousins, other family",
@@ -466,7 +491,7 @@ table3b <- bind_rows(
                           "S56_14N" = "Client or dates for sex exchange",
                           "S56_14O" = "Other"
                         )),
-  table_ManyBinary_Lump(tech, n = 3, header = "What Do You Communicate About on SNs",
+  table_ManyBinary_Lump(tech, n = 3, header = "Communicate About on SN Apps",
                         variables = c(
                           "S56_15A" = "Music, movies, TV",
                           "S56_15B" = "Work",
@@ -486,23 +511,128 @@ table3b <- bind_rows(
                           "S56_15P" = "Hormone therapy",
                           "S56_15Q" = "Other gender identity topics",
                           "S56_15R" = "Other"
+                        )),
+  table_OneFactor_Lump(tech, n = 3, header = "PM Use Frequency",
+                       varString = "S56_16",
+                       keep = "Never") %>%
+    add_row(Variable = "Private Messaging (PM) Apps", .before = 1),
+  table_ManyBinary_Lump(tech, n = 3, header = "Communicate With Whom on PM Apps",
+                        variables = c(
+                          "S56_17A" = "Parents",
+                          "S56_17B" = "Siblings, cousins, other family",
+                          "S56_17C" = "Spouse/Boyfriend/Girlfriend",
+                          "S56_17D" = "Casual sex partner, hook up, etc.",
+                          "S56_17E" = "LGBTQ friends, community",
+                          "S56_17F" = "Non-LGBTQ friends",
+                          "S56_17G" = "People from home",
+                          "S56_17H" = "People from online",
+                          "S56_17I" = "Medical/Social service providers/staff",
+                          "S56_17J" = "Co-workers",
+                          "S56_17K" = "Teachers or school staff",
+                          "S56_17L" = "Classmates/Friends from school",
+                          "S56_17M" = "Banks/Billing/Utility companies",
+                          "S56_17N" = "Client or dates for sex exchange",
+                          "S56_17O" = "Other"
+                        )),
+  table_ManyBinary_Lump(tech, n = 3, header = "Communicate About on PM Apps",
+                        variables = c(
+                          "S56_18A" = "Music, movies, TV",
+                          "S56_18B" = "Work",
+                          "S56_18C" = "School",
+                          "S56_18D" = "Drinking, drugs, partying",
+                          "S56_18E" = "Happy/Fun things w/ friends/family",
+                          "S56_18F" = "Problems/Drama w/ friends/family",
+                          "S56_18G" = "Social services",
+                          "S56_18H" = "Love/Relationships",
+                          "S56_18I" = "Sex",
+                          "S56_18J" = "Sex work",
+                          "S56_18K" = "Safe sex",
+                          "S56_18L" = "Sexual identity/attraction",
+                          "S56_18M" = "HIV status/care",
+                          "S56_18N" = "Videos on LGBTQ topics",
+                          "S56_18O" = "Videos on non-LGBTQ topics",
+                          "S56_18P" = "Hormone therapy",
+                          "S56_18Q" = "Other gender identity topics",
+                          "S56_18R" = "Other"
+                        )),
+  table_ManyBinary_Lump(x = tech, n = 3, header = "Dating/Hookup Apps Used",
+                        keep = "S56_19N",
+                        variables = c(
+                          "S56_19A" = "Tinder",
+                          "S56_19B" = "Grindr",
+                          "S56_19C" = "Growler",
+                          "S56_19D" = "Jack'd",
+                          "S56_19E" = "Scruff",
+                          "S56_19F" = "Badoo",
+                          "S56_19G" = "Craigslist",
+                          "S56_19H" = "Plenty of Fish (POF)",
+                          "S56_19I" = "OkCupid",
+                          "S56_19J" = "Adam4Adam (A4A)",
+                          "S56_19K" = "Hinge",
+                          "S56_19L" = "Bumble",
+                          "S56_19M" = "Other",
+                          "S56_19N" = "None"
+                        )) %>%
+    add_row(Variable = "Dating/Hookup Apps", .before = 1),
+  table_OneFactor_Lump(x = tech, n = 3, header = "Dating/Hookup App Used Most Often",
+                        varString = "S56_20"),
+  table_OneFactor_Lump(tech, n = 3, header = "Dating/Hookup App Use Frequency",
+                       varString = "S56_21"),
+  table_ManyBinary_Lump(tech, n = 3, header = "Dating/Hookup App Activities",
+                        variables = c(
+                          "S56_22A" = "Search for someone for sex",
+                          "S56_22B" = "Search for client for sex for money/food/shelter/etc.",
+                          "S56_22C" = "Search for someone to casually date",
+                          "S56_22D" = "Search for someone for committed dating",
+                          "S56_22E" = "Update your status",
+                          "S56_22F" = "Add/Delete people, make new friends",
+                          "S56_22G" = "Send/Receive private messages",
+                          "S56_22H" = "Send/Receive public messages",
+                          "S56_22I" = "Share pictures/video you took",
+                          "S56_22J" = "Comment/Like/Emoji friends' content",
+                          "S56_22K" = "Support LGBTQ groups/causes",
+                          "S56_22L" = "Share links/memes/GIFs/other media",
+                          "S56_22M" = "Browse profiles/newsfeed/ticker",
+                          "S56_22N" = "Maintain privacy or other settings",
+                          "S56_22O" = "Create/Maintain your profile",
+                          "S56_22P" = "Create/Maintain alternate profiles",
+                          "S56_22Q" = "Read about sexual health information",
+                          "S56_22R" = "Talk about sexual health",
+                          "S56_22S" = "Other"
+                        )),
+  table_OneFactor_Lump(tech, n = 3, header = "Frequency of Other Uses of Internet",
+                       varString = "S56_23",
+                       keep = "Never") %>%
+    add_row(Variable = "Use Internet Other Than Messaging, Email, Social Networking, Dating",
+            .before = 1),
+  table_ManyBinary_Lump(x = tech, n = 2, header = "Ever Used the Internet to...",
+                        keep = c("S56_24XL", "S56_24XM", "S56_24XN", "S56_24XO",
+                                 "S56_24XV"),
+                        variables = c(
+                          "S56_24A"  = "Listen to music",
+                          "S56_24B"  = "Bank or pay bills",
+                          "S56_24C"  = "Look for work",
+                          "S56_24D"  = "Look for housing",
+                          "S56_24E"  = "Read news articles",
+                          "S56_24F"  = "Look for place to party",
+                          "S56_24G"  = "Look for a sex partner for pay",
+                          "S56_24H"  = "Look for a sex partner not for pay",
+                          "S56_24I"  = "Watch porn",
+                          "S56_24J"  = "Watch videos on LGBTQ topics",
+                          "S56_24K"  = "Watch videos on non-LGBTQ topics",
+                          "S56_24XL" = "Look up information about sex/sexuality",
+                          "S56_24XM" = "Look up hormone therapy",
+                          "S56_24XN" = "Look up gender-related surgeries/procedures",
+                          "S56_24XO" = "Look up other health information",
+                          "S56_24XP" = "Look up non-health-related information",
+                          "S56_24XQ" = "Look for social services",
+                          "S56_24XR" = "Look up transgender/identity legal information",
+                          "S56_24XS" = "Other",
+                          "S56_24XV" = "None"
                         ))
 )
-# "S56_14A" = "",
-# "S56_14B" = "",
-# "S56_14C" = "",
-# "S56_14D" = "",
-# "S56_14E" = "",
-# "S56_14F" = "",
-# "S56_14G" = "",
-# "S56_14H" = "",
-# "S56_14I" = "",
-# "S56_14J" = "",
-# "S56_14K" = "",
-# "S56_14L" = "",
-# "S56_14M" = "",
-# "S56_14N" = "",
-# "S56_14O" = "Other"
+
+
 ```
 
 ```{r techTables, include = TRUE}
@@ -527,7 +657,11 @@ kable(table3b %>%
   group_rows("SN Used Most Often, N (%)", 6, 10) %>%
   group_rows("SN Use Frequency, N (%)", 11, 15) %>%
   group_rows("SN Activities, N (%)", 16, 20) %>%
-  group_rows("Who Do You Communicate With on SNs", 21, 25) %>%
-  group_rows("What Do You Communicate About on SNs", 26, 30)
+  group_rows("Communicate With Whom on SN Apps", 21, 25) %>%
+  group_rows("Communicate About on SN Apps", 26, 30) %>%
+  group_rows("PM Use Frequency, N (%)", 31, 35) %>%
+  group_rows("Communicate With Whom on PM Apps", 36, 40) %>%
+  group_rows("Communicate About on PM Apps", 41, 45)
+  
 ```
 
