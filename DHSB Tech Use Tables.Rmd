@@ -1,7 +1,7 @@
 ---
 title: "DHSB Technology Tables"
 author: "Adam Northrup, Data Manager, ETAC"
-date: "March 11, 2019"
+date: "March 15, 2019"
 output: html_document
 ---
 
@@ -635,9 +635,24 @@ table3b <- bind_rows(
     arrange(Variable) %>%
     mutate(Variable = as.character(Variable))
 )
+
+wb <- loadWorkbook("DHSB Tables.xlsx")
+#Table3a
+removeWorksheet(wb, "Table 3a")
+addWorksheet(wb, "Table 3a")
+writeData(wb, sheet = "Table 3a", table3a)
+setColWidths(wb, sheet = "Table 3a", cols = 1:ncol(table3a), widths = "auto")
+#Table3b
+removeWorksheet(wb, "Table 3b")
+addWorksheet(wb, "Table 3b")
+writeData(wb, sheet = "Table 3b", table3b)
+setColWidths(wb, sheet = "Table 3b", cols = 1:ncol(table3b), widths = "auto")
+saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
+
 ```
 
-```{r techTables, include = TRUE}
+### Table 3a
+```{r table3a, include = TRUE}
 kable(table3a %>%
         filter(!is.na(Overall))) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
@@ -651,7 +666,10 @@ kable(table3a %>%
   group_rows("Email:\nFrequency of Checking Email, N (%)", 31, 35) %>%
   group_rows("Email:\nWho You Email, N (%)", 36, 40) %>%
   group_rows("Email:\nWhat You Email About, N (%)", 41, 45)
+```
 
+### Table 3b
+```{r table3b, include = TRUE}
 kable(table3b %>%
         filter(!is.na(Overall))) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
