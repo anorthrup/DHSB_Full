@@ -235,17 +235,18 @@ kable(table2 %>%
 ```
 
 ```{r eval = FALSE}
-wb <- createWorkbook()
+wb <- loadWorkbook("DHSB Tables.xlsx")
 #Table 1
+removeWorksheet(wb, "Table 1")
 addWorksheet(wb, "Table 1")
 writeData(wb, sheet = "Table 1", table1)
 setColWidths(wb, sheet = "Table 1", cols = 1:ncol(table1), widths = "auto")
 #Table 2
+removeWorksheet(wb, "Table 2")
 addWorksheet(wb, "Table 2")
 writeData(wb, sheet = "Table 2", table2)
 setColWidths(wb, sheet = "Table 2", cols = 1:ncol(table2), widths = "auto")
 
 saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
-
 ```
 
