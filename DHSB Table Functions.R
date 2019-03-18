@@ -137,14 +137,13 @@ table_ManyBinary <- function (x, header, variables, n = NULL, keep = NULL) {
 }
 
 table_OneFactor <- function (x, varString, header = varString, 
-                             n = NULL, keep = NULL) {
+                             n = NULL, keep = NULL, varRelevel = NULL) {
   if (is.null(n) & !is.null(keep)) {
     print("'keep' is unnecessary when 'n' is not supplied")
     keep = NULL
   }
   
   varQuo <- quo(!!sym(varString))
-  varName <- str_replace(varString, " ", ".")
   #Print 'Refuse to answer' values
   y <- x %>% 
     select(varString) %>%
@@ -155,9 +154,9 @@ table_OneFactor <- function (x, varString, header = varString,
     print("The following rows contain contain 'Refuse to answer', 'Skipped' or 'NA':")
     print(y)
     missing <- x %>%
-      select(SITE_RC, varName) %>%
+      select(SITE_RC, !!varQuo) %>%
       mutate_at(
-        vars(one_of(varName)), 
+        vars(one_of(varString)), 
         funs(replace(., 
                      which(. == "Refuse to answer" | . == "Skipped"), 
                      NA))) %>%
@@ -226,13 +225,17 @@ table_OneFactor <- function (x, varString, header = varString,
                               } %>%
     unite("Overall", N, Percent, sep = " (") %>%
     mutate(Overall = str_replace(Overall, "(.*)", "\\1)")) %>%
+    mutate(Variable = fct_relevel(factor(Variable, levels = unique(Variable)),
+                                  varRelevel)) %>%
+    arrange(Variable) %>%
+    mutate(Variable = as.character(Variable)) %>%
     {
       bind_rows( #Create totals row and bind to previous summary table
         missing,
         select(., everything()) #Previous summary table
       )
     } %>%
-    mutate(Variable = str_replace(as.character(Variable), "(.*)", "   \\1")) %>%
+    mutate(Variable = str_replace(Variable, "(.*)", "   \\1")) %>%
     select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
            Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
            `Winston-Salem`, `St. Louis`) %>%
