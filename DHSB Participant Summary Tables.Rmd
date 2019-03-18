@@ -201,10 +201,12 @@ table1 <- bind_rows(
   #Age groups
   tab1_OneFactor(demo, varString = "Age Groups", 
                  varRelevel = c("Under 18 Years")),
-  #HIV Diagnosis
-  tab1_OneFactor(demo, varString = "HIV Diagnosis",
-                 varRelevel = c("Within past 12 months",
-                                "More than 12 months ago")),
+  #Ethnicity/Race
+  tab1_OneFactor(demo, varString = "Ethnicity and Race", 
+                 varRelevel = c("Latino",
+                                "Black, Not Latino",
+                                "White, Not Latino",
+                                "White Mixed-Race, Not Latino or Black")),
   #Sex at birth
   tab1_OneFactor(demo, varString = "Sex at Birth",
                  varRelevel = c("Male")),
@@ -218,15 +220,14 @@ table1 <- bind_rows(
                  varRelevel = c("Straight",
                                 "Lesbian or gay",
                                 "Bisexual")),
-  #Relationship Status
-  tab1_OneFactor(demo, varString = "Relationship Status", 
-                 varRelevel = c("Single",
-                                "Dating",
-                                "Partnered/Married")),
   #Education
   tab1_OneFactor(demo, varString = "Education", 
                  varRelevel = c("High school, equivalent or less",
                                 "Some post-K12")),
+  #Employment
+  tab1_ManyBinary(demo, header = "Employment",
+                  Student, `Full-time employed`, 
+                  `Part-time employed`, Disabled, Unemployed),
   #Income
   bind_rows(
     demo %>%
@@ -272,21 +273,15 @@ table1 <- bind_rows(
   #Jailed
   tab1_OneFactor(demo, varString = "Ever Jailed", header = "Incarceration") %>%
     filter(Variable %in% c("   Yes", "Incarceration, N (%)")) %>%
-    mutate(Variable = str_replace(Variable, "   Yes", "   Ever Jailed")),
-  #Ethnicity/Race
-  tab1_OneFactor(demo, varString = "Ethnicity and Race", 
-                 varRelevel = c("Latino",
-                                "Black, Not Latino",
-                                "White, Not Latino",
-                                "White Mixed-Race, Not Latino or Black")),
-  #Employment
-  tab1_ManyBinary(demo, header = "Employment",
-                  Student, `Full-time employed`, 
-                  `Part-time employed`, Disabled, Unemployed)
+    mutate(Variable = str_replace(Variable, "   Yes", "   Ever Jailed"))
 )
 
 #####Table 2: participant health care summary
 table2 <- bind_rows(
+  #HIV Diagnosis
+  tab1_OneFactor(demo, varString = "HIV Diagnosis",
+                 varRelevel = c("Within past 12 months",
+                                "More than 12 months ago")),
   #Insurance
   tab1_ManyBinary(
     demo %>%
@@ -329,7 +324,12 @@ table2 <- bind_rows(
                               which(Seq == 2), 
                               "      Refuse to answer")) %>%
     select(-Seq) %>%
-    filter(!(!is.na(Overall) & Overall == "0 (0.0%)"))
+    filter(!(!is.na(Overall) & Overall == "0 (0.0%)")),
+  #Relationship Status
+  tab1_OneFactor(demo, varString = "Relationship Status", 
+                 varRelevel = c("Single",
+                                "Dating",
+                                "Partnered/Married"))
 )
 ```
 Note that responses from participants with no baseline survey were replaced with 6 month survey. "Past 6 months" refers to 6 months prior to 6 month survey. If no data was available for a given question (participant had no baseline survey, and question wasn't asked in 6 month survey), the participant was not included in the denominator.  
