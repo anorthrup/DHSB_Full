@@ -46,12 +46,12 @@ demo <- acasi2 %>%
          SEXBRTH = fct_recode(as.factor(SEXBRTH),
                               "Male" = "1", "Female" = "2", "Refuse to answer" = "8"),
          MONEY = ifelse(MONEY %in% c(99997, 99998), NA, MONEY)) %>%
-  mutate_at(vars(matches("EMPLOY|LATINO|RACE|INSURE|CARELHIV"), JAILL, -RACEFS, -INSURE, -INSUREHS), 
+  mutate_at(vars(JAILL), 
             funs(as.factor)) %>%
-  mutate_at(vars(matches("EMPLOY|LATINO|RACE|INSURE|CARELHIV"), JAILL, -RACEFS, -INSURE, -INSUREHS), 
+  mutate_at(vars(JAILL), 
             funs(fct_recode), "Yes" = "1", "No" = "0", "Don't know/Not sure" = "7", "Refuse to answer" = "8") %>%
-  mutate_at(vars(contains("CARE"), -CARELHIV), funs(as.factor(case_when(. == 0   ~ "No",
-                                                                        . <= 99  ~ "Yes",
+  mutate_at(vars(contains("CARE"), -CARELHIV), funs(as.factor(case_when(. == 0   ~ "Yes",
+                                                                        . <= 99  ~ "No",
                                                                         . >  99  ~ "Refuse to answer")))) %>%
   unite("SitePID", SITE_RC, PID, remove = FALSE) %>%
   arrange(SITE_RC, PID) %>%
@@ -64,11 +64,7 @@ demo <- acasi2 %>%
          `Residence, Last 7 Days` = STAY7D_RC,
          `Ever Jailed` = JAILL,
          `Ethnicity and Race` = RACE_RC,
-         Student = EMPLOYA, `Full-time employed` = EMPLOYB, `Part-time employed` = EMPLOYC,
-         Disabled = EMPLOYD, `Unemployed` = EMPLOYE_RC,
-         `HIV Diagnosis` = SCREEN5,
-         `Doctor's visit, non-HIV, past 6 months` = CARED6, 
-         `Doctor's visit, HIV, past 6 months` = CAREHV06)
+         `HIV Diagnosis` = SCREEN5)
 ```
 
 ```{r}
@@ -115,9 +111,12 @@ table1 <- bind_rows(
                   varRelevel = c("High school, equivalent or less",
                                  "Some post-K12")),
   #Employment
-  tab1_ManyBinary(demo, header = "Employment",
-                  Student, `Full-time employed`, 
-                  `Part-time employed`, Disabled, Unemployed),
+  table_ManyBinary(demo, header = "Employment",
+                   variables = c("EMPLOYA" = "Student",
+                                 "EMPLOYB" = "Full-time employed",
+                                 "EMPLOYC" = "Part-time employed",
+                                 "EMPLOYD" = "Disabled",
+                                 "EMPLOYE_RC" = "Unemployed")),
   #Income
   bind_rows(
     demo %>%
@@ -176,29 +175,20 @@ table2 <- bind_rows(
   table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
   #Health care history, 6 months
   bind_rows(
-    tab1_ManyBinary(
-      demo, header = "Recent Health Care",
-      `Doctor's visit, non-HIV, past 6 months`, 
-      `Doctor's visit, HIV, past 6 months`
-    ),
-    tab1_ManyBinary(
-      demo,
-      `Doctor's visit, non-HIV, past 6 months`, 
-      `Doctor's visit, HIV, past 6 months`,
-      response = "Refuse to answer"
-    ) %>%
-      filter(!is.na(Overall))
-  ) %>%
-    group_by(Variable) %>%
-    mutate(Seq = 1:n()) %>%
-    ungroup() %>%
-    mutate(Variable = factor(Variable, levels = unique(Variable))) %>%
-    arrange(Variable) %>%
-    mutate(Variable = replace(as.character(Variable),
-                              which(Seq == 2), 
-                              "      Refuse to answer")) %>%
-    select(-Seq) %>%
-    filter(!(!is.na(Overall) & Overall == "0 (0.0%)")) %>%
+    table_OneFactor(demo, header = "Recent Health Care",
+                    varString = "CARED6") %>%
+      filter(Variable != "   No") %>%
+      mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
+                                "   Doctor's visit, non-HIV, 6 months")),
+    table_OneFactor(demo, header = "Recent Health Care",
+                    varString = "CAREHV06") %>%
+      filter(str_detect(Variable, "Refuse|Yes")) %>%
+      arrange(desc(Variable)) %>%
+      mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
+                                "   Doctor's visit, HIV, 6 months"),
+             Variable = replace(Variable, str_which(Variable, "Refuse"),
+                                                    "      Refuse to answer"))
+    )  %>%
     add_row(Variable = "Viral Load, Median [IQR]") %>%
     add_row(Variable = "Viral Load"),
   #Relationship Status
@@ -217,19 +207,17 @@ kable(table1 %>%
       caption = 
         "Table 1. Sociodemographic characteristics of youth and young people living with HIV"
       ) %>%
-  kable_styling(bootstrap_options = c("striped", "condensed"))
-  # group_rows("Age Group, N (%)", 2, 4) %>%
-  # group_rows("HIV Diagnosis, N (%)", 5, 7) %>%
-  # group_rows("Sex at Birth, N (%)", 8, 9) %>%
-  # group_rows("Gender, N (%)", 10, 13) %>%
-  # group_rows("Sexual Orientation, N (%)", 14, 17) %>%
-  # group_rows("Relationship Status, N (%)", 18, 21) %>%
-  # group_rows("Education, N (%)", 22, 24) %>%
-  # group_rows("Income, Median [IQR]", 25, 25) %>%
-  # group_rows("Residence, Last 7 Days, N (%)", 26, 32) %>%
-  # group_rows("Incarceration, N (%)", 33, 33) %>%
-  # group_rows("Ethnicity and Race, N (%)", 34, 38) %>%
-  # group_rows("Employment, N (%)", 39, 43)
+  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+  group_rows("Age Group, N (%)", 2, 5) %>%
+  group_rows("Ethnicity and Race, N (%)", 6, 10) %>%
+  group_rows("Sex at Birth, N (%)", 11, 12) %>%
+  group_rows("Gender, N (%)", 13, 16) %>%
+  group_rows("Sexual Orientation, N (%)", 17, 20) %>%
+  group_rows("Education, N (%)", 21, 24) %>%
+  group_rows("Employment, N (%)", 25, 29) %>%
+  group_rows("Income, Median [IQR]", 30, 30) %>%
+  group_rows("Residence, Last 7 Days, N (%)", 31, 37) %>%
+  group_rows("Incarceration, N (%)", 38, 38)
 ```
 
 ### Table 2
@@ -238,10 +226,12 @@ kable(table2 %>%
         filter(!is.na(Overall)),
       caption = "Table 2. HIV-related health, healthcare utilization, and other characteristics that may relate to digital health seeking"
       ) %>%
-  kable_styling(bootstrap_options = c("striped", "condensed"))
-  # group_rows("Insurance, N (%)", 1, 9) %>%
-  # group_rows("Recent Health Care, N (%)", 10, 18) %>%
-  # add_indent(c(12, 15, 17))
+  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+  group_rows("HIV Diagnosis, N (%)", 1, 4) %>%
+  group_rows("Insurance, N (%)", 5, 7) %>%
+  group_rows("Recent Health Care, N (%)", 8, 10) %>%
+  group_rows("Relationship Status, N (%)", 11, 15) %>%
+  add_indent(c(10))
 ```
 
 ```{r eval = FALSE}
