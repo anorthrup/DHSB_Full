@@ -39,7 +39,7 @@ demo <- acasi2 %>%
   rename(Site = SITE_RC, Age = AGE) %>%
   mutate(`Age Groups` = as.factor(case_when(Age < 18 ~ "Under 18 Years",
                                             Age < 25 ~ "18-24 Years",
-                                            Age >= 25 ~ "25 and older")),
+                                            Age >= 25 ~ "25-34")),
          SCREEN5 = fct_recode(as.factor(SCREEN5),
                               "Within past 12 months" = "1", "More than 12 months ago" = "2",
                               "Don't know/Not sure"   = "7", "Refuse to answer"        = "8"),
@@ -336,12 +336,11 @@ Note that responses from participants with no baseline survey were replaced with
 
 ### Table 1
 ```{r include = TRUE}
-# wb <- createWorkbook()
-# addWorksheet(wb, "Table 1")
-# writeData(wb, sheet = "Table 1", table1)
-# setColWidths(wb, sheet = "Table 1", cols = 1:ncol(table1), widths = "auto")
 kable(table1 %>%
-        filter(!is.na(Overall))) %>%
+        filter(!is.na(Overall)),
+      caption = 
+        "Table 1. Sociodemographic characteristics of youth and young people living with HIV"
+      ) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows("Age Group, N (%)", 2, 4) %>%
   group_rows("HIV Diagnosis, N (%)", 5, 7) %>%
@@ -359,14 +358,28 @@ kable(table1 %>%
 
 ### Table 2
 ```{r include = TRUE}
-addWorksheet(wb, "Table 2")
-writeData(wb, sheet = "Table 2", table2)
-setColWidths(wb, sheet = "Table 2", cols = 1:ncol(table2), widths = "auto")
-saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 kable(table2 %>%
-        filter(!is.na(Overall))) %>%
+        filter(!is.na(Overall)),
+      caption = "Table 2. HIV-related health, healthcare utilization, and other characteristics that may relate to digital health seeking"
+      ) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows("Insurance, N (%)", 1, 9) %>%
   group_rows("Recent Health Care, N (%)", 10, 18) %>%
   add_indent(c(12, 15, 17))
 ```
+
+```{r eval = FALSE}
+wb <- createWorkbook()
+#Table 1
+addWorksheet(wb, "Table 1")
+writeData(wb, sheet = "Table 1", table1)
+setColWidths(wb, sheet = "Table 1", cols = 1:ncol(table1), widths = "auto")
+#Table 2
+addWorksheet(wb, "Table 2")
+writeData(wb, sheet = "Table 2", table2)
+setColWidths(wb, sheet = "Table 2", cols = 1:ncol(table2), widths = "auto")
+
+saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
+
+```
+
