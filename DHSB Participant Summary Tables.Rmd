@@ -258,7 +258,7 @@ table1 <- bind_rows(
         tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
               ~`New York`, ~Chicago, ~Cleveland, ~Hershey, ~Philadelphia,
               ~`San Francisco`, ~`Winston-Salem`, ~`St. Louis`,
-              "Income, Last Month, N (%)", 
+              "Income, Last Month, Median [IQR]", 
               NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
         select(., everything())
       )
@@ -336,10 +336,10 @@ Note that responses from participants with no baseline survey were replaced with
 
 ### Table 1
 ```{r include = TRUE}
-wb <- createWorkbook()
-addWorksheet(wb, "Table 1")
-writeData(wb, sheet = "Table 1", table1)
-setColWidths(wb, sheet = "Table 1", cols = 1:ncol(table1), widths = "auto")
+# wb <- createWorkbook()
+# addWorksheet(wb, "Table 1")
+# writeData(wb, sheet = "Table 1", table1)
+# setColWidths(wb, sheet = "Table 1", cols = 1:ncol(table1), widths = "auto")
 kable(table1 %>%
         filter(!is.na(Overall))) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
