@@ -307,9 +307,23 @@ acasi2 <- acasi %>%
                                "White Mixed-Race, Not Latino or Black",
                              RACEE == 1 ~ "White, Not Latino",
                              TRUE ~ "Other race"),
-         EMPLOYE_RC = if_else(EMPLOYE == 1 | EMPLOYF == 1, 1, 0))
-acasi2 %>% 
-  select(LATINO, contains("RACE")) %>% 
-  filter(LATINO == 0, RACEC == 0, RACE > 1)
+         EMPLOYE_RC = if_else(EMPLOYE == 1 | EMPLOYF == 1, 1, 0),
+         INSUREA_RC = replace(as.character(INSUREA), which(INSUREA == 1), "A"),
+         INSUREB_RC = replace(as.character(INSUREB), which(INSUREB == 1), "B"),
+         INSUREC_RC = replace(as.character(INSUREC), which(INSUREC == 1), "C"),
+         INSURED_RC = replace(as.character(INSURED), which(INSURED == 1), "D"),
+         INSUREE_RC = replace(as.character(INSUREE), which(INSUREE == 1), "E"),
+         INSUREF_RC = replace(as.character(INSUREF), which(INSUREF == 1), "F"),
+         INSUREG_RC = replace(as.character(INSUREG), which(INSUREG == 1), "G"),
+         INSUREH_RC = replace(as.character(INSUREH), which(INSUREH == 1), "H")) %>%
+  unite("INSURE_RC", sep = "", remove = FALSE,
+        INSUREA_RC, INSUREB_RC, INSUREC_RC, INSURED_RC, 
+        INSUREE_RC, INSUREF_RC, INSUREG_RC, INSUREH_RC) %>%
+  select(-matches("^INSURE[[:alpha:]]_RC")) %>%
+  mutate(INSURE_RC = str_replace_all(INSURE_RC, "0", "")) %>%
+  mutate(INSURE_RC = case_when(INSURE_RC == "A" ~ "Not insured",
+                               INSURE_RC == "77777777" ~ "Don't know",
+                               TRUE ~ "Insured"))
+print("Insurance 'Other' included as 'Insured' until further notice.")
 
-save(acasi, acasi2, file = "acasi.RData")
+save(acasi2, file = "acasi.RData")
