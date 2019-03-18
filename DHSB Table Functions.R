@@ -38,7 +38,7 @@ table_ManyBinary <- function (x, header, variables, n = NULL, keep = NULL) {
             spread(SITE_RC, N)
         )
       } %>%
-      mutate(Variable = "Skipped/Refused/Missing")
+      mutate(Variable = "Skipped/Refuse/Missing")
   } else {
     nonbinary <- NULL
   }
@@ -169,14 +169,14 @@ table_OneFactor <- function (x, varString, header = varString,
             spread(SITE_RC, N)
         )
       } %>%
-      mutate(Variable = "Skipped/Refused/Missing")
+      mutate(Variable = "Skipped/Refuse/Missing")
   } else {
     missing <- NULL
   }
   
   x <- x %>%
     select(SITE_RC, varString) %>%
-    filter(!!varQuo != "Skipped" & !!varQuo != "Refused to answer") %>%
+    filter(!!varQuo != "Skipped" & !!varQuo != "Refuse to answer") %>%
     mutate_at(vars(one_of(varString)), funs(factor))
   
   freqLevels <- x %>%
