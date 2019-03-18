@@ -18,6 +18,7 @@ library(kableExtra)
 #####Load data
 setwd("C:/Users/ANorthrup/Documents/ETAC_DHSB")
 load("acasi.RData")
+source("DHSB Table Functions.R")
 ```
 
 ```{r}
@@ -36,10 +37,9 @@ load("acasi.RData")
 demo <- acasi2 %>%
   select(-EMPLOY, -RACE,
          -starts_with("DRUG"), -starts_with("MTU"), -starts_with("S56")) %>%
-  rename(Site = SITE_RC, Age = AGE) %>%
-  mutate(`Age Groups` = as.factor(case_when(Age < 18 ~ "Under 18 Years",
-                                            Age < 25 ~ "18-24 Years",
-                                            Age >= 25 ~ "25-34")),
+  mutate(`Age Groups` = as.factor(case_when(AGE < 18 ~ "Under 18 Years",
+                                            AGE < 25 ~ "18-24 Years",
+                                            AGE >= 25 ~ "25-34")),
          SCREEN5 = fct_recode(as.factor(SCREEN5),
                               "Within past 12 months" = "1", "More than 12 months ago" = "2",
                               "Don't know/Not sure"   = "7", "Refuse to answer"        = "8"),
@@ -53,8 +53,8 @@ demo <- acasi2 %>%
   mutate_at(vars(contains("CARE"), -CARELHIV), funs(as.factor(case_when(. == 0   ~ "No",
                                                                         . <= 99  ~ "Yes",
                                                                         . >  99  ~ "Refuse to answer")))) %>%
-  unite("SitePID", Site, PID, remove = FALSE) %>%
-  arrange(Site, PID) %>%
+  unite("SitePID", SITE_RC, PID, remove = FALSE) %>%
+  arrange(SITE_RC, PID) %>%
   rename(Gender = GENDER_RC,
          `Sex at Birth` = SEXBRTH,
          `Sexual Orientation` = ORIENT_RC,
@@ -66,16 +66,9 @@ demo <- acasi2 %>%
          `Ethnicity and Race` = RACE_RC,
          Student = EMPLOYA, `Full-time employed` = EMPLOYB, `Part-time employed` = EMPLOYC,
          Disabled = EMPLOYD, `Unemployed` = EMPLOYE_RC,
-         `No insurance`                 = INSUREA, Medicaid            = INSUREB, Medicare         = INSUREC, 
-         `Private or employer-provided` = INSURED, `Student insurance` = INSUREE, `Through parent` = INSUREF, 
-         `Through partner`              = INSUREG, `Other insurance`   = INSUREH,
          `HIV Diagnosis` = SCREEN5,
          `Doctor's visit, non-HIV, past 6 months` = CARED6, 
-         `ER or urgent care, non-HIV, past 6 months` = CAREE6,
-         `Hospital stay, non-HIV, past 6 months` = CAREH6,
-         `Doctor's visit, HIV, past 6 months` = CAREHV06,
-         `Doctor's visit, HIV, past 12 months` = CAREHV12,
-         `Doctor's visit, HIV, lifetime` = CARELHIV)
+         `Doctor's visit, HIV, past 6 months` = CAREHV06)
 ```
 
 ```{r}
@@ -96,20 +89,20 @@ tab1_OneFactor <- function (x, varString, header = varString, varRelevel = NULL)
       as.data.frame(., stringsAsFactors = FALSE) %>%
       setNames(c("Variable", "N")) %>%
       mutate(Percent = percent(N / sum(N), accuracy = 0.1),
-             Site = "Overall"),
+             SITE_RC = "Overall"),
     x %>%
-      select(Site, !!sym(varString)) %>%
+      select(SITE_RC, !!sym(varString)) %>%
       table() %>%
       as.data.frame(., stringsAsFactors = FALSE) %>%
-      setNames(c("Site", "Variable", "N")) %>%
-      group_by(Site) %>%
+      setNames(c("SITE_RC", "Variable", "N")) %>%
+      group_by(SITE_RC) %>%
       mutate(Percent = percent(N / sum(N), accuracy = 0.1))
   ) %>%
     unite("Frequency", N, Percent, sep = " (") %>%
     mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)"),
            Variable = as.character(Variable)) %>%
-    spread(Site, Frequency) %>%
-    select(Variable, Overall, levels(x$Site)) %>%
+    spread(SITE_RC, Frequency) %>%
+    select(Variable, Overall, levels(x$SITE_RC)) %>%
     {
       bind_rows(
         tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
@@ -143,10 +136,10 @@ tab1_ManyBinary <- function (x, ..., header = NULL, response = "Yes") {
                                          mutate(Variable = str_replace(Variable, "_P", "")),
                                        by = "Variable")
                            } %>%
-      mutate(Site = "Overall"),
+      mutate(SITE_RC = "Overall"),
     x %>%
-      group_by(Site) %>%
-      select(Site, !!! selectVars) %>%
+      group_by(SITE_RC) %>%
+      select(SITE_RC, !!! selectVars) %>%
       summarize_all(funs(N = length(which(. == response)),
                          P = length(which(. == response)) /
                            length(which(!is.na(.))))) %>%
@@ -157,14 +150,14 @@ tab1_ManyBinary <- function (x, ..., header = NULL, response = "Yes") {
                                        select(., -contains("_N")) %>%
                                          gather("Variable", "P", contains("_P")) %>%
                                          mutate(Variable = str_replace(Variable, "_P", "")),
-                                       by = c("Variable", "Site"))
+                                       by = c("Variable", "SITE_RC"))
                            } %>%
-      mutate(Site = as.character(Site))) %>%
+      mutate(SITE_RC = as.character(SITE_RC))) %>%
     mutate(P = percent(P, accuracy = 0.1)) %>%
     unite("Metric", N, P, sep = " (") %>%
     mutate(Metric = str_replace(Metric, "(.*)", "\\1)")) %>%
-    spread(Site, Metric) %>%
-    select(Variable, Overall, levels(x$Site)) %>%
+    spread(SITE_RC, Metric) %>%
+    select(Variable, Overall, levels(x$SITE_RC)) %>%
     mutate(Variable = factor(Variable, levels = selectStrings)) %>%
     arrange(Variable) %>%
     mutate(Variable = as.character(Variable)) %>%
@@ -188,16 +181,16 @@ table1 <- bind_rows(
   bind_rows(
     demo %>%
       summarize(Frequency = n()) %>%
-      mutate(Site = "Overall"),
+      mutate(SITE_RC = "Overall"),
     demo %>%
-      group_by(Site) %>%
+      group_by(SITE_RC) %>%
       summarize(Frequency = n()) %>%
-      mutate(Site = as.character(Site))
+      mutate(SITE_RC = as.character(SITE_RC))
   ) %>%
     mutate(Frequency = as.character(Frequency)) %>%
-    spread(Site, Frequency) %>%
+    spread(SITE_RC, Frequency) %>%
     mutate(Variable = "Number of Participants") %>%
-    select(Variable, Overall, levels(demo$Site)),
+    select(Variable, Overall, levels(demo$SITE_RC)),
   #Age groups
   tab1_OneFactor(demo, varString = "Age Groups", 
                  varRelevel = c("Under 18 Years")),
@@ -218,7 +211,7 @@ table1 <- bind_rows(
   #Orientation
   tab1_OneFactor(demo, varString = "Sexual Orientation",
                  varRelevel = c("Straight",
-                                "Lesbian or gay",
+                                "Gay or lesbian",
                                 "Bisexual")),
   #Education
   tab1_OneFactor(demo, varString = "Education", 
@@ -239,9 +232,9 @@ table1 <- bind_rows(
           "]"
         ))
       ) %>%
-      mutate(Site = "Overall"),
+      mutate(SITE_RC = "Overall"),
     demo %>%
-      group_by(Site) %>%
+      group_by(SITE_RC) %>%
       summarize(Metric = as.character(
         paste0(
           median(`Income, Last Month`, na.rm = TRUE), " [",
@@ -250,10 +243,10 @@ table1 <- bind_rows(
           "]"
         ))
       ) %>%
-      mutate(Site = as.character(Site))) %>%
-    spread(Site, Metric) %>%
+      mutate(SITE_RC = as.character(SITE_RC))) %>%
+    spread(SITE_RC, Metric) %>%
     mutate(Variable = "   Income") %>%
-    select(Variable, Overall, levels(demo$Site)) %>%
+    select(Variable, Overall, levels(demo$SITE_RC)) %>%
     {
       bind_rows(
         tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
@@ -283,34 +276,20 @@ table2 <- bind_rows(
                  varRelevel = c("Within past 12 months",
                                 "More than 12 months ago")),
   #Insurance
-  tab1_ManyBinary(
-    demo %>%
-      mutate(INSURE = replace(INSURE, which(INSURE == 97), "Yes")) %>%
-      rename(`Don't know/Not Sure` = INSURE), 
-    header = "Insurance",
-    `No insurance`, Medicaid, Medicare, `Private or employer-provided`, 
-    `Student insurance`, `Through parent`, `Through partner`, `Other insurance`, 
-    `Don't know/Not Sure`
-  ),
+  table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
   #Health care history, 6 months
   bind_rows(
     tab1_ManyBinary(
       demo, header = "Recent Health Care",
       `Doctor's visit, non-HIV, past 6 months`, 
-      `ER or urgent care, non-HIV, past 6 months`,
-      `Hospital stay, non-HIV, past 6 months`,
-      `Doctor's visit, HIV, past 6 months`,
-      `Doctor's visit, HIV, past 12 months`,
-      `Doctor's visit, HIV, lifetime`
-    ),
+      `Doctor's visit, HIV, past 6 months`
+    ) %>%
+      add_row(Variable = "Viral Load, Median [IQR]") %>%
+      add_row(Variable = "Viral Load"),
     tab1_ManyBinary(
       demo,
       `Doctor's visit, non-HIV, past 6 months`, 
-      `ER or urgent care, non-HIV, past 6 months`,
-      `Hospital stay, non-HIV, past 6 months`,
       `Doctor's visit, HIV, past 6 months`,
-      `Doctor's visit, HIV, past 12 months`,
-      `Doctor's visit, HIV, lifetime`,
       response = "Refuse to answer"
     ) %>%
       filter(!is.na(Overall))
@@ -342,18 +321,18 @@ kable(table1 %>%
         "Table 1. Sociodemographic characteristics of youth and young people living with HIV"
       ) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
-  group_rows("Age Group, N (%)", 2, 4) %>%
-  group_rows("HIV Diagnosis, N (%)", 5, 7) %>%
-  group_rows("Sex at Birth, N (%)", 8, 9) %>%
-  group_rows("Gender, N (%)", 10, 13) %>%
-  group_rows("Sexual Orientation, N (%)", 14, 17) %>%
-  group_rows("Relationship Status, N (%)", 18, 21) %>%
-  group_rows("Education, N (%)", 22, 24) %>%
-  group_rows("Income, Median [IQR]", 25, 25) %>%
-  group_rows("Residence, Last 7 Days, N (%)", 26, 32) %>%
-  group_rows("Incarceration, N (%)", 33, 33) %>%
-  group_rows("Ethnicity and Race, N (%)", 34, 38) %>%
-  group_rows("Employment, N (%)", 39, 43)
+  # group_rows("Age Group, N (%)", 2, 4) %>%
+  # group_rows("HIV Diagnosis, N (%)", 5, 7) %>%
+  # group_rows("Sex at Birth, N (%)", 8, 9) %>%
+  # group_rows("Gender, N (%)", 10, 13) %>%
+  # group_rows("Sexual Orientation, N (%)", 14, 17) %>%
+  # group_rows("Relationship Status, N (%)", 18, 21) %>%
+  # group_rows("Education, N (%)", 22, 24) %>%
+  # group_rows("Income, Median [IQR]", 25, 25) %>%
+  # group_rows("Residence, Last 7 Days, N (%)", 26, 32) %>%
+  # group_rows("Incarceration, N (%)", 33, 33) %>%
+  # group_rows("Ethnicity and Race, N (%)", 34, 38) %>%
+  # group_rows("Employment, N (%)", 39, 43)
 ```
 
 ### Table 2
@@ -363,9 +342,9 @@ kable(table2 %>%
       caption = "Table 2. HIV-related health, healthcare utilization, and other characteristics that may relate to digital health seeking"
       ) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
-  group_rows("Insurance, N (%)", 1, 9) %>%
-  group_rows("Recent Health Care, N (%)", 10, 18) %>%
-  add_indent(c(12, 15, 17))
+  # group_rows("Insurance, N (%)", 1, 9) %>%
+  # group_rows("Recent Health Care, N (%)", 10, 18) %>%
+  # add_indent(c(12, 15, 17))
 ```
 
 ```{r eval = FALSE}
