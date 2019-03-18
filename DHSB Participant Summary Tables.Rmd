@@ -72,109 +72,6 @@ demo <- acasi2 %>%
 ```
 
 ```{r}
-#####Create summary tables
-#Functions
-tab1_OneFactor <- function (x, varString, header = varString, varRelevel = NULL) {
-  varName <- str_replace(varString, " ", ".")
-  if (!is.null(varRelevel)) {
-    varRelevel <- c(paste0(header, ", N (%)"), 
-                    paste0("   ", varRelevel))
-  } else {
-    varRelevel <- c(paste0(header, ", N (%)"))
-  }
-  bind_rows(
-    x %>%
-      select(varString) %>%
-      table() %>%
-      as.data.frame(., stringsAsFactors = FALSE) %>%
-      setNames(c("Variable", "N")) %>%
-      mutate(Percent = percent(N / sum(N), accuracy = 0.1),
-             SITE_RC = "Overall"),
-    x %>%
-      select(SITE_RC, !!sym(varString)) %>%
-      table() %>%
-      as.data.frame(., stringsAsFactors = FALSE) %>%
-      setNames(c("SITE_RC", "Variable", "N")) %>%
-      group_by(SITE_RC) %>%
-      mutate(Percent = percent(N / sum(N), accuracy = 0.1))
-  ) %>%
-    unite("Frequency", N, Percent, sep = " (") %>%
-    mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)"),
-           Variable = as.character(Variable)) %>%
-    spread(SITE_RC, Frequency) %>%
-    select(Variable, Overall, levels(x$SITE_RC)) %>%
-    {
-      bind_rows(
-        tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
-                ~`New York`, ~Chicago, ~Cleveland, ~Hershey, ~Philadelphia,
-                ~`San Francisco`, ~`Winston-Salem`, ~`St. Louis`,
-                paste0(header, ", N (%)"), 
-                NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-        mutate(., Variable = gsub("(.*)", "   \\1", Variable))
-      )
-    } %>%
-    mutate(Variable = fct_relevel(as.factor(Variable), varRelevel)) %>%
-    arrange(Variable) %>%
-    mutate(Variable = as.character(Variable))
-}
-
-tab1_ManyBinary <- function (x, ..., header = NULL, response = "Yes") {
-  selectVars <- quos(...)
-  selectStrings <- gsub("~|`", "", as.character(selectVars))
-  bind_rows(
-    x %>%
-      select(!!! selectVars) %>%
-      summarize_all(funs(N = length(which(. == response)),
-                         P = length(which(. == response)) /
-                           length(which(!is.na(.))))) %>%
-                           {
-                             full_join(select(., -contains("_P")) %>%
-                                         gather("Variable", "N", contains("_N")) %>%
-                                         mutate(Variable = str_replace(Variable, "_N", "")),
-                                       select(., -contains("_N")) %>%
-                                         gather("Variable", "P", contains("_P")) %>%
-                                         mutate(Variable = str_replace(Variable, "_P", "")),
-                                       by = "Variable")
-                           } %>%
-      mutate(SITE_RC = "Overall"),
-    x %>%
-      group_by(SITE_RC) %>%
-      select(SITE_RC, !!! selectVars) %>%
-      summarize_all(funs(N = length(which(. == response)),
-                         P = length(which(. == response)) /
-                           length(which(!is.na(.))))) %>%
-                           {
-                             full_join(select(., -contains("_P")) %>%
-                                         gather("Variable", "N", contains("_N")) %>%
-                                         mutate(Variable = str_replace(Variable, "_N", "")),
-                                       select(., -contains("_N")) %>%
-                                         gather("Variable", "P", contains("_P")) %>%
-                                         mutate(Variable = str_replace(Variable, "_P", "")),
-                                       by = c("Variable", "SITE_RC"))
-                           } %>%
-      mutate(SITE_RC = as.character(SITE_RC))) %>%
-    mutate(P = percent(P, accuracy = 0.1)) %>%
-    unite("Metric", N, P, sep = " (") %>%
-    mutate(Metric = str_replace(Metric, "(.*)", "\\1)")) %>%
-    spread(SITE_RC, Metric) %>%
-    select(Variable, Overall, levels(x$SITE_RC)) %>%
-    mutate(Variable = factor(Variable, levels = selectStrings)) %>%
-    arrange(Variable) %>%
-    mutate(Variable = as.character(Variable)) %>%
-    {
-      bind_rows(
-        tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
-                ~`New York`, ~Chicago, ~Cleveland, ~Hershey, ~Philadelphia,
-                ~`San Francisco`, ~`Winston-Salem`, ~`St. Louis`,
-                paste0(header, ", N (%)"), 
-                NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-        mutate(., Variable = gsub("(.*)", "   \\1", Variable))
-      )
-    }
-}
-```
-
-```{r}
 #####Table 1: participant characteristics summary
 table1 <- bind_rows(
   #Number of participants
@@ -192,31 +89,31 @@ table1 <- bind_rows(
     mutate(Variable = "Number of Participants") %>%
     select(Variable, Overall, levels(demo$SITE_RC)),
   #Age groups
-  tab1_OneFactor(demo, varString = "Age Groups", 
-                 varRelevel = c("Under 18 Years")),
+  table_OneFactor(demo, varString = "Age Groups",
+                  varRelevel = c("Under 18 Years", "18-24 Years")),
   #Ethnicity/Race
-  tab1_OneFactor(demo, varString = "Ethnicity and Race", 
-                 varRelevel = c("Latino",
-                                "Black, Not Latino",
-                                "White, Not Latino",
-                                "White Mixed-Race, Not Latino or Black")),
+  table_OneFactor(demo, varString = "Ethnicity and Race", 
+                  varRelevel = c("Latino",
+                                 "Black, Not Latino",
+                                 "White, Not Latino",
+                                 "White Mixed-Race, Not Latino or Black")),
   #Sex at birth
-  tab1_OneFactor(demo, varString = "Sex at Birth",
-                 varRelevel = c("Male")),
+  table_OneFactor(demo, varString = "Sex at Birth",
+                  varRelevel = c("Male")),
   #Gender
-  tab1_OneFactor(demo, varString = "Gender",
-                 varRelevel = c("Male (cis man)",
-                                "Female (cis woman)",
-                                "Trans person")),
+  table_OneFactor(demo, varString = "Gender",
+                  varRelevel = c("Male (cis man)",
+                                 "Female (cis woman)",
+                                 "Trans person")),
   #Orientation
-  tab1_OneFactor(demo, varString = "Sexual Orientation",
-                 varRelevel = c("Straight",
-                                "Gay or lesbian",
-                                "Bisexual")),
+  table_OneFactor(demo, varString = "Sexual Orientation",
+                  varRelevel = c("Straight",
+                                 "Gay or lesbian",
+                                 "Bisexual")),
   #Education
-  tab1_OneFactor(demo, varString = "Education", 
-                 varRelevel = c("High school, equivalent or less",
-                                "Some post-K12")),
+  table_OneFactor(demo, varString = "Education", 
+                  varRelevel = c("High school, equivalent or less",
+                                 "Some post-K12")),
   #Employment
   tab1_ManyBinary(demo, header = "Employment",
                   Student, `Full-time employed`, 
@@ -258,13 +155,13 @@ table1 <- bind_rows(
       )
     },
   #Residence
-  tab1_OneFactor(demo, varString = "Residence, Last 7 Days", 
-                 varRelevel = c("Rented house/apt/flat",
-                                "Other's house/apt/flat",
-                                "Hotel/Shelter/Rehab",
-                                "Hospital/Medical facility")),
+  table_OneFactor(demo, varString = "Residence, Last 7 Days", 
+                  varRelevel = c("Rented house/apt/flat",
+                                 "Other's house/apt/flat",
+                                 "Hotel/Shelter/Rehab",
+                                 "Hospital/Medical facility")),
   #Jailed
-  tab1_OneFactor(demo, varString = "Ever Jailed", header = "Incarceration") %>%
+  table_OneFactor(demo, varString = "Ever Jailed", header = "Incarceration") %>%
     filter(Variable %in% c("   Yes", "Incarceration, N (%)")) %>%
     mutate(Variable = str_replace(Variable, "   Yes", "   Ever Jailed"))
 )
@@ -272,9 +169,9 @@ table1 <- bind_rows(
 #####Table 2: participant health care summary
 table2 <- bind_rows(
   #HIV Diagnosis
-  tab1_OneFactor(demo, varString = "HIV Diagnosis",
-                 varRelevel = c("Within past 12 months",
-                                "More than 12 months ago")),
+  table_OneFactor(demo, varString = "HIV Diagnosis",
+                  varRelevel = c("Within past 12 months",
+                                 "More than 12 months ago")),
   #Insurance
   table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
   #Health care history, 6 months
@@ -283,9 +180,7 @@ table2 <- bind_rows(
       demo, header = "Recent Health Care",
       `Doctor's visit, non-HIV, past 6 months`, 
       `Doctor's visit, HIV, past 6 months`
-    ) %>%
-      add_row(Variable = "Viral Load, Median [IQR]") %>%
-      add_row(Variable = "Viral Load"),
+    ),
     tab1_ManyBinary(
       demo,
       `Doctor's visit, non-HIV, past 6 months`, 
@@ -303,12 +198,14 @@ table2 <- bind_rows(
                               which(Seq == 2), 
                               "      Refuse to answer")) %>%
     select(-Seq) %>%
-    filter(!(!is.na(Overall) & Overall == "0 (0.0%)")),
+    filter(!(!is.na(Overall) & Overall == "0 (0.0%)")) %>%
+    add_row(Variable = "Viral Load, Median [IQR]") %>%
+    add_row(Variable = "Viral Load"),
   #Relationship Status
-  tab1_OneFactor(demo, varString = "Relationship Status", 
-                 varRelevel = c("Single",
-                                "Dating",
-                                "Partnered/Married"))
+  table_OneFactor(demo, varString = "Relationship Status", 
+                  varRelevel = c("Single",
+                                 "Dating",
+                                 "Partnered/Married"))
 )
 ```
 Note that responses from participants with no baseline survey were replaced with 6 month survey. "Past 6 months" refers to 6 months prior to 6 month survey. If no data was available for a given question (participant had no baseline survey, and question wasn't asked in 6 month survey), the participant was not included in the denominator.  
@@ -320,7 +217,7 @@ kable(table1 %>%
       caption = 
         "Table 1. Sociodemographic characteristics of youth and young people living with HIV"
       ) %>%
-  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"))
   # group_rows("Age Group, N (%)", 2, 4) %>%
   # group_rows("HIV Diagnosis, N (%)", 5, 7) %>%
   # group_rows("Sex at Birth, N (%)", 8, 9) %>%
@@ -341,7 +238,7 @@ kable(table2 %>%
         filter(!is.na(Overall)),
       caption = "Table 2. HIV-related health, healthcare utilization, and other characteristics that may relate to digital health seeking"
       ) %>%
-  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"))
   # group_rows("Insurance, N (%)", 1, 9) %>%
   # group_rows("Recent Health Care, N (%)", 10, 18) %>%
   # add_indent(c(12, 15, 17))
