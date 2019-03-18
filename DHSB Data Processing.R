@@ -265,7 +265,7 @@ acasi2 <- acasi %>%
                                 "Refuse to answer"   = "8"),
          ORIENT_RC = fct_recode(as.factor(ORIENT),
                                 "Straight"          = "1", 
-                                "Lesbian or gay"    = "2", 
+                                "Gay or lesbian"    = "2", 
                                 "Bisexual"          = "3",
                                 "Other orientation" = "4", 
                                 "Other orientation" = "5", 
