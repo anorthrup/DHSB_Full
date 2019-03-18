@@ -46,6 +46,7 @@ table_ManyBinary <- function (x, header, variables, n = NULL, keep = NULL) {
   x <- x %>%
     #Narrow x to only necessary columns
     select(SITE_RC, names(variables)) %>%
+    mutate_if(is.double, funs(as.integer)) %>%
     #Remove rows with non-binary values (refused to answer, skipped)
     filter_if(is.numeric, all_vars(. %in% c(0, 1)))
   #List responses in descending ranked order
@@ -78,9 +79,12 @@ table_ManyBinary <- function (x, header, variables, n = NULL, keep = NULL) {
     variables[which(names(variables) %in% freqCols)],
     freqCols[which(!freqCols %in% names(variables))]
   )
-  if("Other" %in% variables & 
-     names(variables)[which(variables == "Other")] == "") 
-    names(variables)[which(variables == "Other")] <- "Other"
+  if ("Other" %in% variables) {
+    if (names(variables)[which(variables == "Other")] == "") {
+      names(variables)[which(variables == "Other")] <- "Other"
+    }
+  } 
+
   #Summarize responses overall and by site
   full_join( #Create two data frames and join them together: summary of overall, summary by site
     #Summarize overall
