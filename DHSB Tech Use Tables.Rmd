@@ -402,20 +402,6 @@ table3b <- bind_rows(
     arrange(Variable) %>%
     mutate(Variable = as.character(Variable))
 )
-
-wb <- loadWorkbook("DHSB Tables.xlsx")
-#Table3a
-removeWorksheet(wb, "Table 3a")
-addWorksheet(wb, "Table 3a")
-writeData(wb, sheet = "Table 3a", table3a)
-setColWidths(wb, sheet = "Table 3a", cols = 1:ncol(table3a), widths = "auto")
-#Table3b
-removeWorksheet(wb, "Table 3b")
-addWorksheet(wb, "Table 3b")
-writeData(wb, sheet = "Table 3b", table3b)
-setColWidths(wb, sheet = "Table 3b", cols = 1:ncol(table3b), widths = "auto")
-saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
-
 ```
 
 ### Table 3a
@@ -455,5 +441,20 @@ kable(table3b %>%
   group_rows("Dating/Hookup App Activities", 61, 65) %>%
   group_rows("Frequency of Other Uses of Internet", 66, 70) %>%
   group_rows("Ever Used the Internet to...", 71, 77)
+```
+
+```{r saveWorkbook, eval = FALSE}
+wb <- loadWorkbook("DHSB Tables.xlsx")
+#Table3a
+removeWorksheet(wb, "Table 3a")
+addWorksheet(wb, "Table 3a")
+writeData(wb, sheet = "Table 3a", table3a)
+setColWidths(wb, sheet = "Table 3a", cols = 1:ncol(table3a), widths = "auto")
+#Table3b
+removeWorksheet(wb, "Table 3b")
+addWorksheet(wb, "Table 3b")
+writeData(wb, sheet = "Table 3b", table3b)
+setColWidths(wb, sheet = "Table 3b", cols = 1:ncol(table3b), widths = "auto")
+saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 ```
 
