@@ -326,7 +326,22 @@ acasi2 <- acasi %>%
   mutate(INSURE_RC = case_when(INSURE_RC == "A" ~ "Not insured",
                                INSURE_RC == "77777777" ~ "Don't know",
                                TRUE ~ "Insured")) %>%
-  ##Scales
+  #Scales
+  ##Procedure:
+  ###1) Convert any values not included in the item to NA ('Refuse to answer' or 'Don't know')
+  ###2) Check whether all items are NA
+  ###3) If not, sum all items (na.rm = TRUE)
+  
+  ##Social support
+  mutate_at(vars(matches("SOCIALS\\d{1}")),
+            funs(RC = replace(., which(. > 10), NA))) %>%
+  mutate(
+    SOCIALS_RC = case_when(
+      rowSums(is.na(select(., matches("SOCIALS\\d{1}_RC")))) < 3 ~
+        rowSums(select(., matches("SOCIALS\\d{1}_RC")), na.rm = TRUE)
+    )
+  ) %>%
+  ###Youth Health Engagement
   mutate_at(vars(starts_with("HE")), 
             funs(RC = replace(., which(. > 4), NA))) %>%
   mutate(
@@ -339,6 +354,7 @@ acasi2 <- acasi %>%
       na.rm = TRUE
     )
   ) %>%
+  ###Provider Empathy (CARE)
   mutate_at(vars(matches("CARE\\d{2}")),
             funs(RC = replace(., which(. > 5), NA))) %>%
   mutate(
@@ -347,6 +363,7 @@ acasi2 <- acasi %>%
       na.rm = TRUE
     )
   ) %>%
+  ###Physical and Mental Health
   mutate_at(vars(starts_with("MENTALH"), -MENTALH4),
             funs(RC = replace(., which(. > 6), NA))) %>%
   mutate(
@@ -356,11 +373,15 @@ acasi2 <- acasi %>%
     )
   )
 
-cat(c("Insurance 'Other' included as 'Insured' until further notice.",
-      "HE_RC_HAL: Youth Health Engagement subscale Health Access Literacy out of 16 for any 18 or older participants.",
-      "CARE_RC: CARE scale responses 'Refuse to answer' and 'Not applicable' changed to NA",
-      "MENTALH_RC: Mental health scale 'Refuse to answer' changed to NA."),
-    sep = "\n")
+#Insurance 'Other' included as 'Insured' until further notice.
+
+#SOCIALS: 17 NA, 1 Refuse (SOCIALS1)
+#HExx: 17 NA, 717 skipped (HE05)
+#HE_RC_HAL is out of 16 for any 18 or older participants
+#CARExx: 17 NA, 1 Refuse (CARE09)
+#CARE01, CARE03: 116 'Not Applicable'; CARE04, CARE08-CARE10: 117; CARE05-CARE07: 118; CARE02: 119
+#MENTAL_RC: included all 4 MENTALH items; MENTALH3 and MENTALH4 are negatively correlated with others
+#MENTALHx: 0 NA, 1 Refuse (MENTALH1)
 
 save(acasi2, file = "acasi.RData")
 
