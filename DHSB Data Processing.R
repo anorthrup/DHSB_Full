@@ -337,9 +337,19 @@ acasi2 <- acasi %>%
       na.rm = TRUE
     )
   ) %>%
-  select(-matches("HE\\d{2}_RC"))
+  select(-matches("HE\\d{2}_RC")) %>%
+  mutate_at(vars(matches("CARE\\d{2}")),
+            funs(RC = replace(., which(. > 5), NA))) %>%
+  mutate(
+    CARE_RC = rowSums(
+      select(., one_of(c(paste0("CARE0", 1:9, "_RC"), "CARE10_RC"))),
+      na.rm = TRUE
+    )
+  )
 
-print("Insurance 'Other' included as 'Insured' until further notice.")
-print("HE_RC_HAL: Youth Health Engagement subscale Health Access Literacy out of 16 for any 18 or older participants.")
+cat(c("Insurance 'Other' included as 'Insured' until further notice.",
+      "HE_RC_HAL: Youth Health Engagement subscale Health Access Literacy out of 16 for any 18 or older participants.",
+      "CARE_RC: CARE scale includes 'Refuse to answer' and 'Not applicable'"), sep = "\n")
+print()
 
 save(acasi2, file = "acasi.RData")
