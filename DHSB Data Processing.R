@@ -337,12 +337,19 @@ acasi2 <- acasi %>%
       na.rm = TRUE
     )
   ) %>%
-  select(-matches("HE\\d{2}_RC")) %>%
   mutate_at(vars(matches("CARE\\d{2}")),
             funs(RC = replace(., which(. > 5), NA))) %>%
   mutate(
     CARE_RC = rowSums(
-      select(., one_of(c(paste0("CARE0", 1:9, "_RC"), "CARE10_RC"))),
+      select(., matches("CARE\\d{2}_RC")),
+      na.rm = TRUE
+    )
+  ) %>%
+  mutate_at(vars(starts_with("MENTALH"), -MENTALH4),
+            funs(RC = replace(., which(. > 6), NA))) %>%
+  mutate(
+    MENTALH_RC = rowSums(
+      select(., matches("MENTALH\\d_RC")),
       na.rm = TRUE
     )
   )
