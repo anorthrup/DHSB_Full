@@ -255,6 +255,7 @@ acasi2 <- acasi %>%
                             "Cleveland"  = "MHS", "Hershey" = "PSU", 
                             "Philadelphia" = "PFC", "San Francisco" = "SFDPH", 
                             "Winston-Salem"  = "WFU", "St. Louis" = "WUSL"),
+  ##Demographic variables
          GENDER_RC = fct_recode(as.factor(GENDER),
                                 "Male (cis man)"     = "1", 
                                 "Female (cis woman)" = "2",
@@ -325,6 +326,7 @@ acasi2 <- acasi %>%
   mutate(INSURE_RC = case_when(INSURE_RC == "A" ~ "Not insured",
                                INSURE_RC == "77777777" ~ "Don't know",
                                TRUE ~ "Insured")) %>%
+  ##Scales
   mutate_at(vars(starts_with("HE")), 
             funs(RC = replace(., which(. > 4), NA))) %>%
   mutate(
@@ -356,7 +358,13 @@ acasi2 <- acasi %>%
 
 cat(c("Insurance 'Other' included as 'Insured' until further notice.",
       "HE_RC_HAL: Youth Health Engagement subscale Health Access Literacy out of 16 for any 18 or older participants.",
-      "CARE_RC: CARE scale includes 'Refuse to answer' and 'Not applicable'"), sep = "\n")
-print()
+      "CARE_RC: CARE scale responses 'Refuse to answer' and 'Not applicable' changed to NA",
+      "MENTALH_RC: Mental health scale 'Refuse to answer' changed to NA."),
+    sep = "\n")
 
 save(acasi2, file = "acasi.RData")
+
+alpha(acasi2 %>% select(matches("CARE\\d{2}_RC")), cumulative = TRUE)
+alpha(acasi2 %>% select(matches("MENTALH\\d{1}_RC")), 
+      cumulative = TRUE,
+      check.keys = TRUE)
