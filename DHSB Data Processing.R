@@ -315,7 +315,8 @@ acasi2 <- acasi %>%
          INSUREE_RC = replace(as.character(INSUREE), which(INSUREE == 1), "E"),
          INSUREF_RC = replace(as.character(INSUREF), which(INSUREF == 1), "F"),
          INSUREG_RC = replace(as.character(INSUREG), which(INSUREG == 1), "G"),
-         INSUREH_RC = replace(as.character(INSUREH), which(INSUREH == 1), "H")) %>%
+         INSUREH_RC = replace(as.character(INSUREH), which(INSUREH == 1), "H")
+  ) %>%
   unite("INSURE_RC", sep = "", remove = FALSE,
         INSUREA_RC, INSUREB_RC, INSUREC_RC, INSURED_RC, 
         INSUREE_RC, INSUREF_RC, INSUREG_RC, INSUREH_RC) %>%
@@ -323,7 +324,22 @@ acasi2 <- acasi %>%
   mutate(INSURE_RC = str_replace_all(INSURE_RC, "0", "")) %>%
   mutate(INSURE_RC = case_when(INSURE_RC == "A" ~ "Not insured",
                                INSURE_RC == "77777777" ~ "Don't know",
-                               TRUE ~ "Insured"))
+                               TRUE ~ "Insured")) %>%
+  mutate_at(vars(starts_with("HE")), 
+            funs(RC = replace(., which(. > 4), NA))) %>%
+  mutate(
+    HE_RC_HAL = rowSums(
+      select(., one_of(paste0("HE0", 1:5, "_RC"))),
+      na.rm = TRUE
+    ),
+    HE_RC_HSE  = rowSums(
+      select(., one_of(c(paste0("HE0", 6:9, "_RC"), "HE10_RC"))),
+      na.rm = TRUE
+    )
+  ) %>%
+  select(-matches("HE\\d{2}_RC"))
+
 print("Insurance 'Other' included as 'Insured' until further notice.")
+print("HE_RC_HAL: Youth Health Engagement subscale Health Access Literacy out of 16 for any 18 or older participants.")
 
 save(acasi2, file = "acasi.RData")
