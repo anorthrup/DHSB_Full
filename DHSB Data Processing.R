@@ -385,26 +385,91 @@ acasi2 <- acasi %>%
       rowSums(is.na(select(., matches("MENTALH\\d{1}_RC")))) < 10 ~ #Is number of NA < number of items?
         rowSums(select(., matches("MENTALH\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
     )
+  ) %>%
+  ##Email Usage, 4 items
+  mutate_at(vars(starts_with("MTUEX")),
+            funs(RC = replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
+  mutate(
+    MTUEX_RC = case_when(
+      rowSums(is.na(select(., matches("MTUEX\\d{1}_RC")))) < 4 ~ #Is number of NA < number of items?
+        rowSums(select(., matches("MTUEX\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
+    )
+  ) %>%
+  ##Mobile Phone Usage, 9 items
+  mutate_at(vars(starts_with("MTUSPX"), -MTUSPX01, -MTUSPX02, -MTUSPX03),
+            funs(RC = replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
+  mutate(
+    MTUSPX_RC = case_when(
+      rowSums(is.na(select(., one_of(paste0("MTUSPX", 
+                                            str_pad(c(4:9, 10:12), width = 2, pad = 0),
+                                            "_RC"
+      ))))) < 9 ~ #Is number of NA < number of items?
+        rowSums(select(., one_of(paste0("MTUSPX", 
+                                        str_pad(c(4:9, 10:12), width = 2, pad = 0),
+                                        "_RC"
+        ))), na.rm = TRUE) #If so, sum columns
+    )
+  ) %>%
+  ##Internet Search, 6 items
+  mutate_at(vars(starts_with("MTUIX")),
+            funs(RC = replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
+  mutate(
+    MTUIX_RC = case_when(
+      rowSums(is.na(select(., matches("MTUIX\\d{1}_RC")))) < 6 ~ #Is number of NA < number of items?
+        rowSums(select(., matches("MTUIX\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
+    )
+  ) %>%
+  ##General Social Media Usage, 9 items
+  mutate_at(vars(starts_with("MTUSNX")),
+            funs(RC = replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
+  mutate(
+    MTUSNX_RC = case_when(
+      rowSums(is.na(select(., one_of(paste0("MTUSNX0", 1:9))))) < 9 ~ #Is number of NA < number of items?
+        rowSums(select(., one_of(paste0("MTUSNX0", 1:9))), na.rm = TRUE) #If so, sum columns
+    )
+  ) %>%
+  ##MTUAX01-04, 9-11  (Positive Attitudes Technology), 7 items
+  mutate_at(vars(one_of(paste0("MTUAX", 
+                               str_pad(c(1:4, 9:11), width = 2, pad = 0)))),
+            funs(RC = replace(., which(. > 5), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
+  mutate(
+    MTUAX_RC_Pos = case_when(
+      rowSums(is.na(select(., one_of(
+        paste0("MTUAX", str_pad(c(1:4, 9:11), width = 2, pad = 0))
+      )))) < 7 ~ #Is number of NA < number of items?
+        rowSums(select(., one_of(
+          paste0("MTUAX", str_pad(c(1:4, 9:11), width = 2, pad = 0))
+        )),
+        na.rm = TRUE) #If so, sum columns
+    )
   )
 
 #Insurance 'Other' included as 'Insured' until further notice.
 
 #SOCIALS: 17 NA, 1 Refuse (SOCIALS1)
 #STIGMA: 0 NA, 1 Refuse STIGMA06, 1 Refuse STIGMA08
-#HExx: 17 NA, 717 skipped (HE05): exclude HE05 from HAL subscale; 0-26 "Don't know" in each item
-#CARExx: 17 NA, 1 Refuse (CARE09)
+#HE: 17 NA, 717 skipped (HE05): exclude HE05 from HAL subscale; 0-26 "Don't know" in each item
+#CARE: 17 NA, 1 Refuse (CARE09)
 #CARE01, CARE03: 116 'Not Applicable'; CARE04, CARE08-CARE10: 117; CARE05-CARE07: 118; CARE02: 119
-#MENTALHx: 0 NA, 1 Refuse (MENTALH1)
+#MENTALH: 0 NA, 1 Refuse (MENTALH1)
+#MTUEX: 17 NA, 1 Refuse MTUEX2
+#MTUSPX: 17 NA, 0 Refuse; excluded MTSPX01, MTSPX02 (Texting), MTSPX03 (Email)
+#MTUIX: 17 NA, 0 Refuse
+#MTUSNX: 17 NA, 1 Refuse (MTUSNX05), 67 skipped; excluded MTUSNX10-12 (sex partners/relationships, sex health, trans-specific)
+#MTUAX: 17 NA, 1 Refuse (MTUAX 08, 09, 13, 14)
+
 #May have to treat 17 missing as MCAR
 acasi2 %>% 
   select(one_of(c("SOCIALS_RC", "STIGMA_RC", "HE_RC_HAL", "HE_RC_HSE", 
-                  "CARE_RC", "MENTALH_RC"))) %>%
+                  "CARE_RC", "MENTALH_RC", "MTUEX_RC", "MTUSPX_RC",
+                  "MTUIX_RC", "MTUSNX_RC"))) %>%
   map(~length(which(is.na(.))))
 
 #Check all that apply that still need to be recoded:
 #> EMPLOY
 #> DISC
 #> Substance use
+#> MTUSN (Social Media, Sexual, Social Networking Sites/Apps Used)
 
 save(acasi2, file = "acasi.RData")
 
@@ -421,12 +486,36 @@ alphaCARE <- alpha(acasi2 %>% select(matches("CARE\\d{2}_RC")),
                    cumulative = TRUE)
 alphaMENTALH <- alpha(acasi2 %>% select(matches("MENTALH\\d{1}_RC")), 
                       cumulative = TRUE)
-tribble(
-  ~Scale,                       ~Alpha,
-  "Social Support",             alphaSOCIALS[["total"]]$raw_alpha,
-  "HIV-related Stigma",         alphaSTIGMA[["total"]]$raw_alpha,
-  "Health Access Literacy",     alphaHAL[["total"]]$raw_alpha,
-  "Health Self-Efficacy",       alphaHSE[["total"]]$raw_alpha,
-  "Provider Empathy",           alphaCARE[["total"]]$raw_alpha,
-  "Physical and Mental Health", alphaMENTALH[["total"]]$raw_alpha
+alphaMTUEX <- alpha(acasi2 %>% select(matches("MTUEX\\d{1}_RC")), 
+                    cumulative = TRUE)
+alphaMTUSPX <- alpha(acasi2 %>% select(
+  one_of(paste0("MTUSPX", str_pad(c(4:9, 10:12), width = 2, pad = 0), "_RC"))),
+                     cumulative = TRUE)
+alphaMTUIX <- alpha(acasi2 %>% select(matches("MTUIX\\d{1}_RC")), 
+                    cumulative = TRUE)
+alphaMTUSNX <- alpha(acasi2 %>% select(one_of(paste0("MTUSNX0", 1:9, "_RC"))),
+                     cumulative = TRUE)
+alphaMTUAXPos <- alpha(acasi2 %>% select(one_of(
+  paste0("MTUAX", str_pad(c(1:4, 9:11), width = 2, pad = 0), "_RC")
+)),
+cumulative = TRUE)
+alphaTable <- function (alpha, description) {
+  tribble(
+    ~Scale,      ~Alpha,                     ~Items,     ~Variable,
+    description, alpha[["total"]]$raw_alpha, alpha$nvar, unique(str_replace(names(alpha$keys), "([[:alpha:]]*)(\\d+)(_RC)", "\\1"))
+  )
+}
+bind_rows(
+  alphaTable(alphaSOCIALS,  "Social Support"),
+  alphaTable(alphaSTIGMA,   "HIV-related Stigma"),
+  alphaTable(alphaHAL,      "Health Access Literacy"),
+  alphaTable(alphaHSE,      "Health Self-Efficacy"),
+  alphaTable(alphaCARE,     "Provider Empathy"),
+  alphaTable(alphaMENTALH,  "Physical and Mental Health"),
+  alphaTable(alphaMTUEX,    "Email Usage"),
+  alphaTable(alphaMTUSPX,   "Mobile Phone Usage"),
+  alphaTable(alphaMTUIX,    "Internet Search"),
+  alphaTable(alphaMTUSNX,   "Social Media Usage"),
+  alphaTable(alphaMTUAXPos, "Positive Technology Attitudes")
 )
+
