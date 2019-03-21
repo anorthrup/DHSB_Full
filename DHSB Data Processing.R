@@ -392,7 +392,21 @@ acasi2 %>%
 
 save(acasi2, file = "acasi.RData")
 
-alpha(acasi2 %>% select(matches("CARE\\d{2}_RC")), 
-      cumulative = TRUE)
-alpha(acasi2 %>% select(matches("MENTALH\\d{1}_RC")), 
-      cumulative = TRUE)
+alphaSOCIALS <- alpha(acasi2 %>% select(matches("SOCIALS\\d{1}_RC")), 
+                      cumulative = TRUE)
+alphaHAL <- alpha(acasi2 %>% select(one_of(paste0("HE0", 1:4, "_RC"))), 
+                  cumulative = TRUE)
+alphaHSE <- alpha(acasi2 %>% select(one_of(c(paste0("HE0", 6:9, "_RC"), "HE10_RC"))), 
+                  cumulative = TRUE)
+alphaCARE <- alpha(acasi2 %>% select(matches("CARE\\d{2}_RC")), 
+                   cumulative = TRUE)
+alphaMENTALH <- alpha(acasi2 %>% select(matches("MENTALH\\d{1}_RC")), 
+                      cumulative = TRUE)
+tribble(
+  ~Scale,                       ~Alpha,
+  "Social Support",             alphaSOCIALS[["total"]]$raw_alpha,
+  "Health Access Literacy",     alphaHAL[["total"]]$raw_alpha,
+  "Health Self-Efficacy",       alphaHSE[["total"]]$raw_alpha,
+  "Provider Empathy",           alphaCARE[["total"]]$raw_alpha,
+  "Physical and Mental Health", alphaMENTALH[["total"]]$raw_alpha
+)
