@@ -328,64 +328,71 @@ acasi2 <- acasi %>%
                                TRUE ~ "Insured")) %>%
   #Scales
   ##Procedure:
-  ###1) Convert any values not included in the item to NA ('Refuse to answer' or 'Don't know')
-  ###2) Check whether all items are NA
-  ###3) If not, sum all items (na.rm = TRUE)
+  ##> 1) Convert any values not included in the item to NA ("Refuse to answer", "Don't know", or "Skipped")
+  ##>>     Each variable coded as integers; values above certain integer are generally refuse, don't know, skip
+  ##> 2) Check whether all items are NA (Does number of NA = number of items?)
+  ##> 3) If not, sum all items (ignoring NA values: na.rm = TRUE)
   
-  ##Social support
+  ##Social support, 3 items
   mutate_at(vars(matches("SOCIALS\\d{1}")),
-            funs(RC = replace(., which(. > 10), NA))) %>%
+            funs(RC = replace(., which(. > 10), NA))) %>% #Values of 0-10 expected; above that = Refuse/Skip
   mutate(
     SOCIALS_RC = case_when(
-      rowSums(is.na(select(., matches("SOCIALS\\d{1}_RC")))) < 3 ~
-        rowSums(select(., matches("SOCIALS\\d{1}_RC")), na.rm = TRUE)
+      rowSums(is.na(select(., matches("SOCIALS\\d{1}_RC")))) < 3 ~ #Is number of NA < number of items?
+        rowSums(select(., matches("SOCIALS\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ###Youth Health Engagement
-  mutate_at(vars(starts_with("HE")), 
-            funs(RC = replace(., which(. > 4), NA))) %>%
+  ##Youth Health Engagement, 10 items
+  ##> Health Access Literacy (HAL): HE01-HE05; exclude HE05 because all but 17 participants skipped (17 under age of 18)
+  ##> Health Self-Efficacy (HSE): HE06-HE10
+  mutate_at(vars(starts_with("HE"), -HE05),
+            funs(RC = replace(., which(. > 4), NA))) %>% #Values of 1-4 expected; 7 = Don't Know, 8 = Refuse, 9 = Skip
   mutate(
-    HE_RC_HAL = rowSums(
-      select(., one_of(paste0("HE0", 1:5, "_RC"))),
-      na.rm = TRUE
+    HE_RC_HAL = case_when(
+      rowSums(is.na(select(., one_of(paste0("HE0", 1:4, "_RC"))))) < 4 ~ #Is number of NA < number of items?
+        rowSums(select(., one_of(paste0("HE0", 1:4, "_RC"))), na.rm = TRUE) #If so, sum columns
     ),
-    HE_RC_HSE  = rowSums(
-      select(., one_of(c(paste0("HE0", 6:9, "_RC"), "HE10_RC"))),
-      na.rm = TRUE
+    HE_RC_HSE = case_when(
+      rowSums(is.na(select(., one_of(c(paste0("HE0", 6:9, "_RC"), "HE10_RC"))))) < 5 ~ #Is number of NA < number of items?
+        rowSums(select(., one_of(c(paste0("HE0", 6:9, "_RC"), "HE10_RC"))), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ###Provider Empathy (CARE)
+  ##Provider Empathy (CARE), 10 items
   mutate_at(vars(matches("CARE\\d{2}")),
-            funs(RC = replace(., which(. > 5), NA))) %>%
+            funs(RC = replace(., which(. > 5), NA))) %>% #Values of 1-5 expected; 8 = refuse, 9 = "Not Applicable"
   mutate(
-    CARE_RC = rowSums(
-      select(., matches("CARE\\d{2}_RC")),
-      na.rm = TRUE
+    CARE_RC = case_when(
+      rowSums(is.na(select(., matches("CARE\\d{2}_RC")))) < 10 ~ #Is number of NA < number of items?
+        rowSums(select(., matches("CARE\\d{2}_RC")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ###Physical and Mental Health
+  ##Physical and Mental Health, 4 items
+  ##> Exclude MENTALH4 because it differs from MENTALH1-3
   mutate_at(vars(starts_with("MENTALH"), -MENTALH4),
-            funs(RC = replace(., which(. > 6), NA))) %>%
+            funs(RC = replace(., which(. > 6), NA))) %>% #Values of 1-6 expected; 8 = refuse to answer
   mutate(
-    MENTALH_RC = rowSums(
-      select(., matches("MENTALH\\d_RC")),
-      na.rm = TRUE
+    MENTALH3_RC = 7 - MENTALH3, #Reverse code MENTALH3 because it is negatively correlated with MENTALH1/2
+    MENTALH_RC = case_when(
+      rowSums(is.na(select(., matches("MENTALH\\d{1}_RC")))) < 10 ~ #Is number of NA < number of items?
+        rowSums(select(., matches("MENTALH\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
     )
   )
 
 #Insurance 'Other' included as 'Insured' until further notice.
 
 #SOCIALS: 17 NA, 1 Refuse (SOCIALS1)
-#HExx: 17 NA, 717 skipped (HE05)
-#HE_RC_HAL is out of 16 for any 18 or older participants
+#HExx: 17 NA, 717 skipped (HE05): exclude HE05 from HAL subscale
 #CARExx: 17 NA, 1 Refuse (CARE09)
 #CARE01, CARE03: 116 'Not Applicable'; CARE04, CARE08-CARE10: 117; CARE05-CARE07: 118; CARE02: 119
-#MENTAL_RC: included all 4 MENTALH items; MENTALH3 and MENTALH4 are negatively correlated with others
 #MENTALHx: 0 NA, 1 Refuse (MENTALH1)
+#May have to treat 17 missing as MCAR
+acasi2 %>% 
+  select(one_of(c("SOCIALS_RC", "HE_RC_HAL", "HE_RC_HSE", "CARE_RC", "MENTALH_RC"))) %>%
+  map(~length(which(is.na(.))))
 
 save(acasi2, file = "acasi.RData")
 
-alpha(acasi2 %>% select(matches("CARE\\d{2}_RC")), cumulative = TRUE)
+alpha(acasi2 %>% select(matches("CARE\\d{2}_RC")), 
+      cumulative = TRUE)
 alpha(acasi2 %>% select(matches("MENTALH\\d{1}_RC")), 
-      cumulative = TRUE,
-      check.keys = TRUE)
+      cumulative = TRUE)
