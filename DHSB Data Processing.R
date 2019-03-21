@@ -342,6 +342,15 @@ acasi2 <- acasi %>%
         rowSums(select(., matches("SOCIALS\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
+  ##HIV-related Stigma, 10 items
+  mutate_at(vars(matches("STIGMA\\d{1}")),
+            funs(RC = replace(., which(. > 4), NA))) %>% #Values of 0-4 expected; above that = Refuse
+  mutate(
+    STIGMA_RC = case_when(
+      rowSums(is.na(select(., matches("STIGMA\\d+_RC")))) < 10 ~ #Is number of NA < number of items?
+        rowSums(select(., matches("STIGMA\\d+_RC")), na.rm = TRUE) #If so, sum columns
+    )
+  ) %>%
   ##Youth Health Engagement, 10 items
   ##> Health Access Literacy (HAL): HE01-HE05; exclude HE05 because all but 17 participants skipped (17 under age of 18)
   ##> Health Self-Efficacy (HSE): HE06-HE10
@@ -381,18 +390,28 @@ acasi2 <- acasi %>%
 #Insurance 'Other' included as 'Insured' until further notice.
 
 #SOCIALS: 17 NA, 1 Refuse (SOCIALS1)
-#HExx: 17 NA, 717 skipped (HE05): exclude HE05 from HAL subscale
+#STIGMA: 0 NA, 1 Refuse STIGMA06, 1 Refuse STIGMA08
+#HExx: 17 NA, 717 skipped (HE05): exclude HE05 from HAL subscale; 0-26 "Don't know" in each item
 #CARExx: 17 NA, 1 Refuse (CARE09)
 #CARE01, CARE03: 116 'Not Applicable'; CARE04, CARE08-CARE10: 117; CARE05-CARE07: 118; CARE02: 119
 #MENTALHx: 0 NA, 1 Refuse (MENTALH1)
 #May have to treat 17 missing as MCAR
 acasi2 %>% 
-  select(one_of(c("SOCIALS_RC", "HE_RC_HAL", "HE_RC_HSE", "CARE_RC", "MENTALH_RC"))) %>%
+  select(one_of(c("SOCIALS_RC", "STIGMA_RC", "HE_RC_HAL", "HE_RC_HSE", 
+                  "CARE_RC", "MENTALH_RC"))) %>%
   map(~length(which(is.na(.))))
+
+#Check all that apply that still need to be recoded:
+#> EMPLOY
+#> DISC
+#> Substance use
 
 save(acasi2, file = "acasi.RData")
 
+#####Calculate Cronbach's alpha for scales
 alphaSOCIALS <- alpha(acasi2 %>% select(matches("SOCIALS\\d{1}_RC")), 
+                      cumulative = TRUE)
+alphaSTIGMA <- alpha(acasi2 %>% select(matches("STIGMA\\d+_RC")), 
                       cumulative = TRUE)
 alphaHAL <- alpha(acasi2 %>% select(one_of(paste0("HE0", 1:4, "_RC"))), 
                   cumulative = TRUE)
@@ -405,6 +424,7 @@ alphaMENTALH <- alpha(acasi2 %>% select(matches("MENTALH\\d{1}_RC")),
 tribble(
   ~Scale,                       ~Alpha,
   "Social Support",             alphaSOCIALS[["total"]]$raw_alpha,
+  "HIV-related Stigma",         alphaSTIGMA[["total"]]$raw_alpha,
   "Health Access Literacy",     alphaHAL[["total"]]$raw_alpha,
   "Health Self-Efficacy",       alphaHSE[["total"]]$raw_alpha,
   "Provider Empathy",           alphaCARE[["total"]]$raw_alpha,
