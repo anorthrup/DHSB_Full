@@ -10,7 +10,7 @@ library(rio)
 #Need to save labels for codebook
 
 #00m
-data00mSAS <- import("X:/Projects & Programs/ETAC/Data merged across sites/acasibase.sas7bdat")
+data00mSAS <- import("Data merged across sites/acasibase.sas7bdat")
 ##Save labels
 labels00m <- get_label(data00mSAS) %>% 
   as.data.frame(., stringsAsFactors = FALSE) %>%
@@ -25,7 +25,7 @@ data00mRaw <- read.csv("acasi00mSAS.csv", na.strings = c("", "NA"),
 unlink("acasi00mSAS.csv")
 
 #06m
-data06mSAS <- import("X:/Projects & Programs/ETAC/Data merged across sites/acasi06m.sas7bdat")
+data06mSAS <- import("Data merged across sites/acasi06m.sas7bdat")
 ##Save labels
 labels06m <- get_label(data06mSAS) %>% 
   as.data.frame(., stringsAsFactors = FALSE) %>%
@@ -47,10 +47,10 @@ acasi06mNa <- data06mRaw %>%
   filter(is.na(S56_1) | grepl("\\.\\.\\.\\.\\.", S56_2S))
 acasi00m <- data00mRaw %>%
   filter(!is.na(MTUEX1)) %>%
-  mutate_all(funs(replace(., list = grep("\\.{5}", .), values = NA)))
+  mutate_all(~replace(., list = grep("\\.{5}", .), values = NA))
 acasi06m <- data06mRaw %>%
   filter(!(is.na(S56_1) | grepl("\\.\\.\\.\\.\\.", S56_2S))) %>%
-  mutate_all(funs(replace(., list = grep("\\.{5}", .), values = NA)))
+  mutate_all(~replace(., list = grep("\\.{5}", .), values = NA))
 #Check whether NA cases are repeated in rest of acasi
 ##First paste SITE1 and PID together, then check if in
 which(do.call(paste, c(acasi00m[, c("SITE1", "PID")], sep = "_")) %in%
@@ -61,7 +61,7 @@ which(do.call(paste, c(acasi06m[, c("SITE1", "PID")], sep = "_")) %in%
 
 #Remove variables in 00m which have only missing values
 varRemove00m <- acasi00m %>%
-  summarize_all(funs(length(which(is.na(.))))) %>%
+  summarize_all(~length(which(is.na(.)))) %>%
   gather("Variable", "NumNA") %>%
   filter(NumNA == nrow(acasi00m))
 acasi00m <- acasi00m %>%
@@ -335,7 +335,7 @@ acasi2 <- acasi %>%
   
   ##Social support, 3 items
   mutate_at(vars(matches("SOCIALS\\d{1}")),
-            funs(RC = replace(., which(. > 10), NA))) %>% #Values of 0-10 expected; above that = Refuse/Skip
+            list(RC = ~replace(., which(. > 10), NA))) %>% #Values of 0-10 expected; above that = Refuse/Skip
   mutate(
     SOCIALS_RC = case_when(
       rowSums(is.na(select(., matches("SOCIALS\\d{1}_RC")))) < 3 ~ #Is number of NA < number of items?
@@ -344,7 +344,7 @@ acasi2 <- acasi %>%
   ) %>%
   ##HIV-related Stigma, 10 items
   mutate_at(vars(matches("STIGMA\\d{1}")),
-            funs(RC = replace(., which(. > 4), NA))) %>% #Values of 0-4 expected; above that = Refuse
+            list(RC = ~replace(., which(. > 4), NA))) %>% #Values of 0-4 expected; above that = Refuse
   mutate(
     STIGMA_RC = case_when(
       rowSums(is.na(select(., matches("STIGMA\\d+_RC")))) < 10 ~ #Is number of NA < number of items?
@@ -355,7 +355,7 @@ acasi2 <- acasi %>%
   ##> Health Access Literacy (HAL): HE01-HE05; exclude HE05 because all but 17 participants skipped (17 under age of 18)
   ##> Health Self-Efficacy (HSE): HE06-HE10
   mutate_at(vars(starts_with("HE"), -HE05),
-            funs(RC = replace(., which(. > 4), NA))) %>% #Values of 1-4 expected; 7 = Don't Know, 8 = Refuse, 9 = Skip
+            list(RC = ~replace(., which(. > 4), NA))) %>% #Values of 1-4 expected; 7 = Don't Know, 8 = Refuse, 9 = Skip
   mutate(
     HE_RC_HAL = case_when(
       rowSums(is.na(select(., one_of(paste0("HE0", 1:4, "_RC"))))) < 4 ~ #Is number of NA < number of items?
@@ -368,7 +368,7 @@ acasi2 <- acasi %>%
   ) %>%
   ##Provider Empathy (CARE), 10 items
   mutate_at(vars(matches("CARE\\d{2}")),
-            funs(RC = replace(., which(. > 5), NA))) %>% #Values of 1-5 expected; 8 = refuse, 9 = "Not Applicable"
+            list(RC = ~replace(., which(. > 5), NA))) %>% #Values of 1-5 expected; 8 = refuse, 9 = "Not Applicable"
   mutate(
     CARE_RC = case_when(
       rowSums(is.na(select(., matches("CARE\\d{2}_RC")))) < 10 ~ #Is number of NA < number of items?
@@ -378,7 +378,7 @@ acasi2 <- acasi %>%
   ##Physical and Mental Health, 4 items
   ##> Exclude MENTALH4 because it differs from MENTALH1-3
   mutate_at(vars(starts_with("MENTALH"), -MENTALH4),
-            funs(RC = replace(., which(. > 6), NA))) %>% #Values of 1-6 expected; 8 = refuse to answer
+            list(RC = ~replace(., which(. > 6), NA))) %>% #Values of 1-6 expected; 8 = refuse to answer
   mutate(
     MENTALH3_RC = 7 - MENTALH3, #Reverse code MENTALH3 because it is negatively correlated with MENTALH1/2
     MENTALH_RC = case_when(
@@ -388,7 +388,7 @@ acasi2 <- acasi %>%
   ) %>%
   ##Email Usage, 4 items
   mutate_at(vars(starts_with("MTUEX")),
-            funs(RC = replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
+            list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
     MTUEX_RC = case_when(
       rowSums(is.na(select(., matches("MTUEX\\d{1}_RC")))) < 4 ~ #Is number of NA < number of items?
@@ -397,7 +397,7 @@ acasi2 <- acasi %>%
   ) %>%
   ##Mobile Phone Usage, 9 items
   mutate_at(vars(starts_with("MTUSPX"), -MTUSPX01, -MTUSPX02, -MTUSPX03),
-            funs(RC = replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
+            list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
     MTUSPX_RC = case_when(
       rowSums(is.na(select(., one_of(paste0("MTUSPX", 
@@ -412,7 +412,7 @@ acasi2 <- acasi %>%
   ) %>%
   ##Internet Search, 6 items
   mutate_at(vars(starts_with("MTUIX")),
-            funs(RC = replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
+            list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
     MTUIX_RC = case_when(
       rowSums(is.na(select(., matches("MTUIX\\d{1}_RC")))) < 6 ~ #Is number of NA < number of items?
@@ -421,7 +421,7 @@ acasi2 <- acasi %>%
   ) %>%
   ##General Social Media Usage, 9 items
   mutate_at(vars(starts_with("MTUSNX")),
-            funs(RC = replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
+            list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
   mutate(
     MTUSNX_RC = case_when(
       rowSums(is.na(select(., one_of(paste0("MTUSNX0", 1:9))))) < 9 ~ #Is number of NA < number of items?
@@ -431,7 +431,7 @@ acasi2 <- acasi %>%
   ##MTUAX01-04, 9-11  (Positive Attitudes Technology), 7 items
   mutate_at(vars(one_of(paste0("MTUAX", 
                                str_pad(c(1:4, 9:11), width = 2, pad = 0)))),
-            funs(RC = replace(., which(. > 5), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
+            list(RC = ~replace(., which(. > 5), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
   mutate(
     MTUAX_RC_Pos = case_when(
       rowSums(is.na(select(., one_of(
