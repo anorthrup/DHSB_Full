@@ -4,6 +4,7 @@
 library(tidyverse)
 library(sjlabelled)
 library(rio)
+library(psych)
 
 #####Read data
 #import() doesn't read all missing values the same, must write to and read from CSV and specify NA strings
