@@ -402,17 +402,24 @@ acasi2 <- acasi %>%
         rowSums(select(., matches("MTUEX\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Mobile Phone Usage, 9 items
-  mutate_at(vars(starts_with("MTUSPX"), -MTUSPX01, -MTUSPX02, -MTUSPX03),
+  ##Text Usage, 3 items
+  mutate_at(vars(starts_with("MTUSPX")),
             list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
-    MTUSPX_RC = case_when(
+    MTUSPX_RC_Text = case_when(
+      rowSums(is.na(select(., MTUSPX01, MTUSPX02, MTUSPX12))) < 3 ~
+        rowSums(is.na(select(., MTUSPX01, MTUSPX02, MTUSPX12)))
+    )
+  ) %>%
+  ##Mobile Phone Usage, 9 items
+  mutate(
+    MTUSPX_RC_Smartphone = case_when(
       rowSums(is.na(select(., one_of(paste0("MTUSPX", 
-                                            str_pad(c(4:9, 10:12), width = 2, pad = 0),
+                                            str_pad(3:11, width = 2, pad = 0),
                                             "_RC"
       ))))) < 9 ~ #Is number of NA < number of items?
         rowSums(select(., one_of(paste0("MTUSPX", 
-                                        str_pad(c(4:9, 10:12), width = 2, pad = 0),
+                                        str_pad(3:11, width = 2, pad = 0),
                                         "_RC"
         ))), na.rm = TRUE) #If so, sum columns
     )
@@ -453,19 +460,18 @@ acasi2 <- acasi %>%
 
 #Insurance 'Other' included as 'Insured' until further notice.
 
-#SOCIALS: 17 NA, 1 Refuse (SOCIALS1)
-#STIGMA: 0 NA, 1 Refuse STIGMA06, 1 Refuse STIGMA08
-#HE: 17 NA, 717 skipped (HE05): exclude HE05 from HAL subscale; 0-26 "Don't know" in each item
-#CARE: 17 NA, 1 Refuse (CARE09)
+#SOCIALS: 1 Refuse (SOCIALS1)
+#STIGMA: 1 Refuse STIGMA06, 1 Refuse STIGMA08
+#HE: 717 skipped (HE05): exclude HE05 from HAL subscale; 0-26 "Don't know" in each item
+#CARE: 1 Refuse (CARE09)
 #CARE01, CARE03: 116 'Not Applicable'; CARE04, CARE08-CARE10: 117; CARE05-CARE07: 118; CARE02: 119
-#MENTALH: 0 NA, 1 Refuse (MENTALH1)
-#MTUEX: 17 NA, 1 Refuse MTUEX2
-#MTUSPX: 17 NA, 0 Refuse; excluded MTSPX01, MTSPX02 (Texting), MTSPX03 (Email)
-#MTUIX: 17 NA, 0 Refuse
-#MTUSNX: 17 NA, 1 Refuse (MTUSNX05), 67 skipped; excluded MTUSNX10-12 (sex partners/relationships, sex health, trans-specific)
-#MTUAX: 17 NA, 1 Refuse (MTUAX 08, 09, 13, 14)
+#MENTALH: 1 Refuse (MENTALH1)
+#MTUEX: 1 Refuse MTUEX2
+#MTUSPX: 0 Refuse
+#MTUIX: 0 Refuse
+#MTUSNX: 1 Refuse (MTUSNX05), 67 skipped; excluded MTUSNX10-12 (sex partners/relationships, sex health, trans-specific)
+#MTUAX: 1 Refuse (MTUAX 08, 09, 13, 14)
 
-#May have to treat 17 missing as MCAR
 acasi2 %>% 
   select(one_of(c("SOCIALS_RC", "STIGMA_RC", "HE_RC_HAL", "HE_RC_HSE", 
                   "CARE_RC", "MENTALH_RC", "MTUEX_RC", "MTUSPX_RC",
