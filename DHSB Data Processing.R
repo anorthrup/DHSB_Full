@@ -409,7 +409,7 @@ acasi2 <- acasi %>%
         rowSums(select(., matches("MTUEX\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Text Usage, 3 items
+  ##Text Usage, 3 items (MTUSPX01, MTUSPX02, MTUSPX12)
   mutate_at(vars(starts_with("MTUSPX")),
             list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
@@ -418,7 +418,7 @@ acasi2 <- acasi %>%
         rowSums(is.na(select(., MTUSPX01, MTUSPX02, MTUSPX12)))
     )
   ) %>%
-  ##Mobile Phone Usage, 9 items
+  ##Mobile Phone Usage, 9 items (MTUSPX03 through MTUSPX11)
   mutate(
     MTUSPX_RC_Smartphone = case_when(
       rowSums(is.na(select(., one_of(paste0("MTUSPX", 
@@ -431,16 +431,16 @@ acasi2 <- acasi %>%
         ))), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Internet Search, 6 items
-  mutate_at(vars(starts_with("MTUIX")),
+  ##Internet Search, 4 items (MTUIX6 and MTUIX6 excluded; added for this study, not part of original subscale)
+  mutate_at(vars(starts_with("MTUIX"), -MTUIX5, -MTUIX6),
             list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
     MTUIX_RC = case_when(
-      rowSums(is.na(select(., matches("MTUIX\\d{1}_RC")))) < 6 ~ #Is number of NA < number of items?
+      rowSums(is.na(select(., matches("MTUIX\\d{1}_RC")))) < 4 ~ #Is number of NA < number of items?
         rowSums(select(., matches("MTUIX\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##General Social Media Usage, 9 items
+  ##General Social Media Usage, 9 items (Excluded MTUSNX10:MTUSNX12; added for this study, not part of original subscale)
   mutate_at(vars(starts_with("MTUSNX")),
             list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
   mutate(
@@ -449,17 +449,41 @@ acasi2 <- acasi %>%
         rowSums(select(., one_of(paste0("MTUSNX0", 1:9))), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##MTUAX01-04, 9-11  (Positive Attitudes Technology), 7 items
+  ##Positive Attitudes Toward Technology, 6 items (MTUAX01, MTUAX03, MTUAX04, MTUAX09:MTUAX11)
   mutate_at(vars(one_of(paste0("MTUAX", 
-                               str_pad(c(1:4, 9:11), width = 2, pad = 0)))),
+                               str_pad(c(1, 3:6, 8, 9:14), width = 2, pad = 0)))),
             list(RC = ~replace(., which(. > 5), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
   mutate(
     MTUAX_RC_Pos = case_when(
       rowSums(is.na(select(., one_of(
-        paste0("MTUAX", str_pad(c(1:4, 9:11), width = 2, pad = 0))
-      )))) < 7 ~ #Is number of NA < number of items?
+        paste0("MTUAX", str_pad(c(1, 3:4, 9:11), width = 2, pad = 0))
+      )))) < 6 ~ #Is number of NA < number of items?
         rowSums(select(., one_of(
-          paste0("MTUAX", str_pad(c(1:4, 9:11), width = 2, pad = 0))
+          paste0("MTUAX", str_pad(c(1, 3:4, 9:11), width = 2, pad = 0))
+        )),
+        na.rm = TRUE) #If so, sum columns
+    )
+  ) %>%
+  ##Anxiety About Being Without Technology or Dependence on Technology, 3 items (MTUAX05, MTUAX06, MTUAX08)
+  mutate(
+    MTUAX_RC_Anx = case_when(
+      rowSums(is.na(select(., one_of(
+        paste0("MTUAX", str_pad(c(5:6, 8), width = 2, pad = 0), "_RC")
+      )))) < 3 ~ #Is number of NA < number of items?
+        rowSums(select(., one_of(
+          paste0("MTUAX", str_pad(c(5:6, 8), width = 2, pad = 0), "_RC")
+        )),
+        na.rm = TRUE) #If so, sum columns
+    )
+  ) %>%
+  ##Negative Attitudes Toward Technology, 3 items (MTUAX12:MTUAX14)
+  mutate(
+    MTUAX_RC_Neg = case_when(
+      rowSums(is.na(select(., one_of(
+        paste0("MTUAX", str_pad(12:14, width = 2, pad = 0), "_RC")
+      )))) < 3 ~ #Is number of NA < number of items?
+        rowSums(select(., one_of(
+          paste0("MTUAX", str_pad(12:14, width = 2, pad = 0), "_RC")
         )),
         na.rm = TRUE) #If so, sum columns
     )
