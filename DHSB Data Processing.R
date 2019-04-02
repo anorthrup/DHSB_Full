@@ -5,6 +5,7 @@
 library(tidyverse)
 library(sjlabelled)
 library(rio)
+library(lubridate)
 
 #####Read data
 #import() doesn't read all missing values the same, must write to and read from CSV and specify NA strings
@@ -66,7 +67,12 @@ varRemove00m <- acasi00m %>%
   gather("Variable", "NumNA") %>%
   filter(NumNA == nrow(acasi00m))
 acasi00m <- acasi00m %>%
-  select(colnames(acasi00m)[!colnames(acasi00m) %in% varRemove00m$Variable])
+  select(colnames(acasi00m)[!colnames(acasi00m) %in% varRemove00m$Variable]) %>%
+  #Correct AGE for WUSL 0020 from -1 to 19; no other AGE values calculated incorrectly
+  mutate(AGE = replace(AGE, 
+                       which(SITE1 == 10, PID == "0020", AGE == -1), 
+                       19))
+#Note that AGE1 and AGE2 that differ from AGE by more than 1, sometimes by upwards of 80
 
 #Order columns in each dataframe alphabetically
 #This serves to order sub-questions alphabetically
@@ -237,7 +243,7 @@ acasiJoinInner <- inner_join(acasi00mTrim,
 acasiJoin00m <- anti_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID"))
 acasiJoin06m <- anti_join(acasi06mTrim, acasi00m, by = c("SITE1", "PID"))
 #Do not include cases from 00m that do not exist in 06m
-acasi <- bind_rows(acasiJoinInner, acasiJoin06m) %>%
+acasi <- bind_rows(acasiJoinInner) %>%
   mutate(SITE1 = fct_recode(as.factor(SITE1),
                             "CBW" = "1", "FRI" = "2", "NYSDA" = "3", 
                             "HBHC" = "4", "MHS"  = "5", "PSU" = "6", 
