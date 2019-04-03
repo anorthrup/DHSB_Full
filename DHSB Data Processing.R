@@ -256,6 +256,7 @@ acasi <- bind_rows(acasiJoinInner) %>%
 
 #Demographic variables
 acasi2 <- acasi %>%
+  filter(AGE >= 18) %>%
   mutate(
     SITE_RC = fct_recode(as.factor(SITE1),
                          "Corpus Christi" = "CBW", "Los Angeles" = "FRI", 
