@@ -538,5 +538,19 @@ acasi2 %>%
 
 # save(acasi2, file = "acasi.RData")
 
-
-
+x2 <- inner_join(acasi00m %>%
+                   select(SITE1, PID, SCREEN7) %>%
+                   mutate(SITE1 = fct_recode(as.factor(SITE1),
+                                             "CBW" = "1", "FRI" = "2", "NYSDA" = "3", 
+                                             "HBHC" = "4", "MHS"  = "5", "PSU" = "6", 
+                                             "PFC" = "7", "SFDPH" = "8", "WFU"  = "9", 
+                                             "WUSL" = "10"),
+                          ViralSupp_Screen = case_when(SCREEN7 == 1 ~ 0,
+                                                       SCREEN7 == 2 ~ 1)) %>%
+                   filter(!is.na(ViralSupp_Screen)) %>%
+                   select(-SCREEN7),
+                 acasi2 %>%
+                   select(SITE1, PID, ViralSupp) %>%
+                   filter(!is.na(ViralSupp)),
+                 by = c("SITE1", "PID"))
+chisq.test(x2$ViralSupp, x2$ViralSupp_Screen)
