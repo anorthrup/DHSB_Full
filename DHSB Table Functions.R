@@ -245,3 +245,32 @@ table_OneFactor <- function (x, varString, header = varString,
            `Winston-Salem`, `St. Louis`) %>%
     add_case(Variable = paste0(header, ", N (%)"), .before = 1)
 }
+
+table_Continuous <- function(x, variable, name = variable) {
+  varQuo <- quo(!!sym(variable))
+  bind_rows(
+    x %>%
+      summarize(Metric = as.character(
+        paste0(
+          median(!!varQuo, na.rm = TRUE), " [",
+          paste(quantile(!!varQuo, c(0.25, 0.75), na.rm = TRUE),
+                collapse = ", "),
+          "]"
+        ))
+      ) %>%
+      mutate(SITE_RC = "Overall"),
+    x %>%
+      group_by(SITE_RC) %>%
+      summarize(Metric = as.character(
+        paste0(
+          median(!!varQuo, na.rm = TRUE), " [",
+          paste(quantile(!!varQuo, c(0.25, 0.75), na.rm = TRUE),
+                collapse = ", "),
+          "]"
+        ))
+      ) %>%
+      mutate(SITE_RC = as.character(SITE_RC))) %>%
+    spread(SITE_RC, Metric) %>%
+    mutate(Variable = paste0("   ", name)) %>%
+    select(Variable, Overall, levels(x$SITE_RC))
+}

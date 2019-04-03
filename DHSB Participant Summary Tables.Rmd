@@ -114,41 +114,7 @@ table1 <- bind_rows(
   #Employment
   table_OneFactor(demo, varString = "EMPLOY_RC", header = "Employment Status"),
   #Income
-  bind_rows(
-    demo %>%
-      summarize(Metric = as.character(
-        paste0(
-          median(`Income, Last Month`, na.rm = TRUE), " [",
-          paste(quantile(`Income, Last Month`, c(0.25, 0.75), na.rm = TRUE),
-                collapse = ", "),
-          "]"
-        ))
-      ) %>%
-      mutate(SITE_RC = "Overall"),
-    demo %>%
-      group_by(SITE_RC) %>%
-      summarize(Metric = as.character(
-        paste0(
-          median(`Income, Last Month`, na.rm = TRUE), " [",
-          paste(quantile(`Income, Last Month`, c(0.25, 0.75), na.rm = TRUE),
-                collapse = ", "),
-          "]"
-        ))
-      ) %>%
-      mutate(SITE_RC = as.character(SITE_RC))) %>%
-    spread(SITE_RC, Metric) %>%
-    mutate(Variable = "   Income") %>%
-    select(Variable, Overall, levels(demo$SITE_RC)) %>%
-    {
-      bind_rows(
-        tribble(~Variable, ~Overall, ~`Corpus Christi`, ~`Los Angeles`,
-              ~`New York`, ~Chicago, ~Cleveland, ~Hershey, ~Philadelphia,
-              ~`San Francisco`, ~`Winston-Salem`, ~`St. Louis`,
-              "Income, Last Month, Median [IQR]", 
-              NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-        select(., everything())
-      )
-    },
+  table_Continuous(demo, "MONEY", "Income, Last Month"),
   #Residence
   table_OneFactor(demo, varString = "Residence, Last 7 Days", 
                   varRelevel = c("Rented house/apt/flat",
