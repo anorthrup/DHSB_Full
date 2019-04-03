@@ -249,3 +249,12 @@ setColWidths(wb, sheet = "Table 2", cols = 1:ncol(table2), widths = "auto")
 saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 ```
 
+```{r}
+table1Chisq <- table1 %>%
+  mutate_at(vars(-Variable), list(~as.integer(str_extract(., "(\\d+)"))))
+chisq.test(x = as.matrix(table1Chisq %>%
+                           filter(Variable %in% 
+                                    c("   18-24 Years", "   25-34 Years")) %>%
+                           select(-Variable, -Overall)))
+```
+
