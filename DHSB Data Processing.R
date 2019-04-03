@@ -5,7 +5,6 @@
 library(tidyverse)
 library(sjlabelled)
 library(rio)
-library(lubridate)
 
 #####Read data
 #import() doesn't read all missing values the same, must write to and read from CSV and specify NA strings
@@ -46,7 +45,7 @@ SasNumToDate <- function (x) {
   x %>%
     ungroup() %>%
     mutate_at(vars(contains("ReportingPeriod"), contains("Date"), -OriginDate), 
-              funs(as.Date(as.numeric(.), origin = "1960-01-01")))
+              list(~as.Date(as.numeric(.), origin = "1960-01-01")))
 }
 labtest <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W3_SASdates.csv") %>%
   SasNumToDate() %>%
