@@ -246,31 +246,42 @@ table_OneFactor <- function (x, varString, header = varString,
     add_case(Variable = paste0(header, ", N (%)"), .before = 1)
 }
 
-table_Continuous <- function(x, variable, name = variable) {
+table_Continuous <- function(x, variable, stat = "mean",
+                             name = variable, header = NULL) {
   varQuo <- quo(!!sym(variable))
-  bind_rows(
+  siteSum <- function(x) {
     x %>%
-      summarize(Metric = as.character(
-        paste0(
-          median(!!varQuo, na.rm = TRUE), " [",
-          paste(quantile(!!varQuo, c(0.25, 0.75), na.rm = TRUE),
-                collapse = ", "),
-          "]"
-        ))
-      ) %>%
+    {
+      if (stat == "mean") {
+        summarize(.,
+                  Metric = paste0(round(mean(!!varQuo, na.rm = TRUE), 1), 
+                                  " (", round(sd(!!varQuo, na.rm = TRUE), 1), ")"
+                  )
+        )
+      } else if (stat == "median") {
+        summarize(.,
+                  Metric = paste0(median(!!varQuo, na.rm = TRUE), 
+                                  " [",
+                                  paste(quantile(!!varQuo, c(0.25, 0.75), na.rm = TRUE), collapse = ", "),
+                                  "]"
+                  )
+        )
+      } else {
+        stop ("'stat' must be set to 'mean' or 'median' only.")
+      }
+    }
+  }
+  bind_rows(
+    siteSum(x) %>%
       mutate(SITE_RC = "Overall"),
     x %>%
       group_by(SITE_RC) %>%
-      summarize(Metric = as.character(
-        paste0(
-          median(!!varQuo, na.rm = TRUE), " [",
-          paste(quantile(!!varQuo, c(0.25, 0.75), na.rm = TRUE),
-                collapse = ", "),
-          "]"
-        ))
-      ) %>%
+      siteSum(.) %>%
       mutate(SITE_RC = as.character(SITE_RC))) %>%
     spread(SITE_RC, Metric) %>%
     mutate(Variable = paste0("   ", name)) %>%
-    select(Variable, Overall, levels(x$SITE_RC))
+    select(Variable, Overall, levels(x$SITE_RC)) %>%
+    {
+      if (!is.null(header)) add_row(., Variable = header, .before = 1) else .
+    }
 }
