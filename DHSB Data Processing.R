@@ -41,6 +41,23 @@ data06mRaw <- read.csv("acasi06mSAS.csv", na.strings = c("", "NA"),
 ##Delete intermediate CSV
 unlink("acasi06mSAS.csv")
 
+#Lab Test Results
+SasNumToDate <- function (x) {
+  x %>%
+    ungroup() %>%
+    mutate_at(vars(contains("ReportingPeriod"), contains("Date"), -OriginDate), 
+              funs(as.Date(as.numeric(.), origin = "1960-01-01")))
+}
+labtest <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W3_SASdates.csv") %>%
+  SasNumToDate() %>%
+  select(SiteID, SiteSpecificID, ServiceDate, ViralSupp) %>%
+  filter(!is.na(ViralSupp)) %>%
+  group_by(SiteID, SiteSpecificID) %>%
+  summarize(ViralSupp = ViralSupp[which.min(ServiceDate)]) %>%
+  rename(SITE1 = SiteID,
+         PID = SiteSpecificID) %>%
+  mutate(PID = replace(PID, which(SITE1 == "WUSL"), str_pad(PID, 4, "left", "0")))
+
 #####Clean and combine data
 #Check for NAs, split NAs and complete cases into separate data friends
 acasi00mNa <- data00mRaw %>%
@@ -249,7 +266,12 @@ acasi <- bind_rows(acasiJoinInner) %>%
                             "HBHC" = "4", "MHS"  = "5", "PSU" = "6", 
                             "PFC" = "7", "SFDPH" = "8", "WFU"  = "9", 
                             "WUSL" = "10")) %>%
-  arrange(SITE1)
+  arrange(SITE1) %>%
+  {
+    left_join(.,
+              labtest,
+              by = c("SITE1", "PID"))
+  }
 
 #####Creation of new variables
 #####Collapse existing demographic variables and create scales
