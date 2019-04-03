@@ -46,22 +46,25 @@ alphaMTU_Neg <- alpha(acasi2 %>% select(one_of(
 alphaTable <- function (alpha, description) {
   tribble(
     ~Scale,      ~Alpha,                     ~Items,     ~Variable,
-    description, alpha[["total"]]$raw_alpha, alpha$nvar, unique(str_replace(names(alpha$keys), "([[:alpha:]]*)(\\d+)(_RC)", "\\1"))
+    description, alpha[["total"]]$raw_alpha, alpha$nvar, paste(names(alpha$keys), collapse = ", ")
   )
 }
-bind_rows(
+alphaValues <- bind_rows(
   alphaTable(alphaSOCIALS,        "Social Support"),
   alphaTable(alphaSTIGMA,         "HIV-related Stigma"),
   alphaTable(alphaHAL,            "Health Access Literacy"),
   alphaTable(alphaHSE,            "Health Self-Efficacy"),
   alphaTable(alphaCARE,           "Provider Empathy"),
   alphaTable(alphaMENTALH,        "Physical and Mental Health"),
-  alphaTable(alphaMTU_Email,      "Email Usage"),
-  alphaTable(alphaMTU_Text,       "Text Usage"),
-  alphaTable(alphaMTU_Smartphone, "Mobile Phone Usage"),
-  alphaTable(alphaMTU_Internet,   "Internet Search"),
-  alphaTable(alphaMTU_SocialMed,  "Social Media Usage"),
-  alphaTable(alphaMTU_Pos,        "Positive Technology Attitudes"),
-  alphaTable(alphaMTU_Anx,        "Anxiety Toward Technology"),
-  alphaTable(alphaMTU_Neg,        "Negative Technology Attitudes")
+  alphaTable(alphaMTU_Email,      "E-mailing"),
+  alphaTable(alphaMTU_Text,       "Text Messaging"),
+  alphaTable(alphaMTU_Smartphone, "Smartphone Usage"),
+  alphaTable(alphaMTU_Internet,   "Internet Searching"),
+  alphaTable(alphaMTU_SocialMed,  "General Social Media Usage"),
+  alphaTable(alphaMTU_Pos,        "Positive Attitudes Toward Technology"),
+  alphaTable(alphaMTU_Anx,        "Anxiety About Being Without Technology or Dependence on Technology"),
+  alphaTable(alphaMTU_Neg,        "Negative Attitudes Toward Techology")
 )
+alphaValues
+
+# write_csv(alphaValues, "Subscale Cronbachs Alphas.csv", na = "")
