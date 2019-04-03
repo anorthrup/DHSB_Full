@@ -21,19 +21,28 @@ alphaCARE <- alpha(acasi2 %>% select(matches("CARE\\d{2}_RC")),
                    cumulative = TRUE)
 alphaMENTALH <- alpha(acasi2 %>% select(matches("MENTALH\\d{1}_RC")), 
                       cumulative = TRUE)
-alphaMTUEX <- alpha(acasi2 %>% select(matches("MTUEX\\d{1}_RC")), 
-                    cumulative = TRUE)
-alphaMTUSPX <- alpha(acasi2 %>% select(
-  one_of(paste0("MTUSPX", str_pad(c(4:9, 10:12), width = 2, pad = 0), "_RC"))),
+#MTUAS Subscales
+alphaMTU_Email <- alpha(acasi2 %>% select(matches("MTUEX\\d{1}_RC")), 
+                        cumulative = TRUE)
+alphaMTU_Text <- alpha(acasi2 %>% select(MTUSPX01_RC, MTUSPX02_RC, MTUSPX12_RC),
+                       cumulative = TRUE)
+alphaMTU_Smartphone <- alpha(acasi2 %>% select(
+  one_of(paste0("MTUSPX", str_pad(3:11, width = 2, pad = 0), "_RC"))),
   cumulative = TRUE)
-alphaMTUIX <- alpha(acasi2 %>% select(matches("MTUIX\\d{1}_RC")), 
+alphaMTU_Internet <- alpha(acasi2 %>% select(matches("MTUIX\\d{1}_RC")), 
                     cumulative = TRUE)
-alphaMTUSNX <- alpha(acasi2 %>% select(one_of(paste0("MTUSNX0", 1:9, "_RC"))),
+alphaMTU_SocialMed <- alpha(acasi2 %>% select(one_of(paste0("MTUSNX0", 1:9, "_RC"))),
                      cumulative = TRUE)
-alphaMTUAXPos <- alpha(acasi2 %>% select(one_of(
-  paste0("MTUAX", str_pad(c(1:4, 9:11), width = 2, pad = 0), "_RC")
-)),
-cumulative = TRUE)
+alphaMTU_Pos <- alpha(acasi2 %>% select(one_of(
+  paste0("MTUAX", str_pad(c(1, 3:4, 9:11), width = 2, pad = 0), "_RC"))),
+  cumulative = TRUE)
+alphaMTU_Anx <- alpha(acasi2 %>% select(one_of(
+  paste0("MTUAX", str_pad(c(5:6, 8), width = 2, pad = 0), "_RC"))),
+  cumulative = TRUE)
+alphaMTU_Neg <- alpha(acasi2 %>% select(one_of(
+  paste0("MTUAX", str_pad(12:14, width = 2, pad = 0), "_RC"))),
+  cumulative = TRUE)
+
 alphaTable <- function (alpha, description) {
   tribble(
     ~Scale,      ~Alpha,                     ~Items,     ~Variable,
@@ -41,15 +50,18 @@ alphaTable <- function (alpha, description) {
   )
 }
 bind_rows(
-  alphaTable(alphaSOCIALS,  "Social Support"),
-  alphaTable(alphaSTIGMA,   "HIV-related Stigma"),
-  alphaTable(alphaHAL,      "Health Access Literacy"),
-  alphaTable(alphaHSE,      "Health Self-Efficacy"),
-  alphaTable(alphaCARE,     "Provider Empathy"),
-  alphaTable(alphaMENTALH,  "Physical and Mental Health"),
-  alphaTable(alphaMTUEX,    "Email Usage"),
-  alphaTable(alphaMTUSPX,   "Mobile Phone Usage"),
-  alphaTable(alphaMTUIX,    "Internet Search"),
-  alphaTable(alphaMTUSNX,   "Social Media Usage"),
-  alphaTable(alphaMTUAXPos, "Positive Technology Attitudes")
+  alphaTable(alphaSOCIALS,        "Social Support"),
+  alphaTable(alphaSTIGMA,         "HIV-related Stigma"),
+  alphaTable(alphaHAL,            "Health Access Literacy"),
+  alphaTable(alphaHSE,            "Health Self-Efficacy"),
+  alphaTable(alphaCARE,           "Provider Empathy"),
+  alphaTable(alphaMENTALH,        "Physical and Mental Health"),
+  alphaTable(alphaMTU_Email,      "Email Usage"),
+  alphaTable(alphaMTU_Text,       "Text Usage"),
+  alphaTable(alphaMTU_Smartphone, "Mobile Phone Usage"),
+  alphaTable(alphaMTU_Internet,   "Internet Search"),
+  alphaTable(alphaMTU_SocialMed,  "Social Media Usage"),
+  alphaTable(alphaMTU_Pos,        "Positive Technology Attitudes"),
+  alphaTable(alphaMTU_Anx,        "Anxiety Toward Technology"),
+  alphaTable(alphaMTU_Neg,        "Negative Technology Attitudes")
 )
