@@ -16,7 +16,6 @@ library(scales)
 library(kableExtra)
 
 #####Load data
-setwd("C:/Users/ANorthrup/Documents/ETAC_DHSB")
 load("acasi.RData")
 source("DHSB Table Functions.R")
 ```
@@ -37,9 +36,8 @@ source("DHSB Table Functions.R")
 demo <- acasi2 %>%
   select(-EMPLOY, -RACE,
          -starts_with("DRUG"), -starts_with("MTU"), -starts_with("S56")) %>%
-  mutate(`Age Groups` = as.factor(case_when(AGE < 18 ~ "Under 18 Years",
-                                            AGE < 25 ~ "18-24 Years",
-                                            AGE >= 25 ~ "25-34")),
+  mutate(`Age Groups` = as.factor(case_when(AGE < 25 ~ "18-24 Years",
+                                            AGE >= 25 ~ "25-34 Years")),
          SCREEN5 = fct_recode(as.factor(SCREEN5),
                               "Within past 12 months" = "1", "More than 12 months ago" = "2",
                               "Don't know/Not sure"   = "7", "Refuse to answer"        = "8"),
@@ -86,7 +84,7 @@ table1 <- bind_rows(
     select(Variable, Overall, levels(demo$SITE_RC)),
   #Age groups
   table_OneFactor(demo, varString = "Age Groups",
-                  varRelevel = c("Under 18 Years", "18-24 Years")),
+                  varRelevel = c("18-24 Years")),
   #Ethnicity/Race
   table_OneFactor(demo, varString = "Ethnicity and Race", 
                   varRelevel = c("Latino",
@@ -111,12 +109,7 @@ table1 <- bind_rows(
                   varRelevel = c("High school, equivalent or less",
                                  "Some post-K12")),
   #Employment
-  table_ManyBinary(demo, header = "Employment",
-                   variables = c("EMPLOYA" = "Student",
-                                 "EMPLOYB" = "Full-time employed",
-                                 "EMPLOYC" = "Part-time employed",
-                                 "EMPLOYD" = "Disabled",
-                                 "EMPLOYE_RC" = "Unemployed")),
+  table_OneFactor(demo, varString = "EMPLOY_RC", header = "Employment Status"),
   #Income
   bind_rows(
     demo %>%
@@ -208,16 +201,16 @@ kable(table1 %>%
         "Table 1. Sociodemographic characteristics of youth and young people living with HIV"
       ) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
-  group_rows("Age Group, N (%)", 2, 5) %>%
-  group_rows("Ethnicity and Race, N (%)", 6, 10) %>%
-  group_rows("Sex at Birth, N (%)", 11, 12) %>%
-  group_rows("Gender, N (%)", 13, 16) %>%
-  group_rows("Sexual Orientation, N (%)", 17, 20) %>%
-  group_rows("Education, N (%)", 21, 24) %>%
-  group_rows("Employment, N (%)", 25, 29) %>%
-  group_rows("Income, Median [IQR]", 30, 30) %>%
-  group_rows("Residence, Last 7 Days, N (%)", 31, 37) %>%
-  group_rows("Incarceration, N (%)", 38, 38)
+  group_rows("Age Group, N (%)", 2, 3) %>%
+  group_rows("Ethnicity and Race, N (%)", 4, 8) %>%
+  group_rows("Sex at Birth, N (%)", 9, 10) %>%
+  group_rows("Gender, N (%)", 11, 14) %>%
+  group_rows("Sexual Orientation, N (%)", 15, 18) %>%
+  group_rows("Education, N (%)", 19, 21) %>%
+  group_rows("Employment, N (%)", 22, 23) %>%
+  group_rows("Income, Median [IQR]", 24, 24) %>%
+  group_rows("Residence, Last 7 Days, N (%)", 25, 31) %>%
+  group_rows("Incarceration, N (%)", 32, 32)
 ```
 
 ### Table 2
