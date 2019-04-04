@@ -437,8 +437,8 @@ acasi2 <- acasi %>%
             list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
     MTUSPX_RC_Text = case_when(
-      rowSums(is.na(select(., MTUSPX01, MTUSPX02, MTUSPX12))) < 3 ~
-        rowSums(is.na(select(., MTUSPX01, MTUSPX02, MTUSPX12)))
+      rowSums(is.na(select(., MTUSPX01_RC, MTUSPX02_RC, MTUSPX12_RC))) < 3 ~
+        rowSums(select(., MTUSPX01_RC, MTUSPX02_RC, MTUSPX12_RC))
     )
   ) %>%
   ##Mobile Phone Usage, 9 items (MTUSPX03 through MTUSPX11)
@@ -454,7 +454,7 @@ acasi2 <- acasi %>%
         ))), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Internet Search, 4 items (MTUIX6 and MTUIX6 excluded; added for this study, not part of original subscale)
+  ##Internet Search, 4 items (MTUIX5 and MTUIX6 excluded; added for this study, not part of original subscale)
   mutate_at(vars(starts_with("MTUIX"), -MTUIX5, -MTUIX6),
             list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
