@@ -178,7 +178,25 @@ table2 <- bind_rows(
   #HIV-Related Stigma
   table_Continuous(demo, variable = "STIGMA_RC",
                    name = "HIV-Related Stigma, 10 items", 
-                   header = "HIV-Related Stigma, Mean (SD)")
+                   header = "HIV-Related Stigma, Mean (SD)"),
+  #HIV Disclosure
+  table_ManyBinary(demo, header = "Disclosure of HIV Status",
+                   variables = c("DISCA" = "No one",
+                                 "DISCB" = "Partner or spouse",
+                                 "DISCC" = "Sex partner(s)",
+                                 "DISCD" = "Family member(s)",
+                                 "DISCE" = "Friend(s)",
+                                 "DISCF" = "Health care providers",
+                                 "DISCG" = "Coach or teacher",
+                                 "DISCH" = "Pastor/Rabbi/Clergy",
+                                 "DISCI" = "Staff from site",
+                                 "DISCJ" = "Other")),
+  #Physical and Mental Health
+  table_Continuous(demo, variable = "MENTALH_RC",
+                   name = "Mental Health, 3 items",
+                   header = "Physical and Mental Health, Mean (SD)"),
+  table_Continuous(demo, variable = "MENTALH4",
+                   name = "Mental and Physical Health, 1 item")
 )
 ```
 Note that responses from participants with no baseline survey were replaced with 6 month survey. "Past 6 months" refers to 6 months prior to 6 month survey. If no data was available for a given question (participant had no baseline survey, and question wasn't asked in 6 month survey), the participant was not included in the denominator.  
