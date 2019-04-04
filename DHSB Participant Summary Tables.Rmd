@@ -16,7 +16,7 @@ library(scales)
 library(kableExtra)
 
 #####Load data
-load("acasi.RData")
+load("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
 source("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/DHSB Table Functions.R")
 ```
 
@@ -244,7 +244,10 @@ table2 <- bind_rows(
                    name = "Smartphone usage"),
   #> Internet Searching
   table_Continuous(demo, variable = "MTUIX_RC",
-                   name = "Internet searching")
+                   name = "Internet searching"),
+  #> General Social Media Usage
+  table_Continuous(demo, variable = "MTUSNX_RC",
+                   name = "General social media usage")
 )
 ```
 Note that responses from participants with no baseline survey were replaced with 6 month survey. "Past 6 months" refers to 6 months prior to 6 month survey. If no data was available for a given question (participant had no baseline survey, and question wasn't asked in 6 month survey), the participant was not included in the denominator.  
