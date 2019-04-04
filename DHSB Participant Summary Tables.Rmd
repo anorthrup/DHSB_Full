@@ -230,7 +230,21 @@ table2 <- bind_rows(
                                   "   Alcohol", "   Tobacco", "   Marijuana", 
                                   "   Injected drugs", "   Other")) %>%
     arrange(Variable) %>%
-    mutate(Variable = as.character(Variable))
+    mutate(Variable = as.character(Variable)),
+  #MTUAS
+  #> Email Usage
+  table_Continuous(demo, variable = "MTUEX_RC",
+                   name = "Email usage",
+                   header = "Media and Technology Use and Attitudes Subscales"),
+  #> Text Messaging
+  table_Continuous(demo, variable = "MTUSPX_RC_Text",
+                   name = "Text messaging"),
+  #> Smartphone Usage
+  table_Continuous(demo, variable = "MTUSPX_RC_Smartphone",
+                   name = "Smartphone usage"),
+  #> Internet Searching
+  table_Continuous(demo, variable = "MTUIX_RC",
+                   name = "Internet searching")
 )
 ```
 Note that responses from participants with no baseline survey were replaced with 6 month survey. "Past 6 months" refers to 6 months prior to 6 month survey. If no data was available for a given question (participant had no baseline survey, and question wasn't asked in 6 month survey), the participant was not included in the denominator.  
