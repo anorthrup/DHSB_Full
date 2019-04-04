@@ -19,7 +19,7 @@ alphaHSE <- alpha(acasi2 %>% select(one_of(c(paste0("HE0", 6:9, "_RC"), "HE10_RC
                   cumulative = TRUE)
 alphaCARE <- alpha(acasi2 %>% select(matches("CARE\\d{2}_RC")), 
                    cumulative = TRUE)
-alphaMENTALH <- alpha(acasi2 %>% select(matches("MENTALH\\d{1}_RC")), 
+alphaMENTALH <- alpha(acasi2 %>% select(matches("(MENTALH)(1|2|3)(_RC)")), 
                       cumulative = TRUE)
 #MTUAS Subscales
 alphaMTU_Email <- alpha(acasi2 %>% select(matches("MTUEX\\d{1}_RC")), 
