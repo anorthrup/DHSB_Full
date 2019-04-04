@@ -35,7 +35,7 @@ source("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/DHSB Table Functions
 #####Format variables and rename
 demo <- acasi2 %>%
   select(-EMPLOY, -RACE,
-         -starts_with("DRUG"), -starts_with("MTU"), -starts_with("S56")) %>%
+         -starts_with("S56")) %>%
   mutate(`Age Groups` = as.factor(case_when(AGE < 25 ~ "18-24 Years",
                                             AGE >= 25 ~ "25-34 Years")),
          SCREEN5 = fct_recode(as.factor(SCREEN5),
@@ -196,7 +196,41 @@ table2 <- bind_rows(
                    name = "Mental Health, 3 items",
                    header = "Physical and Mental Health, Mean (SD)"),
   table_Continuous(demo, variable = "MENTALH4",
-                   name = "Mental and Physical Health, 1 item")
+                   name = "Mental and Physical Health, 1 item"),
+  #Substance Use
+  table_ManyBinary(demo, header = "Substance Use", n = 0,
+                   keep = c("DRUG1LA", "DRUG1LB", "DRUG1LC", "DRUG_RC_None",
+                            "INJECTL"),
+                   variables = c("DRUG1LA" = "Alcohol",
+                                 "DRUG1LB" = "Tobacco",
+                                 "DRUG1LC" = "Marijuana",
+                                 "DRUG1LD" = "Synthetic marijuana",
+                                 "DRUG1LE" = "Marijuana laced with PCP",
+                                 "DRUG1LF" = "Methamphetamine",
+                                 "DRUG1LG" = "Amphetamines",
+                                 "DRUG1LH" = "Molly, MDMA, Ecstasy",
+                                 "DRUG1LI" = "LSD, other hallucinogens",
+                                 "DRUG1LJ" = "Poppers, other inhalants",
+                                 "DRUG1LK" = "Powder cocaine",
+                                 "DRUG1LL" = "Crack cocaine",
+                                 "DRUG2LA" = "Heroin",
+                                 "DRUG2LB" = "Special K",
+                                 "DRUG2LC" = "Primos (marijuana and rock)",
+                                 "DRUG2LD" = "Synthetic cathinones (bath salts)",
+                                 "DRUG2LE" = "Codeine cough syrup",
+                                 "DRUG2LF" = "Painkillers",
+                                 "DRUG2LG" = "Tranquilizers",
+                                 "DRUG2LH" = "ADHD medication",
+                                 "DRUG2LI" = "Other non-injected drugs",
+                                 "DRUG_RC_None" = "None",
+                                 "INJECTL" = "Injected drugs")) %>%
+    mutate(Variable = fct_relevel(factor(Variable, levels = unique(Variable)),
+                                  "Substance Use, N (%)",
+                                  "   Skipped/Refuse/Missing",
+                                  "   Alcohol", "   Tobacco", "   Marijuana", 
+                                  "   Injected drugs", "   Other")) %>%
+    arrange(Variable) %>%
+    mutate(Variable = as.character(Variable))
 )
 ```
 Note that responses from participants with no baseline survey were replaced with 6 month survey. "Past 6 months" refers to 6 months prior to 6 month survey. If no data was available for a given question (participant had no baseline survey, and question wasn't asked in 6 month survey), the participant was not included in the denominator.  
