@@ -135,7 +135,8 @@ table2 <- bind_rows(
                   varRelevel = c("Within past 12 months",
                                  "More than 12 months ago")),
   #Viral Suppression
-  table_OneFactor(demo, varString = "ViralSupp", header = "Viral Suppression"),
+  table_OneFactor(demo, varString = "ViralSupp", header = "Viral Suppression",
+                  varRelevel = c("Suppressed")),
   #Insurance
   table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
   #Health care history, 6 months
@@ -247,7 +248,16 @@ table2 <- bind_rows(
                    name = "Internet searching"),
   #> General Social Media Usage
   table_Continuous(demo, variable = "MTUSNX_RC",
-                   name = "General social media usage")
+                   name = "General social media usage"),
+  #> Positive Attitudes
+  table_Continuous(demo, variable = "MTUAX_RC_Pos",
+                   name = "Positive Attitudes Toward Technology"),
+  #> Anxieties
+  table_Continuous(demo, variable = "MTUAX_RC_Anx",
+                   name = "Anxiety and Dependence on Technology"),
+  #> Negative Attitudes
+  table_Continuous(demo, variable = "MTUAX_RC_Neg",
+                   name = "Negative Attitudes Toward Technology")
 )
 ```
 Note that responses from participants with no baseline survey were replaced with 6 month survey. "Past 6 months" refers to 6 months prior to 6 month survey. If no data was available for a given question (participant had no baseline survey, and question wasn't asked in 6 month survey), the participant was not included in the denominator.  
@@ -283,8 +293,16 @@ kable(table2 %>%
   group_rows("Viral Suppression, N(%)", 4, 6) %>%
   group_rows("Insurance, N (%)", 7, 9) %>%
   group_rows("Recent Health Care, N (%)", 10, 12) %>%
-  group_rows("Relationship Status, N (%)", 13, 16) %>%
-  add_indent(c(12))
+  add_indent(c(12)) %>%
+  group_rows("Youth Health Enagement, Mean (SD)", 13, 14) %>%
+  group_rows("Provider Empathy, Mean (SD)", 15, 15) %>%
+  group_rows("Relationship Status, N (%)", 16, 19) %>%
+  group_rows("Social Support, Mean (SD)", 20, 20) %>%
+  group_rows("HIV-Related Stigma, Mean (SD)", 21, 21) %>%
+  group_rows("Disclosure of HIV Status, N (%)", 22, 31) %>%
+  group_rows("Physical and Mental Health, Mean (SD)", 32, 33) %>%
+  group_rows("Substance Use, N (%)", 34, 40) %>%
+  group_rows("Media and Technology Use and Attitudes Subscales", 41, 48)
 ```
 
 ```{r eval = FALSE}
