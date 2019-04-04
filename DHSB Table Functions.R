@@ -28,7 +28,7 @@ table_ManyBinary <- function (x, header, variables, n = NULL, keep = NULL) {
       select(SITE_RC, names(variables)) %>%
       mutate_at(
         vars(one_of(names(variables))), 
-        funs(replace(., which(!. %in% c(0, 1)), NA))) %>%
+        list(~replace(., which(!. %in% c(0, 1)), NA))) %>%
       mutate(NumNA = if_else(rowSums(is.na(.)) > 0, 1, 0)) %>%
       {
         bind_cols(
@@ -46,7 +46,7 @@ table_ManyBinary <- function (x, header, variables, n = NULL, keep = NULL) {
   x <- x %>%
     #Narrow x to only necessary columns
     select(SITE_RC, names(variables)) %>%
-    mutate_if(is.double, funs(as.integer)) %>%
+    mutate_if(is.double, list(as.integer)) %>%
     #Remove rows with non-binary values (refused to answer, skipped)
     filter_if(is.numeric, all_vars(. %in% c(0, 1)))
   #List responses in descending ranked order
@@ -104,7 +104,7 @@ table_ManyBinary <- function (x, header, variables, n = NULL, keep = NULL) {
     #Summarize by site
     x %>%
       group_by(SITE_RC) %>%
-      summarize_all(funs(sum, mean)) %>%
+      summarize_all(list(~sum, ~mean)) %>%
       gather("Key", "Value", -SITE_RC) %>%
       {
         full_join(filter(., str_detect(Key, "_sum")) %>%
@@ -161,9 +161,9 @@ table_OneFactor <- function (x, varString, header = varString,
       select(SITE_RC, !!varQuo) %>%
       mutate_at(
         vars(one_of(varString)), 
-        funs(replace(., 
-                     which(. == "Refuse to answer" | . == "Skipped"), 
-                     NA))) %>%
+        list(~replace(., 
+                      which(. == "Refuse to answer" | . == "Skipped"), 
+                      NA))) %>%
       mutate(NumNA = if_else(rowSums(is.na(.)) > 0, 1, 0)) %>%
       {
         bind_cols(
@@ -181,7 +181,7 @@ table_OneFactor <- function (x, varString, header = varString,
   x <- x %>%
     select(SITE_RC, varString) %>%
     filter(!!varQuo != "Skipped" & !!varQuo != "Refuse to answer") %>%
-    mutate_at(vars(one_of(varString)), funs(factor))
+    mutate_at(vars(one_of(varString)), list(factor))
   
   freqLevels <- x %>%
     select(varString) %>%
@@ -205,7 +205,7 @@ table_OneFactor <- function (x, varString, header = varString,
   
   x %>%
     mutate_at(vars(one_of(varString)), 
-              funs(fct_recode(factor(., levels = c(freqLevels, keep)),
+              list(~fct_recode(factor(., levels = c(freqLevels, keep)),
                               !!!levRecode))) %>%
                               { #Create two data frames and bind them together: summary of overall, summary by site
                                 full_join(
