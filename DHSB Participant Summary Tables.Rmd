@@ -43,7 +43,6 @@ demo <- acasi2 %>%
                               "Don't know"   = "7", "Refuse to answer"        = "8"),
          SEXBRTH = fct_recode(as.factor(SEXBRTH),
                               "Male" = "1", "Female" = "2", "Refuse to answer" = "8"),
-         MONEY = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
          ViralSupp = fct_recode(as.factor(ViralSupp),
                                 "Not suppressed" = "0",
                                 "Suppressed"     = "1")) %>%
@@ -324,9 +323,35 @@ saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 ```{r}
 table1Chisq <- table1 %>%
   mutate_at(vars(-Variable), list(~as.integer(str_extract(., "(\\d+)"))))
-chisq.test(x = as.matrix(table1Chisq %>%
-                           filter(Variable %in% 
-                                    c("   18-24 Years", "   25-34 Years")) %>%
-                           select(-Variable, -Overall)))
+bind_rows(
+  chisq.dhsb(table1Chisq, "Age Group", 
+             c("   18-24 Years", "   25-34 Years")),
+  chisq.dhsb(table1Chisq, "Ethnicity and Race", 
+             c("   Latino", 
+               "   Black, Not Latino",
+               "   White, Not Latino")),
+  chisq.dhsb(table1Chisq, "Gender", 
+             c("   Male (cis man)", 
+               "   Female (cis woman)",
+               "   Trans person",
+               "   Other gender")),
+  chisq.dhsb(table1Chisq, "Sexual Orientation", 
+             c("   Straight",
+               "   Gay or lesbian",
+               "   Bisexual",
+               "   Other orientation")),
+  chisq.dhsb(table1Chisq, "Education", 
+             c("   High school, equivalent or less",
+               "   Some post-K12",
+               "   Associate, trade cert, or higher")),
+  chisq.dhsb(table1Chisq, "Employment Status", 
+             c("   Employed/Student",
+               "   Unemployed/Disabled"))
+) %>%
+  mutate(Warning = c("No", "Yes", "Yes", "Yes", "Yes", "No"))
+bind_rows(
+  anova.dhsb(demo, "MONEY", "Income, Last Month")
+)
+
 ```
 
