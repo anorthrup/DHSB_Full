@@ -528,8 +528,9 @@ acasi2 <- acasi %>%
 
 acasi2 %>% 
   select(one_of(c("SOCIALS_RC", "STIGMA_RC", "HE_RC_HAL", "HE_RC_HSE", 
-                  "CARE_RC", "MENTALH_RC", "MTUEX_RC", "MTUSPX_RC",
-                  "MTUIX_RC", "MTUSNX_RC"))) %>%
+                  "CARE_RC", "MENTALH_RC", "MTUEX_RC", "MTUSPX_RC_Text",
+                  "MTUSPX_RC_Smartphone", "MTUIX_RC", "MTUSNX_RC",
+                  "MTUAX_RC_Pos", "MTUAX_RC_Anx", "MTUAX_RC_Neg"))) %>%
   map(~length(which(is.na(.))))
 
 #Check all that apply that still need to be recoded:
