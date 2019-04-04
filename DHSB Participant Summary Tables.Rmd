@@ -17,7 +17,7 @@ library(kableExtra)
 
 #####Load data
 load("acasi.RData")
-source("DHSB Table Functions.R")
+source("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/DHSB Table Functions.R")
 ```
 
 ```{r}
@@ -61,7 +61,6 @@ demo <- acasi2 %>%
          `Sexual Orientation` = ORIENT_RC,
          `Relationship Status` = RELSTAT_RC,
          Education = GRADE_RC,
-         `Income, Last Month` = MONEY,
          `Residence, Last 7 Days` = STAY7D_RC,
          `Ever Jailed` = JAILL,
          `Ethnicity and Race` = RACE_RC,
@@ -114,7 +113,8 @@ table1 <- bind_rows(
   #Employment
   table_OneFactor(demo, varString = "EMPLOY_RC", header = "Employment Status"),
   #Income
-  table_Continuous(demo, "MONEY", "Income, Last Month"),
+  table_Continuous(demo, variable = "MONEY", stat = "median", 
+                   name = "Income, Last Month"),
   #Residence
   table_OneFactor(demo, varString = "Residence, Last 7 Days", 
                   varRelevel = c("Rented house/apt/flat",
@@ -152,14 +152,32 @@ table2 <- bind_rows(
                                 "   Doctor's visit, HIV, 6 months"),
              Variable = replace(Variable, str_which(Variable, "Refuse"),
                                                     "      Refuse to answer"))
-    )  %>%
-    add_row(Variable = "Viral Load, Median [IQR]") %>%
-    add_row(Variable = "Viral Load"),
+    ),
+  #Youth Health Engagement
+  #> Health Access Literacy
+  table_Continuous(demo, variable = "HE_RC_HAL",
+                   name = "Health Access Literacy, 4 Items", 
+                   header = "Youth Health Enagement, Mean (SD)"),
+  #> Health Self-Efficacy
+  table_Continuous(demo, variable = "HE_RC_HSE", 
+                   name = "Health Self-Efficacy, 5 Items"),
+  #Provider Empathy
+  table_Continuous(demo, variable = "CARE_RC",
+                   name = "Provider Empathy, 10 items", 
+                   header = "Provider Empathy, Mean (SD)"),
   #Relationship Status
   table_OneFactor(demo, varString = "Relationship Status", 
                   varRelevel = c("Single",
                                  "Dating",
-                                 "Partnered/Married"))
+                                 "Partnered/Married")),
+  #Social Support
+  table_Continuous(demo, variable = "SOCIALS_RC",
+                   name = "Social Support, 3 items", 
+                   header = "Social Support, Mean (SD)"),
+  #HIV-Related Stigma
+  table_Continuous(demo, variable = "STIGMA_RC",
+                   name = "HIV-Related Stigma, 10 items", 
+                   header = "HIV-Related Stigma, Mean (SD)")
 )
 ```
 Note that responses from participants with no baseline survey were replaced with 6 month survey. "Past 6 months" refers to 6 months prior to 6 month survey. If no data was available for a given question (participant had no baseline survey, and question wasn't asked in 6 month survey), the participant was not included in the denominator.  
