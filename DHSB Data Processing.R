@@ -266,6 +266,7 @@ acasi <- bind_rows(acasiJoinInner) %>%
                             "PFC" = "7", "SFDPH" = "8", "WFU"  = "9", 
                             "WUSL" = "10")) %>%
   arrange(SITE1) %>%
+  mutate(SITE1 = as.character(SITE1)) %>%
   {
     left_join(.,
               labtest,
@@ -537,7 +538,7 @@ acasi2 %>%
 #> DISC
 #> Substance use
 
-# save(acasi2, file = "acasi.RData")
+# save(acasi2, file = "Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
 
 x2 <- inner_join(acasi00m %>%
                    select(SITE1, PID, SCREEN7) %>%
