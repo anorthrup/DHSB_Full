@@ -345,6 +345,7 @@ acasi2 <- acasi %>%
                           EMPLOYD == 1 ~ "Unemployed/Disabled",
                           EMPLOYE == 1 ~ "Unemployed/Disabled",
                           EMPLOYF == 1 ~ "Unemployed/Disabled"),
+    MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     DRUG_RC_None = if_else(DRUG1LM == 1 & DRUG2LK == 1, 1, 0),
     #Change INSURE to categorical: Insured, Not insured, Don't know; first look at combinations of options
     INSUREA_RC = replace(as.character(INSUREA), which(INSUREA == 1), "A"),
