@@ -413,13 +413,13 @@ acasi2 <- acasi %>%
   ) %>%
   ##Physical and Mental Health, 4 items
   ##> Exclude MENTALH4 because it differs from MENTALH1-3
-  mutate_at(vars(starts_with("MENTALH"), -MENTALH4),
+  mutate_at(vars(starts_with("MENTALH")),
             list(RC = ~replace(., which(. > 6), NA))) %>% #Values of 1-6 expected; 8 = refuse to answer
+  mutate(MENTALH3_RC = 7 - MENTALH3_RC) %>% #Reverse code MENTALH3 because it is negatively correlated with MENTALH1/2
   mutate(
-    MENTALH3_RC = 7 - MENTALH3, #Reverse code MENTALH3 because it is negatively correlated with MENTALH1/2
     MENTALH_RC = case_when(
-      rowSums(is.na(select(., matches("MENTALH\\d{1}_RC")))) < 10 ~ #Is number of NA < number of items?
-        rowSums(select(., matches("MENTALH\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
+      rowSums(is.na(select(., matches("(MENTALH)(1|2|3)(_RC)")))) < 3 ~ #Is number of NA < number of items?
+        rowSums(select(., matches("(MENTALH)(1|2|3)(_RC)")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
   ##Email Usage, 4 items
