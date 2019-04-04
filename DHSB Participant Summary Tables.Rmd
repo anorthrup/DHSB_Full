@@ -48,12 +48,13 @@ demo <- acasi2 %>%
                                 "Not suppressed" = "0",
                                 "Suppressed"     = "1")) %>%
   mutate_at(vars(JAILL), 
-            funs(as.factor)) %>%
+            list(as.factor)) %>%
   mutate_at(vars(JAILL), 
-            funs(fct_recode), "Yes" = "1", "No" = "0", "Don't know" = "7", "Refuse to answer" = "8") %>%
-  mutate_at(vars(contains("CARE"), -CARELHIV), funs(as.factor(case_when(. == 0   ~ "Yes",
-                                                                        . <= 99  ~ "No",
-                                                                        . >  99  ~ "Refuse to answer")))) %>%
+            list(fct_recode), "Yes" = "1", "No" = "0", "Don't know" = "7", "Refuse to answer" = "8") %>%
+  mutate_at(vars(matches("(CARE)([[:alpha:]]+)(\\d+)")), 
+            list(~as.factor(case_when(. == 0   ~ "Yes",
+                                      . <= 99  ~ "No",
+                                      . >  99  ~ "Refuse to answer")))) %>%
   unite("SitePID", SITE_RC, PID, remove = FALSE) %>%
   arrange(SITE_RC, PID) %>%
   rename(Gender = GENDER_RC,
