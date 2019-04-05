@@ -46,7 +46,7 @@ demo <- acasi2 %>%
          ViralSupp = fct_recode(as.factor(ViralSupp),
                                 "Not suppressed" = "0",
                                 "Suppressed"     = "1"),
-         MONEY_RC_Log = log(MONEY_RC)) %>%
+         MONEY_RC_Log = log(MONEY_RC + 1)) %>%
   mutate_at(vars(JAILL), 
             list(as.factor)) %>%
   mutate_at(vars(JAILL), 
@@ -362,7 +362,17 @@ bind_rows(
   anova.dhsb(demo, "MONEY_RC_Log", "Income, Last Month"),
   anova.dhsb(demo, "HE_RC_HAL", "Health Access Literacy"),
   anova.dhsb(demo, "HE_RC_HSE", "Health Self-Efficacy"),
-  anova.
+  anova.dhsb(demo, "CARE_RC", "Provider Empathy"),
+  anova.dhsb(demo, "MENTALH_RC", "Mental Health"),
+  anova.dhsb(demo, "MENTALH4_RC", "Physical and Mental Health"),
+  anova.dhsb(demo, "MTUEX_RC", "Email Usage"),
+  anova.dhsb(demo, "MTUSPX_RC_Text", "Text Messaging"),
+  anova.dhsb(demo, "MTUSPX_RC_Smartphone", "Smartphone Usage"),
+  anova.dhsb(demo, "MTUIX_RC", "Internet Searching"),
+  anova.dhsb(demo, "MTUSNX_RC", "General Social Media Usage"),
+  anova.dhsb(demo, "MTUAX_RC_Pos", "Positive Attitudes Toward Technology"),
+  anova.dhsb(demo, "MTUAX_RC_Anx", "Anxiety About Being Without Technology or Dependence on Technology"),
+  anova.dhsb(demo, "MTUAX_RC_Neg", "Negative Attitudes Toward Technology")
 )
 
 ```
