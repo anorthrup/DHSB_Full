@@ -57,9 +57,7 @@ demo <- acasi2 %>%
                                       . >  99  ~ "Refuse to answer")))) %>%
   unite("SitePID", SITE_RC, PID, remove = FALSE) %>%
   arrange(SITE_RC, PID) %>%
-  rename(Gender = GENDER_RC,
-         # `Sex at Birth` = SEXBRTH,
-         `Sexual Orientation` = ORIENT_RC,
+  rename(# `Sex at Birth` = SEXBRTH,
          # `Relationship Status` = RELSTAT_RC,
          Education = GRADE_RC,
          `Residence, Last 7 Days` = STAY7D_RC,
@@ -98,12 +96,12 @@ table1 <- bind_rows(
   # table_OneFactor(demo, varString = "Sex at Birth",
   #                 varRelevel = c("Male")),
   #Gender
-  table_OneFactor(demo, varString = "Gender",
+  table_OneFactor(demo, varString = "GENDER_RC", header = "Gender Identity",
                   varRelevel = c("Male (cis man)",
                                  "Female (cis woman)",
-                                 "Trans person")),
+                                 "Trans-identified")),
   #Orientation
-  table_OneFactor(demo, varString = "Sexual Orientation",
+  table_OneFactor(demo, varString = "ORIENT_RC", header = "Sexual Orientation",
                   varRelevel = c("Straight",
                                  "Gay or lesbian",
                                  "Bisexual")),
@@ -118,10 +116,9 @@ table1 <- bind_rows(
                    name = "Income, Last Month"),
   #Residence
   table_OneFactor(demo, varString = "Residence, Last 7 Days", 
-                  varRelevel = c("Rented house/apt/flat",
-                                 "Other's house/apt/flat",
-                                 "Hotel/Shelter/Rehab",
-                                 "Hospital/Medical facility"))
+                  varRelevel = c("Stable housing",
+                                 "Unstable housing",
+                                 "Institution"))
   # #Jailed
   # table_OneFactor(demo, varString = "Ever Jailed", header = "Incarceration") %>%
   #   filter(Variable %in% c("   Yes", "Incarceration, N (%)")) %>%
@@ -272,14 +269,11 @@ kable(table1 %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows("Age Group, N (%)", 2, 3) %>%
   group_rows("Ethnicity and Race, N (%)", 4, 8) %>%
-  # group_rows("Sex at Birth, N (%)", 9, 10) %>%
-  group_rows("Gender, N (%)", 9, 12) %>%
+  group_rows("Gender Identity, N (%)", 9, 12) %>%
   group_rows("Sexual Orientation, N (%)", 13, 16) %>%
   group_rows("Education, N (%)", 17, 19) %>%
-  # group_rows("Employment, N (%)", 22, 23) %>%
   group_rows("Income, Median [IQR]", 20, 20) %>%
-  group_rows("Residence, Last 7 Days, N (%)", 21, 27)
-  # group_rows("Incarceration, N (%)", 32, 32)
+  group_rows("Residence, Last 7 Days, N (%)", 21, 25)
 ```
 
 ### Table 2
@@ -334,10 +328,10 @@ bind_rows(
              c("   Latino", 
                "   Black, Not Latino",
                "   White, Not Latino")),
-  chisq.dhsb(table1Chisq, "Gender", 
+  chisq.dhsb(table1Chisq, "Gender Identity", 
              c("   Male (cis man)", 
                "   Female (cis woman)",
-               "   Trans person",
+               "   Trans-identified",
                "   Other gender")),
   chisq.dhsb(table1Chisq, "Sexual Orientation", 
              c("   Straight",
@@ -347,18 +341,13 @@ bind_rows(
   chisq.dhsb(table1Chisq, "Education", 
              c("   High school, equivalent or less",
                "   Some post-K12",
-               "   Associate, trade cert, or higher")),
-  chisq.dhsb(table1Chisq, "Employment Status", 
-             c("   Employed/Student",
-               "   Unemployed/Disabled")),
+               "   College graduate or trade certification")),
   chisq.dhsb(table1Chisq, "Residence, Last 7 Days",
-             c("   Rented house/apt/flat",
-               "   Other's house/apt/flat",
-               "   Hotel/Shelter/Rehab",
-               "   Hospital/Medical facility",
-               "   Jail/Juvenile detention"))
+             c("   Stable housing",
+               "   Unstable housing",
+               "   Institution"))
 ) %>%
-  mutate(Warning = c("No", "Yes", "Yes", "Yes", "Yes", "No", "Yes")) %>%
+  mutate(Warning = c("No", "Yes", "Yes", "Yes", "Yes", "Yes")) %>%
   kable(., digits = 3,
         caption = "Chi-Square Testing for Categorical Variables Across Site") %>%
   kable_styling(bootstrap_options = c("striped", "condensed"))
