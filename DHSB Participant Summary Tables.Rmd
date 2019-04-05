@@ -45,7 +45,8 @@ demo <- acasi2 %>%
                               "Male" = "1", "Female" = "2", "Refuse to answer" = "8"),
          ViralSupp = fct_recode(as.factor(ViralSupp),
                                 "Not suppressed" = "0",
-                                "Suppressed"     = "1")) %>%
+                                "Suppressed"     = "1"),
+         MONEY_RC_Log = log(MONEY_RC)) %>%
   mutate_at(vars(JAILL), 
             list(as.factor)) %>%
   mutate_at(vars(JAILL), 
@@ -323,6 +324,8 @@ saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 ```{r}
 table1Chisq <- table1 %>%
   mutate_at(vars(-Variable), list(~as.integer(str_extract(., "(\\d+)"))))
+table2Chisq <- table2 %>%
+  mutate_at(vars(-Variable), list(~as.integer(str_extract(., "(\\d+)"))))
 bind_rows(
   chisq.dhsb(table1Chisq, "Age Group", 
              c("   18-24 Years", "   25-34 Years")),
@@ -346,11 +349,20 @@ bind_rows(
                "   Associate, trade cert, or higher")),
   chisq.dhsb(table1Chisq, "Employment Status", 
              c("   Employed/Student",
-               "   Unemployed/Disabled"))
+               "   Unemployed/Disabled")),
+  chisq.dhsb(table1Chisq, "Residence, Last 7 Days",
+             c("   Rented house/apt/flat",
+               "   Other's house/apt/flat",
+               "   Hotel/Shelter/Rehab",
+               "   Hospital/Medical facility",
+               "   Jail/Juvenile detention"))
 ) %>%
-  mutate(Warning = c("No", "Yes", "Yes", "Yes", "Yes", "No"))
+  mutate(Warning = c("No", "Yes", "Yes", "Yes", "Yes", "No", "Yes"))
 bind_rows(
-  anova.dhsb(demo, "MONEY", "Income, Last Month")
+  anova.dhsb(demo, "MONEY_RC_Log", "Income, Last Month"),
+  anova.dhsb(demo, "HE_RC_HAL", "Health Access Literacy"),
+  anova.dhsb(demo, "HE_RC_HSE", "Health Self-Efficacy"),
+  anova.
 )
 
 ```
