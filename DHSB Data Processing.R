@@ -204,14 +204,16 @@ acasi00mTrim <- acasi00m %>%
   select(SITE1, PID,
          surveylanguage, INTRVWER, SITE, #SES: Survey
          SCREEN1, starts_with("AGE"), starts_with("DOB"), #SES: Age
-         SEXBRTH, starts_with("GENDER"), #SES: Gender
+         # SEXBRTH, #SES: Sex/Gender #> Removed
+         starts_with("GENDER"), #SES: Sex/Gender
          LATINO, starts_with("RACE"), #SES: Race
          INSCHOOL, GRADE, #SES: Education
-         MONEY, starts_with("EMPLOY"), #SES: Employment
-         RELSTAT, #SES: Relationship
+         MONEY, #SES: Employment
+         # starts_with("EMPLOY"), #SES: Employment #> Removed
+         # RELSTAT, #SES: Relationship #> Removed
          starts_with("ORIENT"), #SES: Orientation
          starts_with("LIVED"), starts_with("STAY7"), #Housing
-         JAILL, JAILLX, JAIL6X, #Incarceration
+         # JAILL, JAILLX, JAIL6X, #Incarceration #> Removed
          BORNHIV, DIAGHIV, SCREEN5, #Length with HIV: First HIV Diagnosis
          matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
          CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
@@ -303,14 +305,14 @@ acasi2 <- acasi %>%
                            "Other orientation" = "5", 
                            "Other orientation" = "7",
                            "Refuse to answer"  = "8"),
-    RELSTAT_RC = fct_recode(as.factor(RELSTAT),
-                            "Single"            = "1", 
-                            "Dating"            = "2", 
-                            "Dating"            = "3", 
-                            "Partnered/Married" = "4",
-                            "Partnered/Married" = "5", 
-                            "Other status"      = "6",
-                            "Refuse to answer"  = "8"),
+    # RELSTAT_RC = fct_recode(as.factor(RELSTAT),
+    #                         "Single"            = "1", 
+    #                         "Dating"            = "2", 
+    #                         "Dating"            = "3", 
+    #                         "Partnered/Married" = "4",
+    #                         "Partnered/Married" = "5", 
+    #                         "Other status"      = "6",
+    #                         "Refuse to answer"  = "8"),
     GRADE_RC = fct_recode(as.factor(GRADE),
                           "High school, equivalent or less"  = "1", 
                           "High school, equivalent or less"  = "2", 
@@ -339,12 +341,12 @@ acasi2 <- acasi %>%
                           "White Mixed-Race, Not Latino or Black",
                         RACEE == 1 ~ "White, Not Latino",
                         TRUE ~ "Other race"),
-    EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
-                          EMPLOYB == 1 ~ "Employed/Student",
-                          EMPLOYC == 1 ~ "Employed/Student",
-                          EMPLOYD == 1 ~ "Unemployed/Disabled",
-                          EMPLOYE == 1 ~ "Unemployed/Disabled",
-                          EMPLOYF == 1 ~ "Unemployed/Disabled"),
+    # EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
+    #                       EMPLOYB == 1 ~ "Employed/Student",
+    #                       EMPLOYC == 1 ~ "Employed/Student",
+    #                       EMPLOYD == 1 ~ "Unemployed/Disabled",
+    #                       EMPLOYE == 1 ~ "Unemployed/Disabled",
+    #                       EMPLOYF == 1 ~ "Unemployed/Disabled"),
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     DRUG_RC_None = if_else(DRUG1LM == 1 & DRUG2LK == 1, 1, 0),
     #Change INSURE to categorical: Insured, Not insured, Don't know; first look at combinations of options

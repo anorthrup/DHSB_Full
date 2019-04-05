@@ -16,6 +16,7 @@ library(scales)
 library(kableExtra)
 
 #####Load data
+setwd("C:/Users/anorthrup/Box Sync/ETAC")
 load("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
 source("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/DHSB Table Functions.R")
 ```
@@ -34,36 +35,35 @@ source("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/DHSB Table Functions
 
 #####Format variables and rename
 demo <- acasi2 %>%
-  select(-EMPLOY, -RACE,
-         -starts_with("S56")) %>%
+  select(-RACE, -starts_with("S56")) %>%
   mutate(`Age Groups` = as.factor(case_when(AGE < 25 ~ "18-24 Years",
                                             AGE >= 25 ~ "25-34 Years")),
          SCREEN5 = fct_recode(as.factor(SCREEN5),
                               "Within past 12 months" = "1", "More than 12 months ago" = "2",
                               "Don't know"   = "7", "Refuse to answer"        = "8"),
-         SEXBRTH = fct_recode(as.factor(SEXBRTH),
-                              "Male" = "1", "Female" = "2", "Refuse to answer" = "8"),
+         # SEXBRTH = fct_recode(as.factor(SEXBRTH),
+         #                      "Male" = "1", "Female" = "2", "Refuse to answer" = "8"),
          ViralSupp = fct_recode(as.factor(ViralSupp),
                                 "Not suppressed" = "0",
                                 "Suppressed"     = "1"),
          MONEY_RC_Log = log(MONEY_RC + 1)) %>%
-  mutate_at(vars(JAILL), 
-            list(as.factor)) %>%
-  mutate_at(vars(JAILL), 
-            list(fct_recode), "Yes" = "1", "No" = "0", "Don't know" = "7", "Refuse to answer" = "8") %>%
-  mutate_at(vars(matches("(CARE)([[:alpha:]]+)(\\d+)")), 
+  # mutate_at(vars(JAILL), 
+  #           list(as.factor)) %>%
+  # mutate_at(vars(JAILL), 
+  #           list(fct_recode), "Yes" = "1", "No" = "0", "Don't know" = "7", "Refuse to answer" = "8") %>%
+  mutate_at(vars(matches("(CARE)([[:alpha:]]+)(\\d+)")),
             list(~as.factor(case_when(. == 0   ~ "Yes",
                                       . <= 99  ~ "No",
                                       . >  99  ~ "Refuse to answer")))) %>%
   unite("SitePID", SITE_RC, PID, remove = FALSE) %>%
   arrange(SITE_RC, PID) %>%
   rename(Gender = GENDER_RC,
-         `Sex at Birth` = SEXBRTH,
+         # `Sex at Birth` = SEXBRTH,
          `Sexual Orientation` = ORIENT_RC,
-         `Relationship Status` = RELSTAT_RC,
+         # `Relationship Status` = RELSTAT_RC,
          Education = GRADE_RC,
          `Residence, Last 7 Days` = STAY7D_RC,
-         `Ever Jailed` = JAILL,
+         # `Ever Jailed` = JAILL,
          `Ethnicity and Race` = RACE_RC,
          `HIV Diagnosis` = SCREEN5)
 ```
@@ -94,9 +94,9 @@ table1 <- bind_rows(
                                  "Black, Not Latino",
                                  "White, Not Latino",
                                  "White Mixed-Race, Not Latino or Black")),
-  #Sex at birth
-  table_OneFactor(demo, varString = "Sex at Birth",
-                  varRelevel = c("Male")),
+  # #Sex at birth
+  # table_OneFactor(demo, varString = "Sex at Birth",
+  #                 varRelevel = c("Male")),
   #Gender
   table_OneFactor(demo, varString = "Gender",
                   varRelevel = c("Male (cis man)",
@@ -111,8 +111,8 @@ table1 <- bind_rows(
   table_OneFactor(demo, varString = "Education", 
                   varRelevel = c("High school, equivalent or less",
                                  "Some post-K12")),
-  #Employment
-  table_OneFactor(demo, varString = "EMPLOY_RC", header = "Employment Status"),
+  # #Employment
+  # table_OneFactor(demo, varString = "EMPLOY_RC", header = "Employment Status"),
   #Income
   table_Continuous(demo, variable = "MONEY", stat = "median", 
                    name = "Income, Last Month"),
@@ -121,11 +121,11 @@ table1 <- bind_rows(
                   varRelevel = c("Rented house/apt/flat",
                                  "Other's house/apt/flat",
                                  "Hotel/Shelter/Rehab",
-                                 "Hospital/Medical facility")),
-  #Jailed
-  table_OneFactor(demo, varString = "Ever Jailed", header = "Incarceration") %>%
-    filter(Variable %in% c("   Yes", "Incarceration, N (%)")) %>%
-    mutate(Variable = str_replace(Variable, "   Yes", "   Ever Jailed"))
+                                 "Hospital/Medical facility"))
+  # #Jailed
+  # table_OneFactor(demo, varString = "Ever Jailed", header = "Incarceration") %>%
+  #   filter(Variable %in% c("   Yes", "Incarceration, N (%)")) %>%
+  #   mutate(Variable = str_replace(Variable, "   Yes", "   Ever Jailed"))
 )
 
 #####Table 2: participant health care summary
@@ -167,11 +167,11 @@ table2 <- bind_rows(
   table_Continuous(demo, variable = "CARE_RC",
                    name = "Provider Empathy, 10 items", 
                    header = "Provider Empathy, Mean (SD)"),
-  #Relationship Status
-  table_OneFactor(demo, varString = "Relationship Status", 
-                  varRelevel = c("Single",
-                                 "Dating",
-                                 "Partnered/Married")),
+  # #Relationship Status
+  # table_OneFactor(demo, varString = "Relationship Status", 
+  #                 varRelevel = c("Single",
+  #                                "Dating",
+  #                                "Partnered/Married")),
   #Social Support
   table_Continuous(demo, variable = "SOCIALS_RC",
                    name = "Social Support, 3 items", 
@@ -272,14 +272,14 @@ kable(table1 %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows("Age Group, N (%)", 2, 3) %>%
   group_rows("Ethnicity and Race, N (%)", 4, 8) %>%
-  group_rows("Sex at Birth, N (%)", 9, 10) %>%
-  group_rows("Gender, N (%)", 11, 14) %>%
-  group_rows("Sexual Orientation, N (%)", 15, 18) %>%
-  group_rows("Education, N (%)", 19, 21) %>%
-  group_rows("Employment, N (%)", 22, 23) %>%
-  group_rows("Income, Median [IQR]", 24, 24) %>%
-  group_rows("Residence, Last 7 Days, N (%)", 25, 31) %>%
-  group_rows("Incarceration, N (%)", 32, 32)
+  # group_rows("Sex at Birth, N (%)", 9, 10) %>%
+  group_rows("Gender, N (%)", 9, 12) %>%
+  group_rows("Sexual Orientation, N (%)", 13, 16) %>%
+  group_rows("Education, N (%)", 17, 19) %>%
+  # group_rows("Employment, N (%)", 22, 23) %>%
+  group_rows("Income, Median [IQR]", 20, 20) %>%
+  group_rows("Residence, Last 7 Days, N (%)", 21, 27)
+  # group_rows("Incarceration, N (%)", 32, 32)
 ```
 
 ### Table 2
@@ -296,13 +296,13 @@ kable(table2 %>%
   add_indent(c(12)) %>%
   group_rows("Youth Health Enagement, Mean (SD)", 13, 14) %>%
   group_rows("Provider Empathy, Mean (SD)", 15, 15) %>%
-  group_rows("Relationship Status, N (%)", 16, 19) %>%
-  group_rows("Social Support, Mean (SD)", 20, 20) %>%
-  group_rows("HIV-Related Stigma, Mean (SD)", 21, 21) %>%
-  group_rows("Disclosure of HIV Status, N (%)", 22, 31) %>%
-  group_rows("Physical and Mental Health, Mean (SD)", 32, 33) %>%
-  group_rows("Substance Use, N (%)", 34, 40) %>%
-  group_rows("Media and Technology Use and Attitudes Subscales", 41, 48)
+  # group_rows("Relationship Status, N (%)", 16, 19) %>%
+  group_rows("Social Support, Mean (SD)", 16, 16) %>%
+  group_rows("HIV-Related Stigma, Mean (SD)", 17, 17) %>%
+  group_rows("Disclosure of HIV Status, N (%)", 18, 27) %>%
+  group_rows("Physical and Mental Health, Mean (SD)", 28, 29) %>%
+  group_rows("Substance Use, N (%)", 30, 36) %>%
+  group_rows("Media and Technology Use and Attitudes Subscales", 37, 44)
 ```
 
 ```{r eval = FALSE}
@@ -321,7 +321,8 @@ setColWidths(wb, sheet = "Table 2", cols = 1:ncol(table2), widths = "auto")
 saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 ```
 
-```{r}
+### Testing Across Sites
+```{r include = TRUE}
 table1Chisq <- table1 %>%
   mutate_at(vars(-Variable), list(~as.integer(str_extract(., "(\\d+)"))))
 table2Chisq <- table2 %>%
@@ -357,7 +358,10 @@ bind_rows(
                "   Hospital/Medical facility",
                "   Jail/Juvenile detention"))
 ) %>%
-  mutate(Warning = c("No", "Yes", "Yes", "Yes", "Yes", "No", "Yes"))
+  mutate(Warning = c("No", "Yes", "Yes", "Yes", "Yes", "No", "Yes")) %>%
+  kable(., digits = 3,
+        caption = "Chi-Square Testing for Categorical Variables Across Site") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"))
 bind_rows(
   anova.dhsb(demo, "MONEY_RC_Log", "Income, Last Month"),
   anova.dhsb(demo, "HE_RC_HAL", "Health Access Literacy"),
@@ -373,7 +377,10 @@ bind_rows(
   anova.dhsb(demo, "MTUAX_RC_Pos", "Positive Attitudes Toward Technology"),
   anova.dhsb(demo, "MTUAX_RC_Anx", "Anxiety About Being Without Technology or Dependence on Technology"),
   anova.dhsb(demo, "MTUAX_RC_Neg", "Negative Attitudes Toward Technology")
-)
+) %>%
+  kable(., digits = 3,
+        caption = "ANOVA Testing for Continuous Variables Across Site") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"))
 
 ```
 
