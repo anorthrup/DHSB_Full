@@ -40,14 +40,23 @@ data06mRaw <- read.csv("acasi06mSAS.csv", na.strings = c("", "NA"),
 ##Delete intermediate CSV
 unlink("acasi06mSAS.csv")
 
-#Lab Test Results
+#MCD
 SasNumToDate <- function (x) {
   x %>%
     ungroup() %>%
     mutate_at(vars(contains("ReportingPeriod"), contains("Date"), -OriginDate), 
               list(~as.Date(as.numeric(.), origin = "1960-01-01")))
 }
-labtest <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W3_SASdates.csv") %>%
+#> Participant History
+mcd_history <- read_csv("Data merged across sites/MCD/MCD_Participant_Summary_History_W0-W3_SASdates.csv") %>%
+  SasNumToDate() %>%
+  rename(SITE1 = SiteID,
+         PID = SiteSpecificID) %>%
+  mutate(PID = replace(PID, 
+                       which(SITE1 == "WUSL"), 
+                       str_pad(PID[which(SITE1 == "WUSL")], 4, "left", "0")))
+#> Lab Test Results
+mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W3_SASdates.csv") %>%
   SasNumToDate() %>%
   select(SiteID, SiteSpecificID, ServiceDate, ViralSupp) %>%
   filter(!is.na(ViralSupp)) %>%
@@ -55,7 +64,18 @@ labtest <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W3_SAS
   summarize(ViralSupp = ViralSupp[which.min(ServiceDate)]) %>%
   rename(SITE1 = SiteID,
          PID = SiteSpecificID) %>%
-  mutate(PID = replace(PID, which(SITE1 == "WUSL"), str_pad(PID, 4, "left", "0")))
+  mutate(PID = replace(PID, 
+                       which(SITE1 == "WUSL"), 
+                       str_pad(PID[which(SITE1 == "WUSL")], 4, "left", "0")))
+#> Ambulatory Visits
+mcd_ambVisits <- read_csv("Data merged across sites/MCD/MCD_Ambulatory_Visits_W0-W3_SASdates.csv") %>%
+  SasNumToDate() %>%
+  select(SiteID, SiteSpecificID, ServiceDate) %>%
+  rename(SITE1 = SiteID,
+         PID = SiteSpecificID) %>%
+  mutate(PID = replace(PID, 
+                       which(SITE1 == "WUSL"), 
+                       str_pad(PID[which(SITE1 == "WUSL")], 4, "left", "0")))
 
 #####Clean and combine data
 #Check for NAs, split NAs and complete cases into separate data friends
@@ -201,7 +221,7 @@ acasi06mSurvey3 <- acasi06m %>%
 #####Remove unnecessary variables
 #Remove 00m variables
 acasi00mTrim <- acasi00m %>%
-  select(SITE1, PID,
+  select(SITE1, PID, TODAY,
          surveylanguage, INTRVWER, SITE, #SES: Survey
          SCREEN1, starts_with("AGE"), starts_with("DOB"), #SES: Age
          # SEXBRTH, #SES: Sex/Gender #> Removed
@@ -257,21 +277,38 @@ acasi06mTrim <- acasi06mSurvey3 %>%
 acasiJoinInner <- inner_join(acasi00mTrim, 
                              acasi06mTrim %>%
                                select(SITE1, PID, starts_with("S56")),
-                             by = c("SITE1", "PID"))
-acasiJoin00m <- anti_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID"))
-acasiJoin06m <- anti_join(acasi06mTrim, acasi00m, by = c("SITE1", "PID"))
-#Do not include cases from 00m that do not exist in 06m
-acasi <- bind_rows(acasiJoinInner) %>%
+                             by = c("SITE1", "PID")) %>%
   mutate(SITE1 = fct_recode(as.factor(SITE1),
                             "CBW" = "1", "FRI" = "2", "NYSDA" = "3", 
                             "HBHC" = "4", "MHS"  = "5", "PSU" = "6", 
                             "PFC" = "7", "SFDPH" = "8", "WFU"  = "9", 
-                            "WUSL" = "10")) %>%
+                            "WUSL" = "10"),
+         SITE1 = as.character(SITE1))
+  
+acasiJoin00m <- anti_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID"))
+acasiJoin06m <- anti_join(acasi06mTrim, acasi00m, by = c("SITE1", "PID"))
+#Create binary variable from MCD to determine if there was an ambulatory visit within 6 months
+mcd_ambVisits_Bin <- left_join(acasiJoinInner %>%
+                                 select(SITE1, PID, TODAY),
+                               mcd_ambVisits,
+                               by = c("SITE1", "PID")) %>%
+  mutate(TODAY = as.Date(TODAY, origin = "1960-01-01"),
+         DIFF = TODAY - ServiceDate,
+         CAREHV06_RC_MCD = if_else(TODAY - ServiceDate <= 183 &
+                                     TODAY - ServiceDate >= 0, 1, 0))
+#Do not include cases from 00m that do not exist in 06m
+acasi <- bind_rows(acasiJoinInner) %>%
   arrange(SITE1) %>%
   mutate(SITE1 = as.character(SITE1)) %>%
   {
     left_join(.,
-              labtest,
+              mcd_labTests,
+              by = c("SITE1", "PID"))
+  } %>%
+  {
+    left_join(.,
+              mcd_history %>%
+                select(SITE1, PID, HIVDiagnosisYear),
               by = c("SITE1", "PID"))
   }
 
