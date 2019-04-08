@@ -40,6 +40,13 @@ data06mRaw <- read.csv("acasi06mSAS.csv", na.strings = c("", "NA"),
 ##Delete intermediate CSV
 unlink("acasi06mSAS.csv")
 
+#Read FRI PIDs (PID and identifiers differ between ACASI and MCD)
+fri <- import("Data from sites/Friends_Research_Institute/Text Me Girl_PIDs.xlsx",
+              col_names = FALSE) %>%
+  setNames(c("SiteSpecificID", "PID", "Withdrawn")) %>%
+  select(-Withdrawn) %>%
+  mutate(SiteSpecificID = as.character(SiteSpecificID))
+
 #MCD
 SasNumToDate <- function (x) {
   x %>%
@@ -47,14 +54,26 @@ SasNumToDate <- function (x) {
     mutate_at(vars(contains("ReportingPeriod"), contains("Date"), -OriginDate), 
               list(~as.Date(as.numeric(.), origin = "1960-01-01")))
 }
+fri_rekey <- function (x) {
+  x %>%
+  {
+    bind_rows(
+      filter(., SiteID != "FRI") %>%
+        rename(PID = SiteSpecificID),
+      filter(., SiteID == "FRI") %>%
+        left_join(., fri, by = "SiteSpecificID") %>%
+        select(-SiteSpecificID)
+    )
+  } %>%
+    rename(SITE1 = SiteID)
+}
 #> Participant History
 mcd_history <- read_csv("Data merged across sites/MCD/MCD_Participant_Summary_History_W0-W3_SASdates.csv") %>%
   SasNumToDate() %>%
-  rename(SITE1 = SiteID,
-         PID = SiteSpecificID) %>%
-  mutate(PID = replace(PID, 
-                       which(SITE1 == "WUSL"), 
-                       str_pad(PID[which(SITE1 == "WUSL")], 4, "left", "0")))
+  mutate(SiteSpecificID = replace(SiteSpecificID, 
+                                  which(SiteID == "WUSL"), 
+                                  str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
+  fri_rekey()
 #> Lab Test Results
 mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W3_SASdates.csv") %>%
   SasNumToDate() %>%
@@ -62,20 +81,18 @@ mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W
   filter(!is.na(ViralSupp)) %>%
   group_by(SiteID, SiteSpecificID) %>%
   summarize(ViralSupp = ViralSupp[which.min(ServiceDate)]) %>%
-  rename(SITE1 = SiteID,
-         PID = SiteSpecificID) %>%
-  mutate(PID = replace(PID, 
-                       which(SITE1 == "WUSL"), 
-                       str_pad(PID[which(SITE1 == "WUSL")], 4, "left", "0")))
+  mutate(SiteSpecificID = replace(SiteSpecificID, 
+                                  which(SiteID == "WUSL"), 
+                                  str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
+  fri_rekey()
 #> Ambulatory Visits
 mcd_ambVisits <- read_csv("Data merged across sites/MCD/MCD_Ambulatory_Visits_W0-W3_SASdates.csv") %>%
   SasNumToDate() %>%
   select(SiteID, SiteSpecificID, ServiceDate) %>%
-  rename(SITE1 = SiteID,
-         PID = SiteSpecificID) %>%
-  mutate(PID = replace(PID, 
-                       which(SITE1 == "WUSL"), 
-                       str_pad(PID[which(SITE1 == "WUSL")], 4, "left", "0")))
+  mutate(SiteSpecificID = replace(SiteSpecificID, 
+                       which(SiteID == "WUSL"), 
+                       str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
+  fri_rekey()
 
 #####Clean and combine data
 #Check for NAs, split NAs and complete cases into separate data friends
