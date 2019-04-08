@@ -74,7 +74,7 @@ mcd_history <- read_csv("Data merged across sites/MCD/MCD_Participant_Summary_Hi
                                   which(SiteID == "WUSL"), 
                                   str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
   fri_rekey()
-#> Lab Test Results
+  #> Lab Test Results
 mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W3_SASdates.csv") %>%
   SasNumToDate() %>%
   select(SiteID, SiteSpecificID, ServiceDate, ViralSupp) %>%
@@ -85,7 +85,7 @@ mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W
                                   which(SiteID == "WUSL"), 
                                   str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
   fri_rekey()
-#> Ambulatory Visits
+  #> Ambulatory Visits
 mcd_ambVisits <- read_csv("Data merged across sites/MCD/MCD_Ambulatory_Visits_W0-W3_SASdates.csv") %>%
   SasNumToDate() %>%
   select(SiteID, SiteSpecificID, ServiceDate) %>%
@@ -93,7 +93,7 @@ mcd_ambVisits <- read_csv("Data merged across sites/MCD/MCD_Ambulatory_Visits_W0
                        which(SiteID == "WUSL"), 
                        str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
   fri_rekey()
-
+  
 #####Clean and combine data
 #Check for NAs, split NAs and complete cases into separate data friends
 acasi00mNa <- data00mRaw %>%
@@ -304,37 +304,32 @@ acasiJoinInner <- inner_join(acasi00mTrim,
   
 acasiJoin00m <- anti_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID"))
 acasiJoin06m <- anti_join(acasi06mTrim, acasi00m, by = c("SITE1", "PID"))
-#Create binary variable from MCD to determine if there was an ambulatory visit within 6 months
-mcd_ambVisits_Bin <- left_join(acasiJoinInner %>%
-                                 select(SITE1, PID, TODAY),
-                               mcd_ambVisits,
-                               by = c("SITE1", "PID")) %>%
-  mutate(TODAY = as.Date(TODAY, origin = "1960-01-01"),
-         DIFF = TODAY - ServiceDate,
-         CAREHV06_RC_MCD = if_else(TODAY - ServiceDate <= 183 &
-                                     TODAY - ServiceDate >= 0, 1, 0))
-#Do not include cases from 00m that do not exist in 06m
-acasi <- bind_rows(acasiJoinInner) %>%
-  arrange(SITE1) %>%
-  mutate(SITE1 = as.character(SITE1)) %>%
-  {
-    left_join(.,
-              mcd_labTests,
-              by = c("SITE1", "PID"))
-  } %>%
-  {
-    left_join(.,
-              mcd_history %>%
-                select(SITE1, PID, HIVDiagnosisYear),
-              by = c("SITE1", "PID"))
-  }
 
 #####Creation of new variables
 #####Collapse existing demographic variables and create scales
 
-#Demographic variables
-acasi2 <- acasi %>%
+acasi <- acasiJoinInner %>%
+  arrange(SITE1) %>%
+  mutate(SITE1 = as.character(SITE1)) %>%
   filter(AGE >= 18) %>%
+  #Add MCD
+  left_join(., 
+            mcd_history %>%
+              select(SITE1, PID, HIVDiagnosisYear), 
+            by = c("SITE1", "PID")) %>%
+  left_join(., mcd_labTests, by = c("SITE1", "PID")) %>%
+  left_join(., 
+            left_join(acasiJoinInner %>% #Create binary variable from MCD to determine if there was an ambulatory visit within 6 months
+                        select(SITE1, PID, TODAY),
+                      mcd_ambVisits,
+                      by = c("SITE1", "PID")) %>%
+              mutate(TODAY = as.Date(TODAY, origin = "1960-01-01"),
+                     DIFF = TODAY - ServiceDate,
+                     CAREHV06_RC_MCD = if_else(TODAY - ServiceDate <= 183 &
+                                                 TODAY - ServiceDate >= 0, 1, 0)) %>%
+              group_by(SITE1, PID) %>%
+              summarize(CAREHV06_RC_MCD = if_else(any(CAREHV06_RC_MCD == 1), 1, 0)), 
+            by = c("SITE1", "PID")) %>%
   mutate(
     SITE_RC = fct_recode(as.factor(SITE1),
                          "Corpus Christi" = "CBW", "Los Angeles" = "FRI", 
@@ -584,7 +579,7 @@ acasi2 <- acasi %>%
 #MTUSNX: 1 Refuse (MTUSNX05), 67 skipped; excluded MTUSNX10-12 (sex partners/relationships, sex health, trans-specific)
 #MTUAX: 1 Refuse (MTUAX 08, 09, 13, 14)
 
-acasi2 %>% 
+acasi %>% 
   select(one_of(c("SOCIALS_RC", "STIGMA_RC", "HE_RC_HAL", "HE_RC_HSE", 
                   "CARE_RC", "MENTALH_RC", "MTUEX_RC", "MTUSPX_RC_Text",
                   "MTUSPX_RC_Smartphone", "MTUIX_RC", "MTUSNX_RC",
@@ -595,7 +590,7 @@ acasi2 %>%
 #> DISC
 #> Substance use
 
-save(acasi2, file = "Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
+save(acasi, file = "Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
 
 x2 <- inner_join(acasi00m %>%
                    select(SITE1, PID, SCREEN7) %>%
