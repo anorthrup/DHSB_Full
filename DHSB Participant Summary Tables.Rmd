@@ -34,7 +34,7 @@ source("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/DHSB Table Functions
 # saveWorkbook(wb, "ACASI Other Text.xlsx", overwrite = TRUE)
 
 #####Format variables and rename
-demo <- acasi2 %>%
+demo <- acasi %>%
   select(-RACE, -starts_with("S56")) %>%
   mutate(`Age Groups` = as.factor(case_when(AGE < 25 ~ "18-24 Years",
                                             AGE >= 25 ~ "25-34 Years")),

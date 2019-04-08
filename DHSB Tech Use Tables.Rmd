@@ -22,7 +22,7 @@ source("DHSB Table Functions.R")
 ```
 
 ```{r processData}
-tech <- acasi2 %>%
+tech <- acasi %>%
   select(SITE1, SITE_RC, PID, starts_with("MTU"), starts_with("S56")) %>%
   mutate(S56_3 = fct_recode(as.factor(S56_3),
                             "Have cell phone, minutes, and data"    = "1",
