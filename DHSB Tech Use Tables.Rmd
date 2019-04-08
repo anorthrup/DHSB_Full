@@ -16,9 +16,8 @@ library(openxlsx)
 library(kableExtra)
 
 #####Load data
-setwd("C:/Users/ANorthrup/Documents/ETAC_DHSB")
-load("acasi.RData")
-source("DHSB Table Functions.R")
+load("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
+source("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/DHSB Table Functions.R")
 ```
 
 ```{r processData}
@@ -33,9 +32,9 @@ tech <- acasi %>%
                             "Don't have own cell, can't borrow one" = "6",
                             "Refuse to answer"                      = "8")) %>%
   mutate_at(vars(one_of("S56_4", "S56_7", "S56_13", "S56_16", "S56_21")), 
-            funs(as.factor)) %>%
+            list(~as.factor)) %>%
   mutate_at(vars(one_of("S56_4", "S56_7", "S56_13", "S56_16", "S56_21")), 
-            funs(fct_recode),
+            list(~fct_recode),
             "Several times a day"       = "1",
             "Once a day"                = "2",
             "Once every couple of days" = "3",
