@@ -1,0 +1,114 @@
+---
+title: "Digitial Health-Seeking Behaviors Figures"
+author: "Adam Northrup, Data Manager, ETAC"
+date: "April 8, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = FALSE, 
+                      warning = FALSE, message = FALSE)
+#####Read libraries
+if (!require("pacman")) install.packages("pacman", repos='http://cran.us.r-project.org')
+p_load("tidyverse", "RColorBrewer", "openxlsx", "gridExtra")
+
+#####Load data
+load("acasi.RData")
+
+#####Create new Excel workbook
+# wb <- createWorkbook()
+# wb <- loadWorkbook("DHSB Characteristic Data.xlsx")
+
+#####Source functions for summaries
+source("DHSB Figure Functions.R")
+```
+
+```{r}
+#####Create AgeGroup variable
+demo <- acasi %>%
+  mutate(AgeGroup = as.factor(case_when(AGE < 25 ~ "18-24 Years",
+                                        AGE >= 25 ~ "25-34 Years"))) %>%
+  unite("SitePID", SITE1, PID, sep = "_")
+```
+
+### Health-Seeking Behaviors
+```{r include = TRUE}
+#####Summarize health information sought on internet
+hsCat <- hlthSeekCat(demo)
+hsCatAge <- hlthSeekCat(demo, AgeGroup)
+hsSum <- hlthSeekSum(demo)
+hsSumAge <- hlthSeekSum(demo, AgeGroup)
+#Plot proportions for Health Seeking Categories
+plotCat(hsCat, fillVar = "Timeframe", facetCVar = "`Health Category`",
+        title = "Proportion of Respondents Searching Internet for Health Information",
+        subtitle = "Variables: MTUIX (Baseline); S56_24X, S56_25, S56_26 (6 Months)",
+        caption = "Data from internet searches excluding social networking activity\nData for 'At Least Once Per Month' is specific to Baseline",
+        colors = c(4, 6, 8))
+##By age
+plotCat(hsCatAge, fillVar = "AgeGroup", facetRVar = "Timeframe", facetCVar = "`Health Category`",
+        title = "Proportion of Respondents Searching Internet for Health Information (By Age Group)",
+        subtitle = "Variables: MTUIX (Baseline); S56_24X, S56_25, S56_26 (6 Months)",
+        caption = "Data from internet searches excluding social networking activity\nData for 'At Least Once Per Month' is specific to Baseline",
+        colors = c(4, 6, 8))
+#Plot proportions for Health Seeking Summary
+plotSum(hsSum, fillVar = "Timeframe", colors = c(6, 8),
+        title = "Proportion of Respondents Searching Internet\nfor Health Information",
+        subtitle = "Variables: S56_24X, S56_25, S56_26",
+        caption = "Data from internet searches excluding social networking activity")
+##By age
+plotSumGroup(hsSumAge, fillVar = "AgeGroup", fillVarTitle = "Age Group", facetRVar = "Timeframe",
+             title = "Proportion of Respondents Searching Internet\nfor Health Information",
+             subtitle = "Variables: S56_24X, S56_25, S56_26",
+             caption = "Data from internet searches excluding social networking activity",
+             colors = c(6, 8))
+# grid.arrange(p1, p2, nrow = 1)
+#Write table to workbook
+# removeWorksheet(wb, "Health Information")
+# addWorksheet(wb, "Health Information")
+# writeData(wb, "Health Information", hsSum)
+```
+
+### Different Communication Methods
+```{r include = TRUE}
+#####Summarize social networking, private messaging, texting, email activity
+snCat <- socNetworkCat(demo)
+snCatAge <- socNetworkCat(demo, AgeGroup)
+snSum <- socNetworkSum(demo)
+snSumAge <- socNetworkSum(demo, AgeGroup)
+#Plot proportions
+plotCat(snCat, fillVar = "Platform", facetCVar = "Category", colors = c(4, 6, 8, 9),
+        title = "Communications and Social Network Activity Among Respondents",
+        subtitle = "Variables: S56_6, S56_9, S56_12, S56_15, S56_18 (6 Months)",
+        caption = "* Question was only asked with regards to Social Networking Apps")
+##By Age
+plotCat(snCatAge %>% mutate(Platform = case_when(Platform == "Private Messaging" ~ "PM Apps",
+                                                 Platform == "Social Media" ~ "Social Media",
+                                                 Platform == "Text Messaging" ~ "Texting",
+                                                 Platform == "Email" ~ "Email")),
+        fillVar = "AgeGroup", facetRVar = "Platform", facetCVar = "Category", colors = c(4, 6, 8, 9),
+        title = "Communications and Social Network Activity Among Respondents (By Age Group)",
+        subtitle = "Variables: S56_6, S56_9, S56_12, S56_15, S56_18 (6 Months)",
+        caption = "* Question was only asked with regards to Social Networking Apps")
+#Plot proportions for Social Networking Summary
+plotSum(snSum, fillVar = "Platform", colors = c(4, 6, 8, 9),
+        title = "Communications and Social Network Activity\nAmong Respondents",
+        subtitle = "Variables: S56_6, S56_9, S56_15, S56_18 (6 Months)",
+        caption = "Data from internet searches excluding social networking activity")
+##By age
+plotSumGroup(snSumAge, fillVar = "AgeGroup", fillVarTitle = "Age Group", facetRVar = "Platform",
+             title = "Communications and Social Network Activity\nAmong Respondents (By Age Group)",
+             subtitle = "Variables: S56_6, S56_9, S56_15, S56_18 (6 Months)",
+             caption = "Data from internet searches excluding social networking activity",
+             colors = c(4, 6, 8))
+# grid.arrange(p1, p2, nrow = 1)
+#Write table to workbook
+# removeWorksheet(wb, "Social Network Topics")
+# addWorksheet(wb, "Social Network Topics")
+# writeData(wb, "Social Network Topics", snSum)
+```
+
+```{r eval = FALSE}
+#####Export to XLSX
+saveWorkbook(wb, "DHSB Characteristic Data.xlsx", overwrite = TRUE)
+```
+
