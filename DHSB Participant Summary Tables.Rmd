@@ -219,8 +219,9 @@ table2 <- bind_rows(
                                  "DRUG2LF" = "Painkillers",
                                  "DRUG2LG" = "Tranquilizers",
                                  "DRUG2LH" = "ADHD medication",
-                                 "DRUG2LI" = "Other non-injected drugs",
-                                 "DRUG_RC_None" = "None",
+                                 "DRUG2LI" = "Over the counter drugs",
+                                 "DRUG2LJ" = "Other non-injected drugs",
+                                 "DRUG_RCD_None" = "None",
                                  "INJECTL" = "Injected drugs")) %>%
     mutate(Variable = fct_relevel(factor(Variable, levels = unique(Variable)),
                                   "Substance Use, N (%)",
