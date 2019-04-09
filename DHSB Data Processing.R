@@ -246,8 +246,8 @@ acasi00mTrim <- acasi00m %>%
          LATINO, starts_with("RACE"), #SES: Race
          INSCHOOL, GRADE, #SES: Education
          MONEY, #SES: Employment
-         # starts_with("EMPLOY"), #SES: Employment #> Removed
-         # RELSTAT, #SES: Relationship #> Removed
+         starts_with("EMPLOY"), #SES: Employment
+         RELSTAT, #SES: Relationship
          starts_with("ORIENT"), #SES: Orientation
          starts_with("LIVED"), starts_with("STAY7"), #Housing
          # JAILL, JAILLX, JAIL6X, #Incarceration #> Removed
@@ -354,14 +354,14 @@ acasi <- acasiJoinInner %>%
                            "Other orientation" = "5", 
                            "Other orientation" = "7",
                            "Refuse to answer"  = "8"),
-    # RELSTAT_RC = fct_recode(as.factor(RELSTAT),
-    #                         "Single"            = "1", 
-    #                         "Dating"            = "2", 
-    #                         "Dating"            = "3", 
-    #                         "Partnered/Married" = "4",
-    #                         "Partnered/Married" = "5", 
-    #                         "Other status"      = "6",
-    #                         "Refuse to answer"  = "8"),
+    RELSTAT_RC = fct_recode(as.factor(RELSTAT),
+                            "Single"            = "1",
+                            "Dating"            = "2",
+                            "Dating"            = "3",
+                            "Partnered/Married" = "4",
+                            "Partnered/Married" = "5",
+                            "Other status"      = "6",
+                            "Refuse to answer"  = "8"),
     GRADE_RC = fct_recode(as.factor(GRADE),
                           "High school, equivalent or less"         = "1", 
                           "High school, equivalent or less"         = "2", 
@@ -390,12 +390,12 @@ acasi <- acasiJoinInner %>%
                           "White Mixed-Race, Not Latino or Black",
                         RACEE == 1 ~ "White, Not Latino",
                         TRUE ~ "Other race"),
-    # EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
-    #                       EMPLOYB == 1 ~ "Employed/Student",
-    #                       EMPLOYC == 1 ~ "Employed/Student",
-    #                       EMPLOYD == 1 ~ "Unemployed/Disabled",
-    #                       EMPLOYE == 1 ~ "Unemployed/Disabled",
-    #                       EMPLOYF == 1 ~ "Unemployed/Disabled"),
+    EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
+                          EMPLOYB == 1 ~ "Employed/Student",
+                          EMPLOYC == 1 ~ "Employed/Student",
+                          EMPLOYD == 1 ~ "Unemployed/Disabled",
+                          EMPLOYE == 1 ~ "Unemployed/Disabled",
+                          EMPLOYF == 1 ~ "Unemployed/Disabled"),
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     DRUG_RC_None = if_else(DRUG1LM == 1 & DRUG2LK == 1, 1, 0),
     #Change INSURE to categorical: Insured, Not insured, Don't know; first look at combinations of options
@@ -586,11 +586,6 @@ acasi <- acasiJoinInner %>%
       )),
       na.rm = TRUE) > 0,
     1, 0)
-  ) %>%
-  select(
-    S56_25A, S56_25H, S56_25I, S56_25J, S56_25K, S56_25L,
-    one_of(paste0("S56_25", c("A", "H", "I", "J", "K", "L"), "_RC")),
-    Outcome_GenHealth
   )
 
 ##### Create a data set for analysis excluding original variables
@@ -600,29 +595,28 @@ acasi_analysis <- acasi %>%
          GENDER_RC,
          RACE_RC,
          INSCHOOL, GRADE_RC,
-         MONEY_RC,
-         ORIENT_RC,
+         MONEY_RC, EMPLOY_RC,
+         ORIENT_RC, RELSTAT,
          STAY7D_RC,
          BORNHIV, DIAGHIV, #Length with HIV: First HIV Diagnosis
          matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
          CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
-         starts_with("CAREHV"), #Healthcare utilization: Retention in care
+         starts_with("CAREHV"), -CAREHV06_RC_MCD, #Healthcare utilization: Retention in care
          ends_with("LST"), CD4LOW, INFECTN, AIDSDIAG, #Healthcare utilization: Quality of care
          ARTPRESC, ARTL, ARTLAGE, ARTREC, ARTNOW, #Healthcare utilization: Treatment
          ARTADHR, #Healthcare utilization: Adherence
          INSURE_RC, ADAP,
          HE_RC_HAL, HE_RC_HSE,
          CARE_RC,
-         starts_with("CNEED"), #Competing needs ###
          starts_with("DISC"), #Disclosure
          STIGMA_RC,
-         MENTALH_RC,
+         MENTALH_RC, MENTALH4_RC,
          starts_with("DRUG"), #Substance use: non-injected
          INJECTL, #Substance use: injected
          SOCIALS_RC,
          MTUEX_RC, MTUSPX_RC_Text, MTUSPX_RC_Smartphone, MTUIX_RC, MTUSNX_RC,
          MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg,
-         starts_with("S56"))
+         starts_with("Outcome"))
 
 #Insurance 'Other' included as 'Insured' until further notice.
 
