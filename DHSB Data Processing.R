@@ -346,10 +346,13 @@ acasi <- acasiJoinInner %>%
     SITE_RCD_SFDPH = if_else(SITE1 == "SFDPH", 1, 0),
     SITE_RCD_WFU   = if_else(SITE1 == "WFU", 1, 0),
     SITE_RCD_WUSL  = if_else(SITE1 == "WUSL", 1, 0),
-    #Demographic variables
+    #Variable transformations
     #> Procedure:
     ##> 1) Create (if necessary) and re-level factors, collapse levels into fewer options (RC = Recode)
     ##> 2) Create dummy variables (RCD = Recode Dummy)
+    ###>     Treat 'Refused to answer' as separate answer rather than NA
+    ##> 3) Change 'Refused to answer' or 'Skipped' to NA for continuous variables
+    ##> 4) Make other transformations to continuous variables
     
     #> Gender Identity
     GENDER_RC = fct_recode(as.factor(GENDER),
@@ -441,6 +444,29 @@ acasi <- acasiJoinInner %>%
     #> Income
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     MONEY_RC_Log = log(MONEY_RC + 1),
+    #> HIV History
+    BORNHIV_RCD_Yes = if_else(BORNHIV == 1, 1, 0), #None refused to answer
+    DIAGHIV_RC = case_when(DIAGHIV <= 2019 ~ DIAGHIV),
+    #> Insurance
+    INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
+                          INSURE == 97 ~ "Don't know",
+                          INSURE == 98 ~ "Refuse to answer", #None refused to answer
+                          TRUE ~ "Insured"), 
+    INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
+    INSURE_RCD_Unknown = if_else(INSURE_RC == "Don't know", 1, 0),
+    ADAP_RCD_Yes     = if_else(ADAP == 1, 1, 0),
+    ADAP_RCD_Unknown = if_else(ADAP == 7, 1, 0), #'Skipped' treated as 'No'
+    #> HIV Disclosure
+    DISC_RC = case_when(DISCA == 1 ~ "No one",
+                        DISCB == 1 | DISCC == 1 ~ "Partner/Sex partner",
+                        DISCD == 1 | DISCE == 1 ~ "Friends/Family",
+                        DISCF == 1 | DISCG == 1 |
+                          DISCH == 1 | DISCI == 1 |
+                          DISCJ == 1 ~ "Other person",
+                        TRUE ~ "Refuse to answer"), #None refused to answer
+    DISC_RCD_Partner = if_else(DISC_RC == "Partner/Sex partner", 1, 0),
+    DISC_RCD_Family  = if_else(DISC_RC == "Friends/Family", 1, 0),
+    DISC_RCD_Other   = if_else(DISC_RC == "Other person", 1, 0),
     #> Substance Use
     DRUG_RC = case_when(DRUG1LA == 1 ~ "Alcohol",
                         DRUG1LB == 1 ~ "Tobacco",
@@ -459,44 +485,9 @@ acasi <- acasiJoinInner %>%
     DRUG_RCD_None      = if_else(DRUG_RC == "None", 1, 0),
     DRUG_RCD_Refuse    = if_else(DRUG_RC == "Refuse to answer", 1, 0),
     INJECTL_RCD_Inject = if_else(INJECTL == 1, 1, 0),
-    INJECTL_RCD_Refuse = if_else(INJECTL == 8, 1, 0),
-    #> Insurance
-    INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
-                          INSURE == 97 ~ "Don't know",
-                          INSURE == 98 ~ "Refuse to answer", #None refused to answer
-                          TRUE ~ "Insured"), 
-    INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
-    INSURE_RCD_Unknown   = if_else(INSURE_RC == "Don't know", 1, 0),
-    #> HIV Disclosure
-    DISC_RC = case_when(DISCA == 1 ~ "No one",
-                        DISCB == 1 | DISCC == 1 ~ "Partner/Sex partner",
-                        DISCD == 1 | DISCE == 1 ~ "Friends/Family",
-                        DISCF == 1 | DISCG == 1 |
-                          DISCH == 1 | DISCI == 1 |
-                          DISCJ == 1 ~ "Other person",
-                        TRUE ~ "Refuse to answer"), #None refused to answer
-    DISC_RCD_Partner = if_else(DISC_RC == "Partner/Sex partner", 1, 0),
-    DISC_RCD_Family  = if_else(DISC_RC == "Friends/Family", 1, 0),
-    DISC_RCD_Other   = if_else(DISC_RC == "Other person", 1, 0)
-    # #Change INSURE to categorical: Insured, Not insured, Don't know; first look at combinations of options
-    # INSUREA_RC = replace(as.character(INSUREA), which(INSUREA == 1), "A"),
-    # INSUREB_RC = replace(as.character(INSUREB), which(INSUREB == 1), "B"),
-    # INSUREC_RC = replace(as.character(INSUREC), which(INSUREC == 1), "C"),
-    # INSURED_RC = replace(as.character(INSURED), which(INSURED == 1), "D"),
-    # INSUREE_RC = replace(as.character(INSUREE), which(INSUREE == 1), "E"),
-    # INSUREF_RC = replace(as.character(INSUREF), which(INSUREF == 1), "F"),
-    # INSUREG_RC = replace(as.character(INSUREG), which(INSUREG == 1), "G"),
-    # INSUREH_RC = replace(as.character(INSUREH), which(INSUREH == 1), "H")
+    INJECTL_RCD_Refuse = if_else(INJECTL == 8, 1, 0)
   ) %>%
-  # unite("INSURE_RC", sep = "", remove = FALSE,
-  #       INSUREA_RC, INSUREB_RC, INSUREC_RC, INSURED_RC, 
-  #       INSUREE_RC, INSUREF_RC, INSUREG_RC, INSUREH_RC) %>%
-  # select(-matches("^INSURE[[:alpha:]]_RC")) %>%
-  # mutate(INSURE_RC = str_replace_all(INSURE_RC, "0", "")) %>%
-  # mutate(INSURE_RC = case_when(INSURE_RC == "A" ~ "Not insured",
-  #                              INSURE_RC == "77777777" ~ "Don't know", #If participant marked "Don't know", all answers = 7
-  #                              TRUE ~ "Insured")) %>%
-  
+    
   #Scales
   #>Procedure:
   ##> 1) Convert any values not included in the item to NA ("Refuse to answer", "Don't know", or "Skipped")
@@ -674,8 +665,7 @@ acasi_analysis <- acasi %>%
   select(SITE_RC, PID, surveylanguage,
          AGE,
          contains("_RCD_"),
-         BORNHIV, DIAGHIV, #Length with HIV: First HIV Diagnosis
-         ADAP,
+         DIAGHIV_RC,
          HE_RC_HAL, HE_RC_HSE,
          CARE_RC,
          STIGMA_RC,
