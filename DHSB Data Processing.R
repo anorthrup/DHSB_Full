@@ -346,7 +346,12 @@ acasi <- acasiJoinInner %>%
     SITE_RCD_SFDPH = if_else(SITE1 == "SFDPH", 1, 0),
     SITE_RCD_WFU   = if_else(SITE1 == "WFU", 1, 0),
     SITE_RCD_WUSL  = if_else(SITE1 == "WUSL", 1, 0),
-    ##Demographic variables
+    #Demographic variables
+    #> Procedure:
+    ##> 1) Create (if necessary) and re-level factors, collapse levels into fewer options (RC = Recode)
+    ##> 2) Create dummy variables (RCD = Recode Dummy)
+    
+    #> Gender Identity
     GENDER_RC = fct_recode(as.factor(GENDER),
                            "Male (cis man)"     = "1", 
                            "Female (cis woman)" = "2",
@@ -354,10 +359,11 @@ acasi <- acasiJoinInner %>%
                            "Trans-identified"   = "4",
                            "Other gender"       = "5", 
                            "Other gender"       = "6",
-                           "Refuse to answer"   = "8"),
+                           "Refuse to answer"   = "8"), #None refused to answer
     GENDER_RCD_Female = if_else(GENDER_RC == "Female (cis woman)", 1, 0),
     GENDER_RCD_Trans  = if_else(GENDER_RC == "Trans-identified", 1, 0),
     GENDER_RCD_Other  = if_else(GENDER_RC == "Other gender", 1, 0),
+    #> Sexual Orientation
     ORIENT_RC = fct_recode(as.factor(ORIENT),
                            "Straight"          = "1", 
                            "Gay or lesbian"    = "2", 
@@ -365,10 +371,11 @@ acasi <- acasiJoinInner %>%
                            "Other orientation" = "4", 
                            "Other orientation" = "5", 
                            "Other orientation" = "7",
-                           "Refuse to answer"  = "8"),
+                           "Refuse to answer"  = "8"), #None refused to answer
     ORIENT_RCD_Gay   = if_else(ORIENT_RC == "Gay or lesbian", 1, 0),
     ORIENT_RCD_Bi    = if_else(ORIENT_RC == "Bisexual", 1, 0),
     ORIENT_RCD_Other = if_else(ORIENT_RC == "Other orientation", 1, 0),
+    #> Relationship Status
     RELSTAT_RC = fct_recode(as.factor(RELSTAT),
                             "Single"            = "1",
                             "Dating"            = "2",
@@ -376,10 +383,11 @@ acasi <- acasiJoinInner %>%
                             "Partnered/Married" = "4",
                             "Partnered/Married" = "5",
                             "Other status"      = "6",
-                            "Refuse to answer"  = "8"),
+                            "Refuse to answer"  = "8"), #None refused to answer
     RELSTAT_RCD_Dating    = if_else(RELSTAT_RC == "Dating", 1, 0),
     RELSTAT_RCD_Partnered = if_else(RELSTAT_RC == "Partnered/Married", 1, 0),
     RELSTAT_RCD_Other     = if_else(RELSTAT_RC == "Other status", 1, 0),
+    #> Education
     GRADE_RC = fct_recode(as.factor(GRADE),
                           "High school, equivalent or less"         = "1", 
                           "High school, equivalent or less"         = "2", 
@@ -388,9 +396,10 @@ acasi <- acasiJoinInner %>%
                           "College graduate or trade certification" = "5", 
                           "College graduate or trade certification" = "6",
                           "College graduate or trade certification" = "7", 
-                          "Refuse to answer"                        = "8"),
+                          "Refuse to answer"                        = "8"), #None refused to answer
     GRADE_RCD_PostK = if_else(GRADE_RC == "Some post-K12", 1, 0),
     GRADE_RCD_Grad  = if_else(GRADE_RC == "College graduate or trade certification", 1, 0),
+    #> Residence, Last 7 Days
     STAY7D_RC = fct_recode(as.factor(STAY7D),
                            "Stable housing"   =  "1", 
                            "Unstable housing" =  "2",
@@ -408,27 +417,31 @@ acasi <- acasiJoinInner %>%
     STAY7D_RCD_Institution = if_else(STAY7D_RC == "Institution", 1, 0),
     STAY7D_RCD_Other       = if_else(STAY7D_RC == "Other residence", 1, 0),
     STAY7D_RCD_Refuse      = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
+    #> Ethnicity & Race
     RACE_RC = case_when(LATINO == 1 ~ "Latino",
                         RACEC == 1 ~ "Black, Not Latino",
                         RACEE == 1 & RACE > 1 ~ 
                           "White Mixed-Race, Not Latino or Black",
                         RACEE == 1 ~ "White, Not Latino",
-                        LATINO == 8 & RACE == 8 ~ "Refuse to answer",
+                        LATINO == 8 & RACE == 8 ~ "Refuse to answer", #None refused to answer
                         TRUE ~ "Other race"),
     RACE_RCD_Latino   = if_else(RACE_RC == "Latino", 1, 0),
     RACE_RCD_Black    = if_else(RACE_RC == "Black, Not Latino", 1, 0),
     RACE_RCD_WhiteMix = if_else(RACE_RC == "White Mixed-Race, Not Latino or Black", 1, 0),
     RACE_RCD_Other    = if_else(RACE_RC == "Other race", 1, 0),
+    #> Employment
     EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
                           EMPLOYB == 1 ~ "Employed/Student",
                           EMPLOYC == 1 ~ "Employed/Student",
                           EMPLOYD == 1 ~ "Unemployed/Disabled",
                           EMPLOYE == 1 ~ "Unemployed/Disabled",
                           EMPLOYF == 1 ~ "Unemployed/Disabled",
-                          EMPLOY == 8 ~ "Refuse to answer"),
+                          EMPLOY == 8 ~ "Refuse to answer"), #None refused to answer
     EMPLOY_RCD_Employed = if_else(EMPLOY_RC == "Employed/Student", 1, 0),
+    #> Income
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     MONEY_RC_Log = log(MONEY_RC + 1),
+    #> Substance Use
     DRUG_RC = case_when(DRUG1LA == 1 ~ "Alcohol",
                         DRUG1LB == 1 ~ "Tobacco",
                         DRUG1LC == 1 ~ "Marijuana",
@@ -447,12 +460,24 @@ acasi <- acasiJoinInner %>%
     DRUG_RCD_Refuse    = if_else(DRUG_RC == "Refuse to answer", 1, 0),
     INJECTL_RCD_Inject = if_else(INJECTL == 1, 1, 0),
     INJECTL_RCD_Refuse = if_else(INJECTL == 8, 1, 0),
+    #> Insurance
     INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
                           INSURE == 97 ~ "Don't know",
-                          INSURE == 98 ~ "Refuse to answer",
-                          TRUE ~ "Insured"),
+                          INSURE == 98 ~ "Refuse to answer", #None refused to answer
+                          TRUE ~ "Insured"), 
     INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
-    INSURE_RCD_Unknown   = if_else(INSURE_RC == "Don't know", 1, 0)
+    INSURE_RCD_Unknown   = if_else(INSURE_RC == "Don't know", 1, 0),
+    #> HIV Disclosure
+    DISC_RC = case_when(DISCA == 1 ~ "No one",
+                        DISCB == 1 | DISCC == 1 ~ "Partner/Sex partner",
+                        DISCD == 1 | DISCE == 1 ~ "Friends/Family",
+                        DISCF == 1 | DISCG == 1 |
+                          DISCH == 1 | DISCI == 1 |
+                          DISCJ == 1 ~ "Other person",
+                        TRUE ~ "Refuse to answer"), #None refused to answer
+    DISC_RCD_Partner = if_else(DISC_RC == "Partner/Sex partner", 1, 0),
+    DISC_RCD_Family  = if_else(DISC_RC == "Friends/Family", 1, 0),
+    DISC_RCD_Other   = if_else(DISC_RC == "Other person", 1, 0)
     # #Change INSURE to categorical: Insured, Not insured, Don't know; first look at combinations of options
     # INSUREA_RC = replace(as.character(INSUREA), which(INSUREA == 1), "A"),
     # INSUREB_RC = replace(as.character(INSUREB), which(INSUREB == 1), "B"),
@@ -473,13 +498,13 @@ acasi <- acasiJoinInner %>%
   #                              TRUE ~ "Insured")) %>%
   
   #Scales
-  ##Procedure:
+  #>Procedure:
   ##> 1) Convert any values not included in the item to NA ("Refuse to answer", "Don't know", or "Skipped")
-  ##>>     Each variable coded as integers; values above certain integer are generally refuse, don't know, skip
+  ###>     Each variable coded as integers; values above certain integer are generally refuse, don't know, skip
   ##> 2) Check whether all items are NA (Does number of NA = number of items?)
   ##> 3) If not, sum all items (ignoring NA values: na.rm = TRUE)
   
-  ##Social support, 3 items
+  #> Social support, 3 items
   mutate_at(vars(matches("SOCIALS\\d{1}")),
             list(RC = ~replace(., which(. > 10), NA))) %>% #Values of 0-10 expected; above that = Refuse/Skip
   mutate(
@@ -488,7 +513,7 @@ acasi <- acasiJoinInner %>%
         rowSums(select(., matches("SOCIALS\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##HIV-related Stigma, 10 items
+  #> HIV-related Stigma, 10 items
   mutate_at(vars(matches("STIGMA\\d{1}")),
             list(RC = ~replace(., which(. > 4), NA))) %>% #Values of 0-4 expected; above that = Refuse
   mutate(
@@ -497,7 +522,7 @@ acasi <- acasiJoinInner %>%
         rowSums(select(., matches("STIGMA\\d+_RC")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Youth Health Engagement, 10 items
+  #> Youth Health Engagement, 10 items
   ##> Health Access Literacy (HAL): HE01-HE05; exclude HE05 because all but 17 participants skipped (17 under age of 18)
   ##> Health Self-Efficacy (HSE): HE06-HE10
   mutate_at(vars(starts_with("HE"), -HE05),
@@ -512,7 +537,7 @@ acasi <- acasiJoinInner %>%
         rowSums(select(., one_of(c(paste0("HE0", 6:9, "_RC"), "HE10_RC"))), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Provider Empathy (CARE), 10 items
+  #> Provider Empathy (CARE), 10 items
   mutate_at(vars(matches("CARE\\d{2}")),
             list(RC = ~replace(., which(. > 5), NA))) %>% #Values of 1-5 expected; 8 = refuse, 9 = "Not Applicable"
   mutate(
@@ -521,7 +546,7 @@ acasi <- acasiJoinInner %>%
         rowSums(select(., matches("CARE\\d{2}_RC")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Physical and Mental Health, 4 items
+  #> Physical and Mental Health, 4 items
   ##> Exclude MENTALH4 because it differs from MENTALH1-3
   mutate_at(vars(starts_with("MENTALH")),
             list(RC = ~replace(., which(. > 6), NA))) %>% #Values of 1-6 expected; 8 = refuse to answer
@@ -532,7 +557,7 @@ acasi <- acasiJoinInner %>%
         rowSums(select(., matches("(MENTALH)(1|2|3)(_RC)")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Email Usage, 4 items
+  #> Email Usage, 4 items
   mutate_at(vars(starts_with("MTUEX")),
             list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
@@ -541,7 +566,7 @@ acasi <- acasiJoinInner %>%
         rowSums(select(., matches("MTUEX\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Text Usage, 3 items (MTUSPX01, MTUSPX02, MTUSPX12)
+  #> Text Usage, 3 items (MTUSPX01, MTUSPX02, MTUSPX12)
   mutate_at(vars(starts_with("MTUSPX")),
             list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
@@ -550,7 +575,7 @@ acasi <- acasiJoinInner %>%
         rowSums(select(., MTUSPX01_RC, MTUSPX02_RC, MTUSPX12_RC))
     )
   ) %>%
-  ##Mobile Phone Usage, 9 items (MTUSPX03 through MTUSPX11)
+  #> Mobile Phone Usage, 9 items (MTUSPX03 through MTUSPX11)
   mutate(
     MTUSPX_RC_Smartphone = case_when(
       rowSums(is.na(select(., one_of(paste0("MTUSPX", 
@@ -563,7 +588,7 @@ acasi <- acasiJoinInner %>%
         ))), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Internet Search, 4 items (MTUIX5 and MTUIX6 excluded; added for this study, not part of original subscale)
+  #> Internet Search, 4 items (MTUIX5 and MTUIX6 excluded; added for this study, not part of original subscale)
   mutate_at(vars(starts_with("MTUIX"), -MTUIX5, -MTUIX6),
             list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
@@ -572,7 +597,7 @@ acasi <- acasiJoinInner %>%
         rowSums(select(., matches("MTUIX\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##General Social Media Usage, 9 items (Excluded MTUSNX10:MTUSNX12; added for this study, not part of original subscale)
+  #> General Social Media Usage, 9 items (Excluded MTUSNX10:MTUSNX12; added for this study, not part of original subscale)
   mutate_at(vars(starts_with("MTUSNX")),
             list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
   mutate(
@@ -581,7 +606,7 @@ acasi <- acasiJoinInner %>%
         rowSums(select(., one_of(paste0("MTUSNX0", 1:9, "_RC"))), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Positive Attitudes Toward Technology, 6 items (MTUAX01, MTUAX03, MTUAX04, MTUAX09:MTUAX11)
+  #> Positive Attitudes Toward Technology, 6 items (MTUAX01, MTUAX03, MTUAX04, MTUAX09:MTUAX11)
   mutate_at(vars(one_of(paste0("MTUAX", 
                                str_pad(c(1, 3:6, 8, 9:14), width = 2, pad = 0)))),
             list(RC = ~replace(., which(. > 5), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
@@ -596,7 +621,7 @@ acasi <- acasiJoinInner %>%
         na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Anxiety About Being Without Technology or Dependence on Technology, 3 items (MTUAX05, MTUAX06, MTUAX08)
+  #> Anxiety About Being Without Technology or Dependence on Technology, 3 items (MTUAX05, MTUAX06, MTUAX08)
   mutate(
     MTUAX_RC_Anx = case_when(
       rowSums(is.na(select(., one_of(
@@ -608,7 +633,7 @@ acasi <- acasiJoinInner %>%
         na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  ##Negative Attitudes Toward Technology, 3 items (MTUAX12:MTUAX14)
+  #> Negative Attitudes Toward Technology, 3 items (MTUAX12:MTUAX14)
   mutate(
     MTUAX_RC_Neg = case_when(
       rowSums(is.na(select(., one_of(
@@ -653,7 +678,6 @@ acasi_analysis <- acasi %>%
          ADAP,
          HE_RC_HAL, HE_RC_HSE,
          CARE_RC,
-         starts_with("DISC"), #Disclosure
          STIGMA_RC,
          MENTALH_RC, MENTALH4_RC,
          SOCIALS_RC,
