@@ -250,7 +250,7 @@ acasi00mTrim <- acasi00m %>%
          RELSTAT, #SES: Relationship
          starts_with("ORIENT"), #SES: Orientation
          starts_with("LIVED"), starts_with("STAY7"), #Housing
-         # JAILL, JAILLX, JAIL6X, #Incarceration #> Removed
+         JAILL, #JAILLX, JAIL6X, #Incarceration 
          BORNHIV, DIAGHIV, SCREEN5, #Length with HIV: First HIV Diagnosis
          matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
          CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
@@ -404,7 +404,7 @@ acasi <- acasiJoinInner %>%
                            "Institution"      = "10",
                            "Other residence"  = "11", 
                            "Refuse to answer" = "12"),
-    STAY7D_RCD_Unstable    = if_else(STAY7D_RC == "Unstable housing", 1, 0),
+    STAY7D_RCD_Stable      = if_else(STAY7D_RC == "Stable housing", 1, 0),
     STAY7D_RCD_Institution = if_else(STAY7D_RC == "Institution", 1, 0),
     STAY7D_RCD_Other       = if_else(STAY7D_RC == "Other residence", 1, 0),
     STAY7D_RCD_Refuse      = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
@@ -415,8 +415,8 @@ acasi <- acasiJoinInner %>%
                         RACEE == 1 ~ "White, Not Latino",
                         LATINO == 8 & RACE == 8 ~ "Refuse to answer",
                         TRUE ~ "Other race"),
+    RACE_RCD_Latino   = if_else(RACE_RC == "Latino", 1, 0),
     RACE_RCD_Black    = if_else(RACE_RC == "Black, Not Latino", 1, 0),
-    RACE_RCD_White    = if_else(RACE_RC == "White, Not Latino", 1, 0),
     RACE_RCD_WhiteMix = if_else(RACE_RC == "White Mixed-Race, Not Latino or Black", 1, 0),
     RACE_RCD_Other    = if_else(RACE_RC == "Other race", 1, 0),
     EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
@@ -426,7 +426,7 @@ acasi <- acasiJoinInner %>%
                           EMPLOYE == 1 ~ "Unemployed/Disabled",
                           EMPLOYF == 1 ~ "Unemployed/Disabled",
                           EMPLOY == 8 ~ "Refuse to answer"),
-    EMPLOY_RCD_Unemployed = if_else(EMPLOY_RC == "Unemployed/Disabled", 1, 0),
+    EMPLOY_RCD_Employed = if_else(EMPLOY_RC == "Employed/Student", 1, 0),
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     MONEY_RC_Log = log(MONEY_RC + 1),
     DRUG_RC = case_when(DRUG1LA == 1 ~ "Alcohol",
@@ -445,6 +445,8 @@ acasi <- acasiJoinInner %>%
     DRUG_RCD_Other     = if_else(DRUG_RC == "Other drug(s)", 1, 0),
     DRUG_RCD_None      = if_else(DRUG_RC == "None", 1, 0),
     DRUG_RCD_Refuse    = if_else(DRUG_RC == "Refuse to answer", 1, 0),
+    INJECTL_RCD_Inject = if_else(INJECTL == 1, 1, 0),
+    INJECTL_RCD_Refuse = if_else(INJECTL == 8, 1, 0),
     INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
                           INSURE == 97 ~ "Don't know",
                           INSURE == 98 ~ "Refuse to answer",
@@ -646,27 +648,14 @@ acasi <- acasiJoinInner %>%
 acasi_analysis <- acasi %>%
   select(SITE_RC, PID, surveylanguage,
          AGE,
-         GENDER_RC,
-         RACE_RC,
-         INSCHOOL, GRADE_RC,
-         MONEY_RC, EMPLOY_RC,
-         ORIENT_RC, RELSTAT,
-         STAY7D_RC,
+         contains("_RCD_"),
          BORNHIV, DIAGHIV, #Length with HIV: First HIV Diagnosis
-         matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
-         CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
-         starts_with("CAREHV"), -CAREHV06_RC_MCD, #Healthcare utilization: Retention in care
-         ends_with("LST"), CD4LOW, INFECTN, AIDSDIAG, #Healthcare utilization: Quality of care
-         ARTPRESC, ARTL, ARTLAGE, ARTREC, ARTNOW, #Healthcare utilization: Treatment
-         ARTADHR, #Healthcare utilization: Adherence
-         INSURE_RC, ADAP,
+         ADAP,
          HE_RC_HAL, HE_RC_HSE,
          CARE_RC,
          starts_with("DISC"), #Disclosure
          STIGMA_RC,
          MENTALH_RC, MENTALH4_RC,
-         starts_with("DRUG"), #Substance use: non-injected
-         INJECTL, #Substance use: injected
          SOCIALS_RC,
          MTUEX_RC, MTUSPX_RC_Text, MTUSPX_RC_Smartphone, MTUIX_RC, MTUSNX_RC,
          MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg,
