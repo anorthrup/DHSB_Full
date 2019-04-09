@@ -337,6 +337,15 @@ acasi <- acasiJoinInner %>%
                          "Cleveland"  = "MHS", "Hershey" = "PSU", 
                          "Philadelphia" = "PFC", "San Francisco" = "SFDPH", 
                          "Winston-Salem"  = "WFU", "St. Louis" = "WUSL"),
+    SITE_RCD_FRI   = if_else(SITE1 == "FRI", 1, 0),
+    SITE_RCD_NYSDA = if_else(SITE1 == "NYSDA", 1, 0),
+    SITE_RCD_HBHC  = if_else(SITE1 == "HBHC", 1, 0),
+    SITE_RCD_MHS   = if_else(SITE1 == "MHS", 1, 0),
+    SITE_RCD_PSU   = if_else(SITE1 == "PSU", 1, 0),
+    SITE_RCD_PFC   = if_else(SITE1 == "PFC", 1, 0),
+    SITE_RCD_SFDPH = if_else(SITE1 == "SFDPH", 1, 0),
+    SITE_RCD_WFU   = if_else(SITE1 == "WFU", 1, 0),
+    SITE_RCD_WUSL  = if_else(SITE1 == "WUSL", 1, 0),
     ##Demographic variables
     GENDER_RC = fct_recode(as.factor(GENDER),
                            "Male (cis man)"     = "1", 
@@ -346,6 +355,9 @@ acasi <- acasiJoinInner %>%
                            "Other gender"       = "5", 
                            "Other gender"       = "6",
                            "Refuse to answer"   = "8"),
+    GENDER_RCD_Female = if_else(GENDER_RC == "Female (cis woman)", 1, 0),
+    GENDER_RCD_Trans  = if_else(GENDER_RC == "Trans-identified", 1, 0),
+    GENDER_RCD_Other  = if_else(GENDER_RC == "Other gender", 1, 0),
     ORIENT_RC = fct_recode(as.factor(ORIENT),
                            "Straight"          = "1", 
                            "Gay or lesbian"    = "2", 
@@ -354,6 +366,9 @@ acasi <- acasiJoinInner %>%
                            "Other orientation" = "5", 
                            "Other orientation" = "7",
                            "Refuse to answer"  = "8"),
+    ORIENT_RCD_Gay   = if_else(ORIENT_RC == "Gay or lesbian", 1, 0),
+    ORIENT_RCD_Bi    = if_else(ORIENT_RC == "Bisexual", 1, 0),
+    ORIENT_RCD_Other = if_else(ORIENT_RC == "Other orientation", 1, 0),
     RELSTAT_RC = fct_recode(as.factor(RELSTAT),
                             "Single"            = "1",
                             "Dating"            = "2",
@@ -362,6 +377,9 @@ acasi <- acasiJoinInner %>%
                             "Partnered/Married" = "5",
                             "Other status"      = "6",
                             "Refuse to answer"  = "8"),
+    RELSTAT_RCD_Dating    = if_else(RELSTAT_RC == "Dating", 1, 0),
+    RELSTAT_RCD_Partnered = if_else(RELSTAT_RC == "Partnered/Married", 1, 0),
+    RELSTAT_RCD_Other     = if_else(RELSTAT_RC == "Other status", 1, 0),
     GRADE_RC = fct_recode(as.factor(GRADE),
                           "High school, equivalent or less"         = "1", 
                           "High school, equivalent or less"         = "2", 
@@ -371,6 +389,8 @@ acasi <- acasiJoinInner %>%
                           "College graduate or trade certification" = "6",
                           "College graduate or trade certification" = "7", 
                           "Refuse to answer"                        = "8"),
+    GRADE_RCD_PostK = if_else(GRADE_RC == "Some post-K12", 1, 0),
+    GRADE_RCD_Grad  = if_else(GRADE_RC == "College graduate or trade certification", 1, 0),
     STAY7D_RC = fct_recode(as.factor(STAY7D),
                            "Stable housing"   =  "1", 
                            "Unstable housing" =  "2",
@@ -384,38 +404,72 @@ acasi <- acasiJoinInner %>%
                            "Institution"      = "10",
                            "Other residence"  = "11", 
                            "Refuse to answer" = "12"),
+    STAY7D_RCD_Unstable    = if_else(STAY7D_RC == "Unstable housing", 1, 0),
+    STAY7D_RCD_Institution = if_else(STAY7D_RC == "Institution", 1, 0),
+    STAY7D_RCD_Other       = if_else(STAY7D_RC == "Other residence", 1, 0),
+    STAY7D_RCD_Refuse      = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
     RACE_RC = case_when(LATINO == 1 ~ "Latino",
                         RACEC == 1 ~ "Black, Not Latino",
                         RACEE == 1 & RACE > 1 ~ 
                           "White Mixed-Race, Not Latino or Black",
                         RACEE == 1 ~ "White, Not Latino",
+                        LATINO == 8 & RACE == 8 ~ "Refuse to answer",
                         TRUE ~ "Other race"),
+    RACE_RCD_Black    = if_else(RACE_RC == "Black, Not Latino", 1, 0),
+    RACE_RCD_White    = if_else(RACE_RC == "White, Not Latino", 1, 0),
+    RACE_RCD_WhiteMix = if_else(RACE_RC == "White Mixed-Race, Not Latino or Black", 1, 0),
+    RACE_RCD_Other    = if_else(RACE_RC == "Other race", 1, 0),
     EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
                           EMPLOYB == 1 ~ "Employed/Student",
                           EMPLOYC == 1 ~ "Employed/Student",
                           EMPLOYD == 1 ~ "Unemployed/Disabled",
                           EMPLOYE == 1 ~ "Unemployed/Disabled",
-                          EMPLOYF == 1 ~ "Unemployed/Disabled"),
+                          EMPLOYF == 1 ~ "Unemployed/Disabled",
+                          EMPLOY == 8 ~ "Refuse to answer"),
+    EMPLOY_RCD_Unemployed = if_else(EMPLOY_RC == "Unemployed/Disabled", 1, 0),
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
-    DRUG_RC_None = if_else(DRUG1LM == 1 & DRUG2LK == 1, 1, 0),
-    #Change INSURE to categorical: Insured, Not insured, Don't know; first look at combinations of options
-    INSUREA_RC = replace(as.character(INSUREA), which(INSUREA == 1), "A"),
-    INSUREB_RC = replace(as.character(INSUREB), which(INSUREB == 1), "B"),
-    INSUREC_RC = replace(as.character(INSUREC), which(INSUREC == 1), "C"),
-    INSURED_RC = replace(as.character(INSURED), which(INSURED == 1), "D"),
-    INSUREE_RC = replace(as.character(INSUREE), which(INSUREE == 1), "E"),
-    INSUREF_RC = replace(as.character(INSUREF), which(INSUREF == 1), "F"),
-    INSUREG_RC = replace(as.character(INSUREG), which(INSUREG == 1), "G"),
-    INSUREH_RC = replace(as.character(INSUREH), which(INSUREH == 1), "H")
+    MONEY_RC_Log = log(MONEY_RC + 1),
+    DRUG_RC = case_when(DRUG1LA == 1 ~ "Alcohol",
+                        DRUG1LB == 1 ~ "Tobacco",
+                        DRUG1LC == 1 ~ "Marijuana",
+                        rowSums(
+                          select(.,
+                                 one_of(paste0("DRUG1L", LETTERS[4:12]),
+                                        paste0("DRUG2L", LETTERS[1:10]))               
+                          ) == 1) > 0 ~ "Other drug(s)",
+                        DRUG1LM == 1 & DRUG2LK == 1 ~ "None",
+                        TRUE ~ "Refuse to answer"),
+    DRUG_RCD_Alcohol   = if_else(DRUG_RC == "Alcohol", 1, 0),
+    DRUG_RCD_Tobacco   = if_else(DRUG_RC == "Tobacco", 1, 0),
+    DRUG_RCD_Marijuana = if_else(DRUG_RC == "Marijuana", 1, 0),
+    DRUG_RCD_Other     = if_else(DRUG_RC == "Other drug(s)", 1, 0),
+    DRUG_RCD_None      = if_else(DRUG_RC == "None", 1, 0),
+    DRUG_RCD_Refuse    = if_else(DRUG_RC == "Refuse to answer", 1, 0),
+    INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
+                          INSURE == 97 ~ "Don't know",
+                          INSURE == 98 ~ "Refuse to answer",
+                          TRUE ~ "Insured"),
+    INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
+    INSURE_RCD_Unknown   = if_else(INSURE_RC == "Don't know", 1, 0)
+    # #Change INSURE to categorical: Insured, Not insured, Don't know; first look at combinations of options
+    # INSUREA_RC = replace(as.character(INSUREA), which(INSUREA == 1), "A"),
+    # INSUREB_RC = replace(as.character(INSUREB), which(INSUREB == 1), "B"),
+    # INSUREC_RC = replace(as.character(INSUREC), which(INSUREC == 1), "C"),
+    # INSURED_RC = replace(as.character(INSURED), which(INSURED == 1), "D"),
+    # INSUREE_RC = replace(as.character(INSUREE), which(INSUREE == 1), "E"),
+    # INSUREF_RC = replace(as.character(INSUREF), which(INSUREF == 1), "F"),
+    # INSUREG_RC = replace(as.character(INSUREG), which(INSUREG == 1), "G"),
+    # INSUREH_RC = replace(as.character(INSUREH), which(INSUREH == 1), "H")
   ) %>%
-  unite("INSURE_RC", sep = "", remove = FALSE,
-        INSUREA_RC, INSUREB_RC, INSUREC_RC, INSURED_RC, 
-        INSUREE_RC, INSUREF_RC, INSUREG_RC, INSUREH_RC) %>%
-  select(-matches("^INSURE[[:alpha:]]_RC")) %>%
-  mutate(INSURE_RC = str_replace_all(INSURE_RC, "0", "")) %>%
-  mutate(INSURE_RC = case_when(INSURE_RC == "A" ~ "Not insured",
-                               INSURE_RC == "77777777" ~ "Don't know", #If participant marked "Don't know", all answers = 7
-                               TRUE ~ "Insured")) %>%
+  # unite("INSURE_RC", sep = "", remove = FALSE,
+  #       INSUREA_RC, INSUREB_RC, INSUREC_RC, INSURED_RC, 
+  #       INSUREE_RC, INSUREF_RC, INSUREG_RC, INSUREH_RC) %>%
+  # select(-matches("^INSURE[[:alpha:]]_RC")) %>%
+  # mutate(INSURE_RC = str_replace_all(INSURE_RC, "0", "")) %>%
+  # mutate(INSURE_RC = case_when(INSURE_RC == "A" ~ "Not insured",
+  #                              INSURE_RC == "77777777" ~ "Don't know", #If participant marked "Don't know", all answers = 7
+  #                              TRUE ~ "Insured")) %>%
+  
   #Scales
   ##Procedure:
   ##> 1) Convert any values not included in the item to NA ("Refuse to answer", "Don't know", or "Skipped")
