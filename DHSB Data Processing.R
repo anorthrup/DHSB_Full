@@ -563,6 +563,34 @@ acasi <- acasiJoinInner %>%
         )),
         na.rm = TRUE) #If so, sum columns
     )
+  ) %>%
+  #Outcomes
+  #> Sexual Health (Lifetime)
+  mutate_at(vars(S56_25B, S56_25C, S56_25D, S56_25E, S56_25F, S56_25G),
+            list(RC = ~replace(., which(. > 1), NA))) %>%
+  mutate(Outcome_SexHealth = if_else(
+    rowSums(
+      select(., one_of(
+        paste0("S56_25", c("B", "C", "D", "E", "F", "G"), "_RC")
+      )),
+      na.rm = TRUE) > 0,
+    1, 0)
+  ) %>%
+  #> General Health (Lifetime)
+  mutate_at(vars(S56_25A, S56_25H, S56_25I, S56_25J, S56_25K, S56_25L),
+            list(RC = ~replace(., which(. > 1), NA))) %>%
+  mutate(Outcome_GenHealth = if_else(
+    rowSums(
+      select(., one_of(
+        paste0("S56_25", c("A", "H", "I", "J", "K", "L"), "_RC")
+      )),
+      na.rm = TRUE) > 0,
+    1, 0)
+  ) %>%
+  select(
+    S56_25A, S56_25H, S56_25I, S56_25J, S56_25K, S56_25L,
+    one_of(paste0("S56_25", c("A", "H", "I", "J", "K", "L"), "_RC")),
+    Outcome_GenHealth
   )
 
 ##### Create a data set for analysis excluding original variables
@@ -574,8 +602,8 @@ acasi_analysis <- acasi %>%
          INSCHOOL, GRADE_RC,
          MONEY_RC,
          ORIENT_RC,
-         starts_with("LIVED"), STAY7D_RC,
-         BORNHIV, DIAGHIV, SCREEN5, #Length with HIV: First HIV Diagnosis
+         STAY7D_RC,
+         BORNHIV, DIAGHIV, #Length with HIV: First HIV Diagnosis
          matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
          CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
          starts_with("CAREHV"), #Healthcare utilization: Retention in care
@@ -590,7 +618,7 @@ acasi_analysis <- acasi %>%
          STIGMA_RC,
          MENTALH_RC,
          starts_with("DRUG"), #Substance use: non-injected
-         INJECTL, INJECT6, starts_with("INJEC6X"), #Substance use: injected
+         INJECTL, #Substance use: injected
          SOCIALS_RC,
          MTUEX_RC, MTUSPX_RC_Text, MTUSPX_RC_Smartphone, MTUIX_RC, MTUSNX_RC,
          MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg,
