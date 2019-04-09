@@ -565,6 +565,37 @@ acasi <- acasiJoinInner %>%
     )
   )
 
+##### Create a data set for analysis excluding original variables
+acasi_analysis <- acasi %>%
+  select(SITE_RC, PID, surveylanguage,
+         AGE,
+         GENDER_RC,
+         RACE_RC,
+         INSCHOOL, GRADE_RC,
+         MONEY_RC,
+         ORIENT_RC,
+         starts_with("LIVED"), STAY7D_RC,
+         BORNHIV, DIAGHIV, SCREEN5, #Length with HIV: First HIV Diagnosis
+         matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
+         CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
+         starts_with("CAREHV"), #Healthcare utilization: Retention in care
+         ends_with("LST"), CD4LOW, INFECTN, AIDSDIAG, #Healthcare utilization: Quality of care
+         ARTPRESC, ARTL, ARTLAGE, ARTREC, ARTNOW, #Healthcare utilization: Treatment
+         ARTADHR, #Healthcare utilization: Adherence
+         INSURE_RC, ADAP,
+         HE_RC_HAL, HE_RC_HSE,
+         CARE_RC,
+         starts_with("CNEED"), #Competing needs ###
+         starts_with("DISC"), #Disclosure
+         STIGMA_RC,
+         MENTALH_RC,
+         starts_with("DRUG"), #Substance use: non-injected
+         INJECTL, INJECT6, starts_with("INJEC6X"), #Substance use: injected
+         SOCIALS_RC,
+         MTUEX_RC, MTUSPX_RC_Text, MTUSPX_RC_Smartphone, MTUIX_RC, MTUSNX_RC,
+         MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg,
+         starts_with("S56"))
+
 #Insurance 'Other' included as 'Insured' until further notice.
 
 #SOCIALS: 1 Refuse (SOCIALS1)
