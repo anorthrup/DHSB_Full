@@ -244,7 +244,7 @@ plotCat <- function(data, xVar = "Topic", yVar = "Proportion", fillVar, facetRVa
   ggplot(data, aes_string(x = xVar, y = yVar, fill = fillVar)) +
     facet_grid(as.formula(paste(facetRVar, "~", facetCVar)), scales = "free_x", space = "free_x") +
     geom_bar(stat = "identity", position = position_dodge()) +
-    labs(title = title, subtitle = subtitle, caption = caption) +
+    labs(title = title, caption = caption) +
     theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust= 1)) +
     scale_fill_discrete(guide = guide_legend()) + theme(legend.position = "top") +
     scale_fill_manual(values = brewer.pal(9, "BuGn")[colors])
@@ -254,7 +254,7 @@ plotCat <- function(data, xVar = "Topic", yVar = "Proportion", fillVar, facetRVa
 plotSum <- function(data, xVar = "Category", yVar = "Proportion", fillVar, title, subtitle, caption, colors){
   ggplot(data, aes_string(x = xVar, y = yVar, fill = fillVar)) +
     geom_bar(stat = "identity", position = position_dodge()) +
-    labs(x = "", title = title, subtitle = subtitle, caption = caption) +
+    labs(x = "", title = title, caption = caption) +
     scale_fill_manual(values = brewer.pal(9, "BuGn")[colors]) +
     scale_y_continuous(limits = c(0, 1)) + 
     guides(fill = guide_legend(reverse = TRUE)) +
@@ -266,7 +266,7 @@ plotSumGroup <- function(data, xVar = "Category", yVar = "Proportion", fillVar, 
   ggplot(data, aes_string(x = xVar, y = yVar, fill = fillVar)) +
     geom_bar(stat = "identity", position = position_dodge()) +
     facet_grid(as.formula(paste(facetRVar, "~", facetCVar)), scales = "free_x", space = "free_x") +
-    labs(x = "", title = title, subtitle = subtitle, caption = caption) +
+    labs(x = "", title = title, caption = caption) +
     scale_fill_manual(values = brewer.pal(9, "BuGn")[colors]) +
     scale_y_continuous(limits = c(0, 1)) + 
     guides(fill = guide_legend(reverse = TRUE, title = fillVarTitle)) +
