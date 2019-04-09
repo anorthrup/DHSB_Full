@@ -9,96 +9,96 @@ library(psych)
 load("acasi.RData")
 
 #####Calculate Cronbach's alpha for scales
-alphaSOCIALS <- alpha(acasi2 %>% 
+alphaSOCIALS <- alpha(acasi %>% 
                         select(matches("SOCIALS\\d{1}_RC")) %>%
                         filter(rowSums(is.na(.)) < 3), 
                       cumulative = TRUE)
 identical(alphaSOCIALS$scores, 
-          acasi2 %>%
+          acasi %>%
             select(SOCIALS_RC) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
-alphaSTIGMA <- alpha(acasi2 %>% 
+alphaSTIGMA <- alpha(acasi %>% 
                        select(matches("STIGMA\\d+_RC")) %>%
                        filter(rowSums(is.na(.)) < 10), 
                      cumulative = TRUE)
 identical(alphaSTIGMA$scores, 
-          acasi2 %>%
+          acasi %>%
             select(STIGMA_RC) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
-alphaHAL <- alpha(acasi2 %>% 
+alphaHAL <- alpha(acasi %>% 
                     select(one_of(paste0("HE0", 1:4, "_RC"))) %>%
                     filter(rowSums(is.na(.)) < 4), 
                   cumulative = TRUE)
 identical(alphaHAL$scores, 
-          acasi2 %>%
+          acasi %>%
             select(HE_RC_HAL) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
-alphaHSE <- alpha(acasi2 %>% 
+alphaHSE <- alpha(acasi %>% 
                     select(one_of(c(paste0("HE0", 6:9, "_RC"), "HE10_RC"))) %>%
                     filter(rowSums(is.na(.)) < 5), 
                   cumulative = TRUE)
 identical(alphaHSE$scores, 
-          acasi2 %>%
+          acasi %>%
             select(HE_RC_HSE) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
-alphaCARE <- alpha(acasi2 %>% 
+alphaCARE <- alpha(acasi %>% 
                      select(matches("CARE\\d{2}_RC")) %>%
                      filter(rowSums(is.na(.)) < 10), 
                    cumulative = TRUE)
 identical(alphaCARE$scores, 
-          acasi2 %>%
+          acasi %>%
             select(CARE_RC) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
-alphaMENTALH <- alpha(acasi2 %>% 
+alphaMENTALH <- alpha(acasi %>% 
                         select(matches("(MENTALH)(1|2|3)(_RC)")) %>%
                         filter(rowSums(is.na(.)) < 3), 
                       cumulative = TRUE)
 identical(alphaMENTALH$scores, 
-          acasi2 %>%
+          acasi %>%
             select(MENTALH_RC) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
 #MTUAS Subscales
-alphaMTU_Email <- alpha(acasi2 %>% 
+alphaMTU_Email <- alpha(acasi %>% 
                           select(matches("MTUEX\\d{1}_RC")) %>%
                           filter(rowSums(is.na(.)) < 4), 
                         cumulative = TRUE)
 identical(alphaMTU_Email$scores, 
-          acasi2 %>%
+          acasi %>%
             select(MTUEX_RC) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
-alphaMTU_Text <- alpha(acasi2 %>% 
+alphaMTU_Text <- alpha(acasi %>% 
                          select(MTUSPX01_RC, MTUSPX02_RC, MTUSPX12_RC) %>%
                          filter(rowSums(is.na(.)) < 3),
                        cumulative = TRUE)
 identical(alphaMTU_Text$scores, 
-          acasi2 %>%
+          acasi %>%
             select(MTUSPX_RC_Text) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
-alphaMTU_Smartphone <- alpha(acasi2 %>% 
+alphaMTU_Smartphone <- alpha(acasi %>% 
                                select(
                                  one_of(
                                    paste0(
@@ -111,35 +111,35 @@ alphaMTU_Smartphone <- alpha(acasi2 %>%
                                filter(rowSums(is.na(.)) < 9),
   cumulative = TRUE)
 identical(alphaMTU_Smartphone$scores, 
-          acasi2 %>%
+          acasi %>%
             select(MTUSPX_RC_Smartphone) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
-alphaMTU_Internet <- alpha(acasi2 %>% 
-                             select(matches("MTUIX\\d{1}_RC")) %>%
+alphaMTU_Internet <- alpha(acasi %>% 
+                             select(one_of(paste0("MTUIX", c(1:4), "_RC"))) %>%
                              filter(rowSums(is.na(.)) < 4), 
                     cumulative = TRUE)
 identical(alphaMTU_Internet$scores, 
-          acasi2 %>%
+          acasi %>%
             select(MTUIX_RC) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
-alphaMTU_SocialMed <- alpha(acasi2 %>% 
+alphaMTU_SocialMed <- alpha(acasi %>% 
                               select(one_of(paste0("MTUSNX0", 1:9, "_RC"))) %>%
                               filter(rowSums(is.na(.)) < 9),
                      cumulative = TRUE)
 identical(alphaMTU_SocialMed$scores, 
-          acasi2 %>%
+          acasi %>%
             select(MTUSNX_RC) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
-alphaMTU_Pos <- alpha(acasi2 %>% 
+alphaMTU_Pos <- alpha(acasi %>% 
                         select(
                           one_of(
                             paste0(
@@ -152,13 +152,13 @@ alphaMTU_Pos <- alpha(acasi2 %>%
                         filter(rowSums(is.na(.)) < 6),
   cumulative = TRUE)
 identical(alphaMTU_Pos$scores, 
-          acasi2 %>%
+          acasi %>%
             select(MTUAX_RC_Pos) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
-alphaMTU_Anx <- alpha(acasi2 %>% 
+alphaMTU_Anx <- alpha(acasi %>% 
                         select(
                           one_of(
                             paste0(
@@ -171,13 +171,13 @@ alphaMTU_Anx <- alpha(acasi2 %>%
                         filter(rowSums(is.na(.)) < 3),
   cumulative = TRUE)
 identical(alphaMTU_Anx$scores, 
-          acasi2 %>%
+          acasi %>%
             select(MTUAX_RC_Anx) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
             unname())
 
-alphaMTU_Neg <- alpha(acasi2 %>% 
+alphaMTU_Neg <- alpha(acasi %>% 
                         select(
                           one_of(
                             paste0(
@@ -190,7 +190,7 @@ alphaMTU_Neg <- alpha(acasi2 %>%
                         filter(rowSums(is.na(.)) < 3),
   cumulative = TRUE)
 identical(alphaMTU_Neg$scores, 
-          acasi2 %>%
+          acasi %>%
             select(MTUAX_RC_Neg) %>%
             filter(!is.na(.)) %>%
             unlist() %>%
