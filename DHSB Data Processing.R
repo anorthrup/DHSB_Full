@@ -636,6 +636,62 @@ acasi <- acasiJoinInner %>%
         na.rm = TRUE) #If so, sum columns
     )
   ) %>%
+  
+  #S56 variables
+  mutate(
+    #> Devices used (S56_1); none is reference; can interact
+    S56_1_RCD_Cell    = if_else(S56_1A == 1, 1, 0),
+    S56_1_RCD_Tablet  = if_else(S56_1B == 1, 1, 0),
+    S56_1_RCD_Laptop  = if_else(S56_1D == 1, 1, 0),
+    S56_1_RCD_Desktop = if_else(S56_1E == 1, 1, 0),
+    S56_1_RCD_Other   = if_else(S56_1C == 1 | S56_1F == 1, 1, 0),
+    #> Where devices used (S56_2); skipped is reference; can interact
+    S56_2_RCD_Home       = if_else(S56_2A == 1 | S56_2B == 1, 1, 0),
+    S56_2_RCD_Friends    = if_else(S56_2C == 1, 1, 0),
+    S56_2_RCD_Public     = if_else(S56_2D == 1 | S56_2E == 1 | S56_2F == 1, 1, 0),
+    S56_2_RCD_SchoolWork = if_else(S56_2G == 1 | S56_2H == 1, 1, 0),
+    S56_2_RCD_Other      = if_else(S56_2I == 1, 1, 0),
+    #> Cell phone access (S56_3); none refused to answer; no access is reference; no interaction
+    S56_3_RCD_Cell = if_else(S56_3 == 1, 1, 0),
+    S56_3_RCD_Minutes = if_else(S56_3 == 2, 1, 0),
+    S56_3_RCD_Data = if_else(S56_3 == 3, 1, 0),
+    S56_3_RCD_Access = if_else(S56_3 %in% c(4, 5), 1, 0),
+    #> Communication frequency (S56_4, S56_7, S56_13, S56_16); never is reference; no interaction
+    S56_RC_Freq = case_when(
+      rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 1) > 0 ~ "Several times a day",
+      rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 2) > 0 ~ "Once a day",
+      rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 3) > 0 ~ "Once every couple of days",
+      rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 4) > 0 ~ "About once a week",
+      rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 5) > 0 ~ "Less than once a week",
+      rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 6) > 0 ~ "Never",
+      TRUE ~ "Refuse to answer"
+    ),
+    S56_RCD_Freq_SeveralPerDay = if_else(S56_RC_Freq == "Several times a day", 1, 0),
+    S56_RCD_Freq_OncePerDay    = if_else(S56_RC_Freq == "Once a day", 1, 0),
+    S56_RCD_Freq_CoupleDays    = if_else(S56_RC_Freq == "Once every couple of days", 1, 0),
+    S56_RCD_Freq_OncePerWeek   = if_else(S56_RC_Freq == "About once a week", 1, 0),
+    S56_RCD_Freq_LTWeekly      = if_else(S56_RC_Freq == "Less than once a week", 1, 0),
+    S56_RCD_Freq_Never         = if_else(S56_RC_Freq == "Never", 1, 0)
+    # #> Communication partners (S56_5, S56_8, S56_14, S56_17)
+    # S56_RC_Who = case_when(
+    #   rowSums(select(., S56_5A, S56_8A, S56_14A, S56_17A) == 1) > 0 ~ "Parents",
+    #   rowSums(select(., S56_5B, S56_8B, S56_14, S56_17) == 2) > 0 ~ "Once a day",
+    #   rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 3) > 0 ~ "Once every couple of days",
+    #   rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 4) > 0 ~ "About once a week",
+    #   rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 5) > 0 ~ "Less than once a week",
+    #   rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 6) > 0 ~ "Never",
+    #   TRUE ~ "Refuse to answer"
+    # ),
+    # S56_RCD_Who_Family = 
+    #   if_else(rowSums(select(., S56_5A, S56_8A, S56_14A, S56_17A,
+    #                          S56_5B, S56_8B, S56_14B, S56_17B) == 1) > 0, 1, 0),
+    # S56_RCD_Who_Partner = 
+    #   if_else(rowSums(select(., S56_5C, S56_8C, S56_14C, S56_17C) == 1) > 0, 1, 0),
+    # S56_RCD_Who_ = if_else(rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 1) > 0, 1, 0),
+    # S56_RCD_Who_ = if_else(rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 1) > 0, 1, 0),
+    # S56_RCD_Who_ = if_else(rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 1) > 0, 1, 0),
+  ) %>%
+  
   #Outcomes
   #> Sexual Health (Lifetime)
   mutate_at(vars(S56_25B, S56_25C, S56_25D, S56_25E, S56_25F, S56_25G),
