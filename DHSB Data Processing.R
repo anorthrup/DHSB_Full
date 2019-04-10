@@ -709,7 +709,7 @@ acasi_analysis <- acasi %>%
 
 #Insurance 'Other' included as 'Insured' until further notice.
 
-save(acasi, file = "Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
+save(acasi, acasi_analysis, file = "Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
 
 x2 <- inner_join(acasi00m %>%
                    select(SITE1, PID, SCREEN7) %>%

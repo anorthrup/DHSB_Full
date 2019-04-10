@@ -1,7 +1,7 @@
 ---
 title: "Digitial Health-Seeking Behaviors Figures"
 author: "Adam Northrup, Data Manager, ETAC"
-date: "April 8, 2019"
+date: "April 10, 2019"
 output: html_document
 ---
 
@@ -14,6 +14,7 @@ p_load("tidyverse", "RColorBrewer", "openxlsx", "gridExtra")
 
 #####Load data
 load("acasi.RData")
+# load("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
 
 #####Create new Excel workbook
 # wb <- createWorkbook()
@@ -21,11 +22,12 @@ load("acasi.RData")
 
 #####Source functions for summaries
 source("DHSB Figure Functions.R")
+# source("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/DHSB Figure Functions.R")
 ```
 
 ```{r}
 #####Create AgeGroup variable
-demo <- acasi %>%
+figData <- acasi %>%
   mutate(AgeGroup = as.factor(case_when(AGE < 25 ~ "18-24 Years",
                                         AGE >= 25 ~ "25-34 Years"))) %>%
   unite("SitePID", SITE1, PID, sep = "_")
@@ -34,10 +36,10 @@ demo <- acasi %>%
 ### Health-Seeking Behaviors
 ```{r include = TRUE}
 #####Summarize health information sought on internet
-hsCat <- hlthSeekCat(demo)
-hsCatAge <- hlthSeekCat(demo, AgeGroup)
-hsSum <- hlthSeekSum(demo)
-hsSumAge <- hlthSeekSum(demo, AgeGroup)
+hsCat <- hlthSeekCat(figData)
+hsCatAge <- hlthSeekCat(figData, AgeGroup)
+hsSum <- hlthSeekSum(figData)
+hsSumAge <- hlthSeekSum(figData, AgeGroup)
 # #Plot proportions for Health Seeking Categories
 # plotCat(hsCat, fillVar = "Timeframe", facetCVar = "`Health Category`",
 #         title = "Proportion of Respondents Searching Internet for Health Information",
@@ -71,10 +73,10 @@ plotSumGroup(hsSumAge, fillVar = "AgeGroup", fillVarTitle = "Age Group", facetRV
 ### Different Communication Methods
 ```{r include = TRUE}
 #####Summarize social networking, private messaging, texting, email activity
-snCat <- socNetworkCat(demo)
-snCatAge <- socNetworkCat(demo, AgeGroup)
-snSum <- socNetworkSum(demo)
-snSumAge <- socNetworkSum(demo, AgeGroup)
+snCat <- socNetworkCat(figData)
+snCatAge <- socNetworkCat(figData, AgeGroup)
+snSum <- socNetworkSum(figData)
+snSumAge <- socNetworkSum(figData, AgeGroup)
 #Plot proportions
 plotCat(snCat, fillVar = "Platform", facetCVar = "Category", colors = c(4, 6, 8, 9),
         title = "Communications and Social Network Activity Among Respondents",
