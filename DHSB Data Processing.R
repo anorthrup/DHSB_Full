@@ -391,6 +391,7 @@ acasi <- acasiJoinInner %>%
     RELSTAT_RCD_Partnered = if_else(RELSTAT_RC == "Partnered/Married", 1, 0),
     RELSTAT_RCD_Other     = if_else(RELSTAT_RC == "Other status", 1, 0),
     #> Education
+    INSCHOOL_RCD = if_else(INSCHOOL == 1, 1, 0), #None refused to answer
     GRADE_RC = fct_recode(as.factor(GRADE),
                           "High school, equivalent or less"         = "1", 
                           "High school, equivalent or less"         = "2", 
@@ -445,7 +446,7 @@ acasi <- acasiJoinInner %>%
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     MONEY_RC_Log = log(MONEY_RC + 1),
     #> HIV History
-    BORNHIV_RCD_Yes = if_else(BORNHIV == 1, 1, 0), #None refused to answer
+    BORNHIV_RCD = if_else(BORNHIV == 1, 1, 0), #None refused to answer
     DIAGHIV_RC = case_when(DIAGHIV <= 2019 ~ DIAGHIV),
     #> Insurance
     INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
@@ -579,13 +580,13 @@ acasi <- acasiJoinInner %>%
         ))), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  #> Internet Search, 4 items (MTUIX5 and MTUIX6 excluded; added for this study, not part of original subscale)
-  mutate_at(vars(starts_with("MTUIX"), -MTUIX5, -MTUIX6),
+  #> Internet Search, 4 items (MTUIX5 and MTUIX6 excluded from scale: added for this study, not part of original subscale)
+  mutate_at(vars(starts_with("MTUIX")),
             list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
     MTUIX_RC = case_when(
-      rowSums(is.na(select(., matches("MTUIX\\d{1}_RC")))) < 4 ~ #Is number of NA < number of items?
-        rowSums(select(., matches("MTUIX\\d{1}_RC")), na.rm = TRUE) #If so, sum columns
+      rowSums(is.na(select(., one_of(paste0("MTUIX", c(1:4), "_RC"))))) < 4 ~ #Is number of NA < number of items?
+        rowSums(select(., one_of(paste0("MTUIX", c(1:4), "_RC"))), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
   #> General Social Media Usage, 9 items (Excluded MTUSNX10:MTUSNX12; added for this study, not part of original subscale)
@@ -598,8 +599,7 @@ acasi <- acasiJoinInner %>%
     )
   ) %>%
   #> Positive Attitudes Toward Technology, 6 items (MTUAX01, MTUAX03, MTUAX04, MTUAX09:MTUAX11)
-  mutate_at(vars(one_of(paste0("MTUAX", 
-                               str_pad(c(1, 3:6, 8, 9:14), width = 2, pad = 0)))),
+  mutate_at(vars(matches("MTUAX\\d{2}")),
             list(RC = ~replace(., which(. > 5), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
   mutate(
     MTUAX_RC_Pos = case_when(
@@ -662,18 +662,50 @@ acasi <- acasiJoinInner %>%
 
 ##### Create a data set for analysis excluding original variables
 acasi_analysis <- acasi %>%
-  select(SITE_RC, PID, surveylanguage,
-         AGE,
-         contains("_RCD_"),
-         DIAGHIV_RC,
-         HE_RC_HAL, HE_RC_HSE,
-         CARE_RC,
-         STIGMA_RC,
-         MENTALH_RC, MENTALH4_RC,
-         SOCIALS_RC,
-         MTUEX_RC, MTUSPX_RC_Text, MTUSPX_RC_Smartphone, MTUIX_RC, MTUSNX_RC,
-         MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg,
-         starts_with("Outcome"))
+  select(PID,
+         SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
+         SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
+         AGE, #Age
+         # SEXBRTH, #SES: Sex/Gender #> Removed
+         GENDER_RCD_Female, GENDER_RCD_Trans, GENDER_RCD_Other, #Gender
+         RACE_RCD_Latino, RACE_RCD_Black, RACE_RCD_WhiteMix, RACE_RCD_Other, #Ethnicity & Race
+         INSCHOOL_RCD, #Education
+         GRADE_RCD_PostK, GRADE_RCD_Grad, #Education
+         MONEY_RC_Log, #Income
+         EMPLOY_RCD_Employed, #Employment
+         RELSTAT_RCD_Dating, RELSTAT_RCD_Partnered, RELSTAT_RCD_Other, #Relationship
+         ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
+         # starts_with("LIVED"), #Housing
+         STAY7D_RCD_Stable, STAY7D_RCD_Institution, STAY7D_RCD_Other, STAY7D_RCD_Refuse, #Housing
+         # JAILL, #JAILLX, JAIL6X, #Incarceration 
+         BORNHIV_RCD, DIAGHIV_RC, #Length with HIV: First HIV Diagnosis
+         # matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
+         # CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
+         # starts_with("CAREHV"), #Healthcare utilization: Retention in care
+         # ends_with("LST"), CD4LOW, INFECTN, AIDSDIAG, #Healthcare utilization: Quality of care
+         # ARTPRESC, ARTL, ARTLAGE, ARTREC, ARTNOW, #Healthcare utilization: Treatment
+         # ARTADHR, #Healthcare utilization: Adherence
+         INSURE_RCD_Insured, INSURE_RCD_Unknown, ADAP_RCD_Yes, ADAP_RCD_Unknown, #Healthcare utilization: Insurance
+         HE_RC_HAL, HE_RC_HSE, #Youth Health Engagement scale
+         CARE_RC, #Provider Empathy (CARE) scale
+         # starts_with("SSND"), starts_with("SSUSE"), #Support services needed and used ###
+         # starts_with("CNEED"), -CNEED3ES, -CNEED4, -CNEED5, CNEED3ES, CNEED4, CNEED5, #Competing needs ###
+         DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, #Disclosure
+         STIGMA_RC, #HIV-related stigma
+         MENTALH_RC, MENTALH4_RC,#Mental health
+         DRUG_RCD_Alcohol, DRUG_RCD_Tobacco, DRUG_RCD_Marijuana, DRUG_RCD_Other, 
+         DRUG_RCD_None, DRUG_RCD_Refuse, #Substance use: non-injected
+         INJECTL_RCD_Inject, INJECTL_RCD_Refuse, #Substance use: injected
+         SOCIALS_RC, #Social support
+         #Media Technology Usage and Attitudes Scale
+         MTUEX_RC, 
+         MTUSPX_RC_Text, 
+         MTUSPX_RC_Smartphone, 
+         MTUIX_RC, MTUIX5_RC, MTUIX6_RC,
+         MTUSNX_RC, #MTUSN also available
+         MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg, MTUAX02_RC, MTUAX07_RC,
+         starts_with("Outcome")
+  )
 
 #Insurance 'Other' included as 'Insured' until further notice.
 
