@@ -40,29 +40,32 @@ hsCat <- hlthSeekCat(figData)
 hsCatAge <- hlthSeekCat(figData, AgeGroup)
 hsSum <- hlthSeekSum(figData)
 hsSumAge <- hlthSeekSum(figData, AgeGroup)
-# #Plot proportions for Health Seeking Categories
-# plotCat(hsCat, fillVar = "Timeframe", facetCVar = "`Health Category`",
-#         title = "Proportion of Respondents Searching Internet for Health Information",
-#         subtitle = "Variables: MTUIX (Baseline); S56_24X, S56_25, S56_26 (6 Months)",
-#         caption = "Data from internet searches excluding social networking activity\nData for 'At Least Once Per Month' is specific to Baseline",
-#         colors = c(4, 6, 8))
-##By age
-plotCat(hsCatAge, fillVar = "AgeGroup", facetRVar = "Timeframe", facetCVar = "`Health Category`",
-        title = "Figure 2. Proportion of Respondents Searching Internet for Health Information (By Age Group)",
-        subtitle = "",
+#Plot proportions for Health Seeking Categories
+plotCat(hsCat %>%
+          filter(Timeframe == "Last 6 Mo"),
+        fillVar = "Timeframe", facetCVar = "`Health Category`",
+        title = "Figure 1. Proportion of Respondents Searching Internet for Health Information",
+        subtitle = "Last 6 Months",
         caption = "Data from internet searches excluding social networking activity",
-        colors = c(6, 8))
-# #Plot proportions for Health Seeking Summary
-# plotSum(hsSum, fillVar = "Timeframe", colors = c(6, 8),
-#         title = "Proportion of Respondents Searching Internet\nfor Health Information",
-#         subtitle = "Variables: S56_24X, S56_25, S56_26",
-#         caption = "Data from internet searches excluding social networking activity")
-##By age
-plotSumGroup(hsSumAge, fillVar = "AgeGroup", fillVarTitle = "Age Group", facetRVar = "Timeframe",
-             title = "Proportion of Respondents Searching Internet\nfor Health Information",
-             subtitle = "",
-             caption = "Data from internet searches excluding social networking activity",
-             colors = c(6, 8))
+        colors = c(6)) +
+  theme(legend.position = "none")
+# ##By age
+# plotCat(hsCatAge, fillVar = "AgeGroup", facetRVar = "Timeframe", facetCVar = "`Health Category`",
+#         title = "Figure 2. Proportion of Respondents Searching Internet for Health Information (By Age Group)",
+#         subtitle = "",
+#         caption = "Data from internet searches excluding social networking activity",
+#         colors = c(6, 8))
+#Plot proportions for Health Seeking Summary
+plotSum(hsSum, fillVar = "Timeframe", colors = c(6, 8),
+        title = "Proportion of Respondents Searching Internet\nfor Health Information",
+        subtitle = "Variables: S56_24X, S56_25, S56_26",
+        caption = "Data from internet searches excluding social networking activity")
+# ##By age
+# plotSumGroup(hsSumAge, fillVar = "AgeGroup", fillVarTitle = "Age Group", facetRVar = "Timeframe",
+#              title = "Proportion of Respondents Searching Internet\nfor Health Information",
+#              subtitle = "",
+#              caption = "Data from internet searches excluding social networking activity",
+#              colors = c(6, 8))
 # grid.arrange(p1, p2, nrow = 1)
 #Write table to workbook
 # removeWorksheet(wb, "Health Information")
@@ -80,7 +83,7 @@ snSumAge <- socNetworkSum(figData, AgeGroup)
 #Plot proportions
 plotCat(snCat, fillVar = "Platform", facetCVar = "Category", colors = c(4, 6, 8, 9),
         title = "Communications and Social Network Activity Among Respondents",
-        subtitle = "Variables: S56_6, S56_9, S56_12, S56_15, S56_18 (6 Months)",
+        subtitle = "",
         caption = "* Question was only asked with regards to Social Networking Apps")
 # ##By Age
 # plotCat(snCatAge %>% mutate(Platform = case_when(Platform == "Private Messaging" ~ "PM Apps",
@@ -91,24 +94,28 @@ plotCat(snCat, fillVar = "Platform", facetCVar = "Category", colors = c(4, 6, 8,
 #         title = "Communications and Social Network Activity Among Respondents (By Age Group)",
 #         subtitle = "Variables: S56_6, S56_9, S56_12, S56_15, S56_18 (6 Months)",
 #         caption = "* Question was only asked with regards to Social Networking Apps")
-# #Plot proportions for Social Networking Summary
-# plotSum(snSum, fillVar = "Platform", colors = c(4, 6, 8, 9),
-#         title = "Communications and Social Network Activity\nAmong Respondents",
-#         subtitle = "Variables: S56_6, S56_9, S56_15, S56_18 (6 Months)",
-#         caption = "Data from internet searches excluding social networking activity")
-##By age
-plotSumGroup(snSumAge %>%
+#Plot proportions for Social Networking Summary
+plotSum(snSum %>%
                mutate(Platform = fct_relevel(as.factor(Platform),
-                                             "Email",
-                                             "Text\nMessaging",
-                                             "Social\nMedia",
                                              "Private\nMessaging",
-                                             "Internet\nSearch")),
-             fillVar = "AgeGroup", fillVarTitle = "Age Group", facetRVar = "Platform",
-             title = "Communications and Social Network Activity\nAmong Respondents (By Age Group)",
-             subtitle = "",
-             caption = "",
-             colors = c(6, 8))
+                                             "Social\nMedia",
+                                             "Text\nMessaging")),
+        fillVar = "Platform", colors = c(4, 6, 8, 9),
+        title = "Figure 2. Communications and Social Network Activity Among Respondents",
+        subtitle = "Variables: S56_6, S56_9, S56_15, S56_18 (6 Months)",
+        caption = "Data from internet searches excluding social networking activity")
+# ##By age
+# plotSumGroup(snSumAge %>%
+#                mutate(Platform = fct_relevel(as.factor(Platform),
+#                                              "Email",
+#                                              "Text\nMessaging",
+#                                              "Social\nMedia",
+#                                              "Private\nMessaging")),
+#              fillVar = "AgeGroup", fillVarTitle = "Age Group", facetRVar = "Platform",
+#              title = "Communications and Social Network Activity\nAmong Respondents (By Age Group)",
+#              subtitle = "",
+#              caption = "",
+#              colors = c(6, 8))
 # grid.arrange(p1, p2, nrow = 1)
 #Write table to workbook
 # removeWorksheet(wb, "Social Network Topics")
