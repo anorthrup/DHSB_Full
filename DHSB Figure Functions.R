@@ -204,7 +204,7 @@ socNetworkSum <- function(x, ...){
            LGBTQEmail    = ifelse(rowSums(select(., S56_9L, S56_9N, S56_9P, S56_9Q)), 1, 0),
            LGBTQSN       = ifelse(rowSums(select(., S56_15L, S56_15N, S56_15P, S56_15Q)), 1, 0),
            LGBTQPM       = ifelse(rowSums(select(., S56_18L, S56_18N, S56_18P, S56_18Q)), 1, 0),
-           LGBTQInternet = ifelse(rowSums(select(., S56_24J, S56_24XM, S56_24XN, S56_24XR)), 1, 0),
+           # LGBTQInternet = ifelse(rowSums(select(., S56_24J, S56_24XM, S56_24XN, S56_24XR)), 1, 0),
            LifestyleSMS      = ifelse(rowSums(select(., S56_6A, S56_6B, S56_6C, S56_6D, S56_6E, S56_6F, 
                                                      S56_6G, S56_6O)), 1, 0),
            LifestyleEmail    = ifelse(rowSums(select(., S56_9A, S56_9B, S56_9C, S56_9D, S56_9E, S56_9F, 
@@ -213,7 +213,8 @@ socNetworkSum <- function(x, ...){
                                                      S56_15F, S56_15G, S56_15O)), 1, 0),
            LifestylePM       = ifelse(rowSums(select(., S56_18A, S56_18B, S56_18C, S56_18D, S56_18E, 
                                                      S56_18F, S56_18G, S56_18O)), 1, 0),
-           LifestyleInternet = ifelse(rowSums(select(., one_of(paste0("S56_24", LETTERS[c(1:6, 11)])))), 1, 0),
+           LifestyleInternet = ifelse(rowSums(select(., one_of(paste0("S56_24", LETTERS[c(1:6, 11)]),
+                                                               "S56_24XP"))), 1, 0),
            RelationsSMS      = ifelse(rowSums(select(., S56_6H, S56_6I, S56_6J)), 1, 0),
            RelationsEmail    = ifelse(rowSums(select(., S56_9H, S56_9I, S56_9J)), 1, 0),
            RelationsSN       = ifelse(rowSums(select(., S56_15H, S56_15I, S56_15J)), 1, 0),
@@ -225,21 +226,32 @@ socNetworkSum <- function(x, ...){
            SexualPM       = ifelse(rowSums(select(., S56_18K, S56_18M)), 1, 0),
            SexualInternet = ifelse(rowSums(select(., S56_25B, S56_25C, S56_25D, S56_25E, S56_25F, S56_25G),
                                            na.rm = TRUE),
-                                   1, 0)
+                                   1, 0),
+           GenHealthInternet = ifelse(rowSums(select(., S56_25A, S56_25H, S56_25I, S56_25J, S56_25K, S56_25L)),
+                                      1, 0),
+           TransHealthInternet = ifelse(rowSums(select(., S56_24XM, S56_24XN)), 1, 0),
+           VidInternet = ifelse(S56_24J == 1, 1, 0),
+           SocialInternet = ifelse(S56_24XP == 1, 1, 0)
            )
   snSum <- xSub %>%
     group_by(!!! groupVars) %>%
-    summarise_at(vars(LGBTQSMS:SexualInternet), list(~sum), na.rm = TRUE) %>%
-    gather(Variable, Count, matches("LGBTQ|Lifestyle|Relations|Sexual")) %>%
-    full_join(., xSub %>%
+    summarise_at(vars(LGBTQSMS:SocialInternet), list(~sum), na.rm = TRUE) %>%
+    gather(Variable, Count, matches("SMS|Email|SN$|PM$|Internet")) %>%
+    full_join(., 
+              xSub %>%
                 group_by(!!! groupVars) %>%
-                summarise_at(vars(LGBTQSMS:SexualInternet), list(~sum(!is.na(.)))) %>%
-                gather(Variable, Total, matches("LGBTQ|Lifestyle|Relations|Sexual"))) %>%
+                summarise_at(vars(LGBTQSMS:SocialInternet), list(~sum(!is.na(.)))) %>%
+                gather(Variable, Total, matches("SMS|Email|SN$|PM$|Internet")),
+              by = c("Variable", str_replace(as.character(groupVars), "~", ""))) %>%
     mutate(Proportion = round(Count / Total, 3),
            Category  = case_when(grepl("LGBTQ", Variable) ~ "LGBTQ Topics",
                                  grepl("Lifestyle", Variable) ~ "Lifestyle",
                                  grepl("Relations", Variable) ~ "Relationships/Sex",
-                                 grepl("Sexual", Variable) ~ "Sexual Health"),
+                                 grepl("Sexual", Variable) ~ "Sexual Health",
+                                 grepl("GenHealth", Variable) ~ "General Health",
+                                 grepl("TransHealth", Variable) ~ "Trans Health",
+                                 grepl("Vid", Variable) ~ "LGBTQ Videos",
+                                 grepl("Social", Variable) ~ "Social Services"),
            Platform = case_when(grepl("SMS", Variable) ~ "Text\nMessaging",
                                 grepl("Email", Variable)  ~ "Email",
                                 grepl("SN$", Variable) ~ "Social\nMedia",
@@ -274,7 +286,7 @@ plotSum <- function(data, xVar = "Category", yVar = "Proportion", fillVar, title
 plotSumGroup <- function(data, xVar = "Category", yVar = "Proportion", fillVar, fillVarTitle, facetRVar, facetCVar = ".", title, subtitle, caption, colors){
   ggplot(data, aes_string(x = xVar, y = yVar, fill = fillVar)) +
     geom_bar(stat = "identity", position = position_dodge()) +
-    facet_grid(as.formula(paste(facetRVar, "~", facetCVar)), scales = "free_x", space = "free_x") +
+    facet_grid(as.formula(paste(facetRVar, "~", facetCVar)), scales = "free", space = "free") +
     labs(x = "", title = title, caption = caption) +
     scale_fill_manual(values = brewer.pal(9, "BuGn")[colors]) +
     scale_y_continuous(limits = c(0, 1)) + 
