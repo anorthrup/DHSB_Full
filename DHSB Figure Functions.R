@@ -197,45 +197,54 @@ socNetworkSum <- function(x, ...){
   #Create indicator variable for whether information is searched for
   xSub <- x %>%
     select(AgeGroup, S56_6A:S56_6R, S56_9A:S56_9R, S56_12M:S56_12Q, -S56_12N, 
-           S56_15A:S56_15R, S56_18A:S56_18R) %>%
+           S56_15A:S56_15R, S56_18A:S56_18R, starts_with("S56_24"),
+           starts_with("S56_25")) %>%
     mutate_at(vars(contains("S56")), list(~S56transform)) %>%
-    mutate(LGBTQSMS     = ifelse(rowSums(select(., S56_6L, S56_6N, S56_6P, S56_6Q)), 1, 0),
-           LGBTQEmail   = ifelse(rowSums(select(., S56_9L, S56_9N, S56_9P, S56_9Q)), 1, 0),
-           LGBTQSN      = ifelse(rowSums(select(., S56_15L, S56_15N, S56_15P, S56_15Q)), 1, 0),
-           LGBTQPM      = ifelse(rowSums(select(., S56_18L, S56_18N, S56_18P, S56_18Q)), 1, 0),
-           LifestyleSMS   = ifelse(rowSums(select(., S56_6A, S56_6B, S56_6C, S56_6D, S56_6E, S56_6F, 
-                                                  S56_6G, S56_6O, S56_6R)), 1, 0),
-           LifestyleEmail = ifelse(rowSums(select(., S56_9A, S56_9B, S56_9C, S56_9D, S56_9E, S56_9F, 
-                                                  S56_9G, S56_9O, S56_9R)), 1, 0),
-           LifestyleSN    = ifelse(rowSums(select(., S56_15A, S56_15B, S56_15C, S56_15D, S56_15E, 
-                                                  S56_15F, S56_15G, S56_15O, S56_15R)), 1, 0),
-           LifestylePM    = ifelse(rowSums(select(., S56_18A, S56_18B, S56_18C, S56_18D, S56_18E, 
-                                                  S56_18F, S56_18G, S56_18O, S56_18R)), 1, 0),
-           RelationsSMS   = ifelse(rowSums(select(., S56_6H, S56_6I, S56_6J)), 1, 0),
-           RelationsEmail = ifelse(rowSums(select(., S56_9H, S56_9I, S56_9J)), 1, 0),
-           RelationsSN    = ifelse(rowSums(select(., S56_15H, S56_15I, S56_15J)), 1, 0),
-           RelationsPM    = ifelse(rowSums(select(., S56_18H, S56_18I, S56_18J)), 1, 0),
-           SexualSMS   = ifelse(rowSums(select(., S56_6K, S56_6M)), 1, 0),
-           SexualEmail = ifelse(rowSums(select(., S56_9K, S56_9M)), 1, 0),
-           SexualSN    = ifelse(rowSums(select(., S56_15K, S56_15M)), 1, 0),
-           SexualPM    = ifelse(rowSums(select(., S56_18K, S56_18M)), 1, 0))
+    mutate(LGBTQSMS      = ifelse(rowSums(select(., S56_6L, S56_6N, S56_6P, S56_6Q)), 1, 0),
+           LGBTQEmail    = ifelse(rowSums(select(., S56_9L, S56_9N, S56_9P, S56_9Q)), 1, 0),
+           LGBTQSN       = ifelse(rowSums(select(., S56_15L, S56_15N, S56_15P, S56_15Q)), 1, 0),
+           LGBTQPM       = ifelse(rowSums(select(., S56_18L, S56_18N, S56_18P, S56_18Q)), 1, 0),
+           LGBTQInternet = ifelse(rowSums(select(., S56_24J, S56_24XM, S56_24XN, S56_24XR)), 1, 0),
+           LifestyleSMS      = ifelse(rowSums(select(., S56_6A, S56_6B, S56_6C, S56_6D, S56_6E, S56_6F, 
+                                                     S56_6G, S56_6O)), 1, 0),
+           LifestyleEmail    = ifelse(rowSums(select(., S56_9A, S56_9B, S56_9C, S56_9D, S56_9E, S56_9F, 
+                                                     S56_9G, S56_9O)), 1, 0),
+           LifestyleSN       = ifelse(rowSums(select(., S56_15A, S56_15B, S56_15C, S56_15D, S56_15E, 
+                                                     S56_15F, S56_15G, S56_15O)), 1, 0),
+           LifestylePM       = ifelse(rowSums(select(., S56_18A, S56_18B, S56_18C, S56_18D, S56_18E, 
+                                                     S56_18F, S56_18G, S56_18O)), 1, 0),
+           LifestyleInternet = ifelse(rowSums(select(., one_of(paste0("S56_24", LETTERS[c(1:6, 11)])))), 1, 0),
+           RelationsSMS      = ifelse(rowSums(select(., S56_6H, S56_6I, S56_6J)), 1, 0),
+           RelationsEmail    = ifelse(rowSums(select(., S56_9H, S56_9I, S56_9J)), 1, 0),
+           RelationsSN       = ifelse(rowSums(select(., S56_15H, S56_15I, S56_15J)), 1, 0),
+           RelationsPM       = ifelse(rowSums(select(., S56_18H, S56_18I, S56_18J)), 1, 0),
+           RelationsInternet = ifelse(rowSums(select(., S56_24G, S56_24H, S56_24I, S56_24XL)), 1, 0),
+           SexualSMS      = ifelse(rowSums(select(., S56_6K, S56_6M)), 1, 0),
+           SexualEmail    = ifelse(rowSums(select(., S56_9K, S56_9M)), 1, 0),
+           SexualSN       = ifelse(rowSums(select(., S56_15K, S56_15M)), 1, 0),
+           SexualPM       = ifelse(rowSums(select(., S56_18K, S56_18M)), 1, 0),
+           SexualInternet = ifelse(rowSums(select(., S56_25B, S56_25C, S56_25D, S56_25E, S56_25F, S56_25G),
+                                           na.rm = TRUE),
+                                   1, 0)
+           )
   snSum <- xSub %>%
     group_by(!!! groupVars) %>%
-    summarise_at(vars(LGBTQSMS:SexualPM), list(~sum), na.rm = TRUE) %>%
+    summarise_at(vars(LGBTQSMS:SexualInternet), list(~sum), na.rm = TRUE) %>%
     gather(Variable, Count, matches("LGBTQ|Lifestyle|Relations|Sexual")) %>%
     full_join(., xSub %>%
                 group_by(!!! groupVars) %>%
-                summarise_at(vars(LGBTQSMS:SexualPM), list(~sum(!is.na(.)))) %>%
+                summarise_at(vars(LGBTQSMS:SexualInternet), list(~sum(!is.na(.)))) %>%
                 gather(Variable, Total, matches("LGBTQ|Lifestyle|Relations|Sexual"))) %>%
     mutate(Proportion = round(Count / Total, 3),
            Category  = case_when(grepl("LGBTQ", Variable) ~ "LGBTQ Topics",
                                  grepl("Lifestyle", Variable) ~ "Lifestyle",
                                  grepl("Relations", Variable) ~ "Relationships/Sex",
                                  grepl("Sexual", Variable) ~ "Sexual Health"),
-           Platform = case_when(grepl("SMS", Variable) ~ "Text Messaging",
+           Platform = case_when(grepl("SMS", Variable) ~ "Text\nMessaging",
                                 grepl("Email", Variable)  ~ "Email",
-                                grepl("SN$", Variable) ~ "Social Media",
-                                grepl("PM$", Variable) ~ "Private Messaging"))
+                                grepl("SN$", Variable) ~ "Social\nMedia",
+                                grepl("PM$", Variable) ~ "Private\nMessaging",
+                                grepl("Internet", Variable) ~ "Internet\nSearch"))
 }
 
 #####Plots

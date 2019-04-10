@@ -97,11 +97,18 @@ plotCat(snCat, fillVar = "Platform", facetCVar = "Category", colors = c(4, 6, 8,
 #         subtitle = "Variables: S56_6, S56_9, S56_15, S56_18 (6 Months)",
 #         caption = "Data from internet searches excluding social networking activity")
 ##By age
-plotSumGroup(snSumAge, fillVar = "AgeGroup", fillVarTitle = "Age Group", facetRVar = "Platform",
+plotSumGroup(snSumAge %>%
+               mutate(Platform = fct_relevel(as.factor(Platform),
+                                             "Email",
+                                             "Text\nMessaging",
+                                             "Social\nMedia",
+                                             "Private\nMessaging",
+                                             "Internet\nSearch")),
+             fillVar = "AgeGroup", fillVarTitle = "Age Group", facetRVar = "Platform",
              title = "Communications and Social Network Activity\nAmong Respondents (By Age Group)",
              subtitle = "",
-             caption = "Data from internet searches excluding social networking activity",
-             colors = c(4, 6, 8))
+             caption = "",
+             colors = c(6, 8))
 # grid.arrange(p1, p2, nrow = 1)
 #Write table to workbook
 # removeWorksheet(wb, "Social Network Topics")
