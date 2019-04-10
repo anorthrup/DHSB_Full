@@ -1,7 +1,7 @@
 ---
 title: "Digital Health-Seeking Behaviors Tables"
 author: "Adam Northrup, Data Manager, ETAC"
-date: "March 8, 2019"
+date: "April 10, 2019"
 output: html_document
 ---
 ```{r include = FALSE}
@@ -197,7 +197,7 @@ table2 <- bind_rows(
                    name = "Mental and Physical Health, 1 item"),
   #Substance Use
   table_ManyBinary(demo, header = "Substance Use", n = 0,
-                   keep = c("DRUG1LA", "DRUG1LB", "DRUG1LC", "DRUG_RC_None",
+                   keep = c("DRUG1LA", "DRUG1LB", "DRUG1LC", "DRUG_RCD_None",
                             "INJECTL"),
                    variables = c("DRUG1LA" = "Alcohol",
                                  "DRUG1LB" = "Tobacco",
@@ -258,7 +258,6 @@ table2 <- bind_rows(
                    name = "Negative Attitudes Toward Technology")
 )
 ```
-Note that responses from participants with no baseline survey were replaced with 6 month survey. "Past 6 months" refers to 6 months prior to 6 month survey. If no data was available for a given question (participant had no baseline survey, and question wasn't asked in 6 month survey), the participant was not included in the denominator.  
 
 ### Table 1
 ```{r include = TRUE}
