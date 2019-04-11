@@ -312,7 +312,7 @@ acasi <- acasiJoinInner %>%
   arrange(SITE1) %>%
   mutate(SITE1 = as.character(SITE1)) %>%
   filter(AGE >= 18) %>%
-  #Add MCD
+  #Add MCD variables
   left_join(., 
             mcd_history %>%
               select(SITE1, PID, HIVDiagnosisYear), 
@@ -671,26 +671,60 @@ acasi <- acasiJoinInner %>%
     S56_RCD_Freq_CoupleDays    = if_else(S56_RC_Freq == "Once every couple of days", 1, 0),
     S56_RCD_Freq_OncePerWeek   = if_else(S56_RC_Freq == "About once a week", 1, 0),
     S56_RCD_Freq_LTWeekly      = if_else(S56_RC_Freq == "Less than once a week", 1, 0),
-    S56_RCD_Freq_Never         = if_else(S56_RC_Freq == "Never", 1, 0)
-    # #> Communication partners (S56_5, S56_8, S56_14, S56_17)
-    # S56_RC_Who = case_when(
-    #   rowSums(select(., S56_5A, S56_8A, S56_14A, S56_17A) == 1) > 0 ~ "Parents",
-    #   rowSums(select(., S56_5B, S56_8B, S56_14, S56_17) == 2) > 0 ~ "Once a day",
-    #   rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 3) > 0 ~ "Once every couple of days",
-    #   rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 4) > 0 ~ "About once a week",
-    #   rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 5) > 0 ~ "Less than once a week",
-    #   rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 6) > 0 ~ "Never",
-    #   TRUE ~ "Refuse to answer"
-    # ),
-    # S56_RCD_Who_Family = 
-    #   if_else(rowSums(select(., S56_5A, S56_8A, S56_14A, S56_17A,
-    #                          S56_5B, S56_8B, S56_14B, S56_17B) == 1) > 0, 1, 0),
-    # S56_RCD_Who_Partner = 
-    #   if_else(rowSums(select(., S56_5C, S56_8C, S56_14C, S56_17C) == 1) > 0, 1, 0),
-    # S56_RCD_Who_ = if_else(rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 1) > 0, 1, 0),
-    # S56_RCD_Who_ = if_else(rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 1) > 0, 1, 0),
-    # S56_RCD_Who_ = if_else(rowSums(select(., S56_5, S56_8, S56_14, S56_17) == 1) > 0, 1, 0),
+    S56_RCD_Freq_Never         = if_else(S56_RC_Freq == "Never", 1, 0),
+    #> Communication partners (S56_5, S56_8, S56_14, S56_17)
+    S56_RCD_Who_Family =
+      if_else(rowSums(select(., S56_5A, S56_8A, S56_14A, S56_17A,
+                             S56_5B, S56_8B, S56_14B, S56_17B) == 1) > 0, 1, 0),
+    S56_RCD_Who_Partner =
+      if_else(rowSums(select(., S56_5C, S56_8C, S56_14C, S56_17C) == 1) > 0, 1, 0),
+    S56_RCD_Who_Lover = 
+      if_else(rowSums(select(., S56_5D, S56_8D, S56_14D, S56_17D) == 1) > 0, 1, 0),
+    S56_RCD_Who_Friends = 
+      if_else(rowSums(select(., S56_5E, S56_8E, S56_14E, S56_17E,
+                             S56_5F, S56_8F, S56_14F, S56_17F,
+                             S56_5G, S56_8G, S56_14G, S56_17G) == 1) > 0, 1, 0),
+    S56_RCD_Who_Service = 
+      if_else(rowSums(select(., S56_5I, S56_8I, S56_14I, S56_17I) == 1) > 0, 1, 0),
+    S56_RCD_Who_WorkSchool = 
+      if_else(rowSums(select(., S56_5J, S56_8J, S56_14J, S56_17J,
+                             S56_5K, S56_8K, S56_14K, S56_17K,
+                             S56_5L, S56_8L, S56_14L, S56_17L) == 1) > 0, 1, 0),
+    S56_RCD_Who_Utility = 
+      if_else(rowSums(select(., S56_5M, S56_8M, S56_14M, S56_17M) == 1) > 0, 1, 0),
+    S56_RCD_Who_Other = 
+      if_else(rowSums(select(., S56_5H, S56_8H, S56_14H, S56_17H,
+                             S56_5N, S56_8N, S56_14N, S56_17N,
+                             S56_5O, S56_8O, S56_14O, S56_17O) == 1) > 0, 1, 0),
+    #> Communication about (S56_6, S56_9, S56_15, S56_18)
+    S56_RCD_What_Lifestyle = if_else(
+      rowSums(select(., paste0("S56_6", c(LETTERS[1:7], "O")),
+                     paste0("S56_9", c(LETTERS[1:7], "O")),
+                     paste0("S56_15", c(LETTERS[1:7], "O")),
+                     paste0("S56_18", c(LETTERS[1:7], "O"))) == 1) > 0, 1, 0
+    ),
+    S56_RCD_What_Relations = if_else(
+      rowSums(select(., paste0("S56_6", LETTERS[8:10]),
+                     paste0("S56_9", LETTERS[8:10]),
+                     paste0("S56_15", LETTERS[8:10]),
+                     paste0("S56_18", LETTERS[8:10])) == 1) > 0, 1, 0
+    ),
+    S56_RCD_What_Sexual = if_else(
+      rowSums(select(., paste0("S56_6", c("K", "M")),
+                     paste0("S56_9", c("K", "M")),
+                     paste0("S56_15", c("K", "M")),
+                     paste0("S56_18", c("K", "M"))) == 1) > 0, 1, 0
+    ),
+    S56_RCD_What_LGBTQ = if_else(
+      rowSums(select(., paste0("S56_6", c("L", "N")),
+                     paste0("S56_9", c("L", "N")),
+                     paste0("S56_15", c("L", "N")),
+                     paste0("S56_18", c("L", "N"))) == 1) > 0, 1, 0
+    )
   ) %>%
+  # mutate(
+  #   S56_RCD_What_None = if_else(rowSums(select(., starts_with("S56_RCD_What")) == 1) == 0, 1, 0)
+  # ) %>%
   
   #Outcomes
   #> Sexual Health (Lifetime)
@@ -758,7 +792,7 @@ acasi_analysis <- acasi %>%
          MTUSPX_RC_Text, 
          MTUSPX_RC_Smartphone, 
          MTUIX_RC, MTUIX5_RC, MTUIX6_RC,
-         MTUSNX_RC, #MTUSN also available
+         MTUSNX_RC, #MTUSN,
          MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg, MTUAX02_RC, MTUAX07_RC,
          starts_with("Outcome")
   )
