@@ -86,7 +86,10 @@ mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W
                                   str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
   fri_rekey()
   #> Ambulatory Visits
-mcd_ambVisits <- read_csv("Data merged across sites/MCD/MCD_Ambulatory_Visits_W0-W3_SASdates.csv") %>%
+mcd_ambVisits <- read_csv("Data merged across sites/MCD/MCD_Ambulatory_Visits_W0-W3_SASdates.csv",
+                          col_types = cols(
+                            SiteSpecificID = col_character()
+                          )) %>%
   SasNumToDate() %>%
   select(SiteID, SiteSpecificID, ServiceDate) %>%
   mutate(SiteSpecificID = replace(SiteSpecificID, 
