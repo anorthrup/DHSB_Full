@@ -471,11 +471,13 @@ acasi <- acasiJoinInner %>%
     #> Insurance
     INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
                           INSURE == 97 ~ "Don't know",
-                          INSURE == 98 ~ "Refuse to answer", #None refused to answer
+                          INSURE == 98 ~ "Refuse to answer",
+                          INSURE == 99 ~ "Skipped", #None refused to answer
                           TRUE ~ "Insured"), 
     INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
     INSURE_RCD_Unknown = if_else(INSURE_RC == "Don't know", 1, 0),
-    INSURE_RCD_Missing = if_else(INSURE_RC == "Refuse to answer", 1, 0),
+    INSURE_RCD_Missing = if_else(INSURE_RC == "Refuse to answer" |
+                                   INSURE_RC == "Skipped", 1, 0),
     ADAP_RCD_Yes     = if_else(ADAP == 1, 1, 0),
     ADAP_RCD_Unknown = if_else(ADAP == 7, 1, 0), #'Skipped' treated as 'No'
     #> Medical Care
@@ -508,10 +510,11 @@ acasi <- acasiJoinInner %>%
                         DISCF == 1 | DISCG == 1 |
                           DISCH == 1 | DISCI == 1 |
                           DISCJ == 1 ~ "Other person",
-                        TRUE ~ "Refuse to answer"), #None refused to answer
+                        TRUE ~ "Missing"), #None refused to answer
     DISC_RCD_Partner = if_else(DISC_RC == "Partner/Sex partner", 1, 0),
     DISC_RCD_Family  = if_else(DISC_RC == "Friends/Family", 1, 0),
     DISC_RCD_Other   = if_else(DISC_RC == "Other person", 1, 0),
+    DISC_RCD_Missing = if_else(DISC_RC == "Missing", 1, 0),
     #> Substance Use
     DRUG_RC = case_when(DRUG1LA == 1 ~ "Alcohol",
                         DRUG1LB == 1 ~ "Tobacco",
@@ -522,15 +525,15 @@ acasi <- acasiJoinInner %>%
                                         paste0("DRUG2L", LETTERS[1:10]))               
                           ) == 1) > 0 ~ "Other drug(s)",
                         DRUG1LM == 1 & DRUG2LK == 1 ~ "None",
-                        TRUE ~ "Refuse to answer"),
-    DRUG_RCD_Alcohol   = if_else(DRUG_RC == "Alcohol", 1, 0),
-    DRUG_RCD_Tobacco   = if_else(DRUG_RC == "Tobacco", 1, 0),
-    DRUG_RCD_Marijuana = if_else(DRUG_RC == "Marijuana", 1, 0),
-    DRUG_RCD_Other     = if_else(DRUG_RC == "Other drug(s)", 1, 0),
-    DRUG_RCD_None      = if_else(DRUG_RC == "None", 1, 0),
-    DRUG_RCD_Refuse    = if_else(DRUG_RC == "Refuse to answer", 1, 0),
-    INJECTL_RCD_Inject = if_else(INJECTL == 1, 1, 0),
-    INJECTL_RCD_Refuse = if_else(INJECTL == 8, 1, 0)
+                        TRUE ~ "Missing"),
+    DRUG_RCD_Alcohol    = if_else(DRUG_RC == "Alcohol", 1, 0),
+    DRUG_RCD_Tobacco    = if_else(DRUG_RC == "Tobacco", 1, 0),
+    DRUG_RCD_Marijuana  = if_else(DRUG_RC == "Marijuana", 1, 0),
+    DRUG_RCD_Other      = if_else(DRUG_RC == "Other drug(s)", 1, 0),
+    DRUG_RCD_None       = if_else(DRUG_RC == "None", 1, 0),
+    DRUG_RCD_Missing    = if_else(DRUG_RC == "Missing", 1, 0),
+    INJECTL_RCD_Inject  = if_else(INJECTL == 1, 1, 0),
+    INJECTL_RCD_Missing = if_else(!INJECTL %in% c(1, 0), 1, 0)
   ) %>%
     
   #Scales
@@ -635,7 +638,9 @@ acasi <- acasiJoinInner %>%
   ) %>%
   #> General Social Media Usage, 9 items (Excluded MTUSNX10:MTUSNX12; added for this study, not part of original subscale)
   mutate_at(vars(starts_with("MTUSNX")),
-            list(RC = ~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
+            list(RC = ~replace(., which(. == 99), 0))) %>% #99 = skipped; change 99 to 0 as those skipped indicated not using social media
+  mutate_at(vars(matches("MTUSNX\\d+_RC")),
+            list(~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
     MTUSNX_RC = case_when(
       rowSums(is.na(select(., one_of(paste0("MTUSNX0", 1:9, "_RC"))))) < 9 ~ #Is number of NA < number of items?
@@ -644,7 +649,7 @@ acasi <- acasiJoinInner %>%
   ) %>%
   #> Positive Attitudes Toward Technology, 6 items (MTUAX01, MTUAX03, MTUAX04, MTUAX09:MTUAX11)
   mutate_at(vars(matches("MTUAX\\d{2}")),
-            list(RC = ~replace(., which(. > 5), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer; 99 = skipped
+            list(RC = ~replace(., which(. > 5), NA))) %>% #Values of 0-5 expected; 8 = refuse to answer; 9 = skipped (none)
   mutate(
     MTUAX_RC_Pos = case_when(
       rowSums(is.na(select(., one_of(
@@ -801,12 +806,15 @@ acasi_analysis <- acasi %>%
          SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
          surveylanguage_RCD_Eng,
          AGE, #Age
-         RACE_RCD_Latino, RACE_RCD_Black, RACE_RCD_WhiteMix, RACE_RCD_Other, #Ethnicity & Race
-         GENDER_RCD_Female, GENDER_RCD_Trans, GENDER_RCD_Other, GENDER_RCD_Missing, #Gender
+         RACE_RCD_Latino, RACE_RCD_Black, RACE_RCD_WhiteMix, 
+         RACE_RCD_Other, RACE_RCD_Missing, #Ethnicity & Race
+         GENDER_RCD_Female, GENDER_RCD_Trans, 
+         GENDER_RCD_Other, GENDER_RCD_Missing, #Gender
          ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
          GRADE_RCD_PostK, GRADE_RCD_Grad, #Education
          MONEY_RC_Log, #Income
-         STAY7D_RCD_Stable, STAY7D_RCD_Institution, STAY7D_RCD_Other, STAY7D_RCD_Refuse, #Housing
+         STAY7D_RCD_Stable, STAY7D_RCD_Institution, 
+         STAY7D_RCD_Other, STAY7D_RCD_Missing, #Housing
          BORNHIV, TIMESINCEHIV,
          BORNHIV_MCD, TIMESINCEHIV_MCD,
          ViralSupp_MCD,
@@ -817,21 +825,19 @@ acasi_analysis <- acasi %>%
          ARTADHR_RCD_Neutral, ARTADHR_RCD_Positive, ARTADHR_RCD_Missing, #Healthcare utilization: Adherence
          HE_RC_HAL, HE_RC_HSE, #Youth Health Engagement scale
          CARE_RC, #Provider Empathy (CARE) scale
-         # starts_with("SSND"), starts_with("SSUSE"), #Support services needed and used ###
-         # starts_with("CNEED"), -CNEED3ES, -CNEED4, -CNEED5, CNEED3ES, CNEED4, CNEED5, #Competing needs ###
          STIGMA_RC, #HIV-related stigma
-         DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, #Disclosure
+         DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, DISC_RCD_Missing, #Disclosure
          MENTALH_RC, MENTALH4_RC,#Mental health
          DRUG_RCD_Alcohol, DRUG_RCD_Tobacco, DRUG_RCD_Marijuana, DRUG_RCD_Other, 
-         DRUG_RCD_None, DRUG_RCD_Refuse, #Substance use: non-injected
-         INJECTL_RCD_Inject, INJECTL_RCD_Refuse, #Substance use: injected
+         DRUG_RCD_None, DRUG_RCD_Missing, #Substance use: non-injected
+         INJECTL_RCD_Inject, INJECTL_RCD_Missing, #Substance use: injected
          SOCIALS_RC, #Social support
          #Media Technology Usage and Attitudes Scale
          MTUEX_RC, 
          MTUSPX_RC_Text, 
          MTUSPX_RC_Smartphone, 
          MTUIX_RC, MTUIX5_RC, MTUIX6_RC,
-         MTUSNX_RC, #MTUSN,
+         MTUSNX_RC,
          MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg, MTUAX02_RC, MTUAX07_RC,
          starts_with("Outcome")
   ) %>%
