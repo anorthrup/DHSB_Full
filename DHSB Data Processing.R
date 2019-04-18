@@ -246,23 +246,23 @@ acasi00mTrim <- acasi00m %>%
          surveylanguage, INTRVWER, SITE, #SES: Survey
          SCREEN1, starts_with("AGE"), starts_with("DOB"), #SES: Age
          # SEXBRTH, #SES: Sex/Gender #> Removed
-         starts_with("GENDER"), #SES: Sex/Gender
          LATINO, starts_with("RACE"), #SES: Race
+         starts_with("GENDER"), #SES: Sex/Gender
+         starts_with("ORIENT"), #SES: Orientation
          INSCHOOL, GRADE, #SES: Education
          MONEY, #SES: Employment
          starts_with("EMPLOY"), #SES: Employment
          RELSTAT, #SES: Relationship
-         starts_with("ORIENT"), #SES: Orientation
          starts_with("LIVED"), starts_with("STAY7"), #Housing
          # JAILL, JAILLX, JAIL6X, #Incarceration #> Removed
          BORNHIV, DIAGHIV, SCREEN5, #Length with HIV: First HIV Diagnosis
+         starts_with("INSURE"), ADAP, #Healthcare utilization: Insurance
          matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
          CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
          starts_with("CAREHV"), #Healthcare utilization: Retention in care
          ends_with("LST"), CD4LOW, INFECTN, AIDSDIAG, #Healthcare utilization: Quality of care
          ARTPRESC, ARTL, ARTLAGE, ARTREC, ARTNOW, #Healthcare utilization: Treatment
          ARTADHR, #Healthcare utilization: Adherence
-         starts_with("INSURE"), ADAP, #Healthcare utilization: Insurance
          starts_with("HE"), #Youth Health Engagement scale
          matches("CARE\\d{2}"), #Provider Empathy (CARE) scale
          starts_with("SSND"), starts_with("SSUSE"), #Support services needed and used ###
@@ -365,6 +365,19 @@ acasi <- acasiJoinInner %>%
     SITE_RCD_WUSL  = if_else(SITE1 == "WUSL", 1, 0),
     #> Survey language
     surveylanguage_RCD_Eng = if_else(surveylanguage == "English", 1, 0),
+    #> Ethnicity & Race
+    RACE_RC = case_when(LATINO == 1 ~ "Latino",
+                        RACEC == 1 ~ "Black, Not Latino",
+                        RACEE == 1 & RACE > 1 ~ 
+                          "White Mixed-Race, Not Latino or Black",
+                        RACEE == 1 ~ "White, Not Latino",
+                        LATINO == 8 & RACE == 8 ~ "Refuse to answer", #None refused to answer
+                        TRUE ~ "Other race"),
+    RACE_RCD_Latino   = if_else(RACE_RC == "Latino", 1, 0),
+    RACE_RCD_Black    = if_else(RACE_RC == "Black, Not Latino", 1, 0),
+    RACE_RCD_WhiteMix = if_else(RACE_RC == "White Mixed-Race, Not Latino or Black", 1, 0),
+    RACE_RCD_Other    = if_else(RACE_RC == "Other race", 1, 0),
+    RACE_RCD_Missing  = if_else(RACE_RC == "Refuse to answer", 1, 0),
     #> Gender Identity
     GENDER_RC = fct_recode(as.factor(GENDER),
                            "Male (cis man)"     = "1", 
@@ -418,6 +431,19 @@ acasi <- acasiJoinInner %>%
     GRADE_RCD_PostK   = if_else(GRADE_RC == "Some post-K12", 1, 0),
     GRADE_RCD_Grad    = if_else(GRADE_RC == "College graduate or trade certification", 1, 0),
     GRADE_RCD_Missing = if_else(GRADE_RC == "Refuse to answer", 1, 0),
+    #> Income
+    MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
+    MONEY_RC_Log = log(MONEY_RC + 1),
+    #> Employment
+    EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
+                          EMPLOYB == 1 ~ "Employed/Student",
+                          EMPLOYC == 1 ~ "Employed/Student",
+                          EMPLOYD == 1 ~ "Unemployed/Disabled",
+                          EMPLOYE == 1 ~ "Unemployed/Disabled",
+                          EMPLOYF == 1 ~ "Unemployed/Disabled",
+                          EMPLOY == 8 ~ "Refuse to answer"), #None refused to answer
+    EMPLOY_RCD_Employed = if_else(EMPLOY_RC == "Employed/Student", 1, 0),
+    EMPLOY_RCD_Missing  = if_else(EMPLOY_RC == "Refuse to answer", 1, 0),
     #> Residence, Last 7 Days
     STAY7D_RC = fct_recode(as.factor(STAY7D),
                            "Stable housing"   =  "1", 
@@ -437,37 +463,21 @@ acasi <- acasiJoinInner %>%
     STAY7D_RCD_Institution = if_else(STAY7D_RC == "Institution", 1, 0),
     STAY7D_RCD_Other       = if_else(STAY7D_RC == "Other residence", 1, 0),
     STAY7D_RCD_Missing     = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
-    #> Ethnicity & Race
-    RACE_RC = case_when(LATINO == 1 ~ "Latino",
-                        RACEC == 1 ~ "Black, Not Latino",
-                        RACEE == 1 & RACE > 1 ~ 
-                          "White Mixed-Race, Not Latino or Black",
-                        RACEE == 1 ~ "White, Not Latino",
-                        LATINO == 8 & RACE == 8 ~ "Refuse to answer", #None refused to answer
-                        TRUE ~ "Other race"),
-    RACE_RCD_Latino   = if_else(RACE_RC == "Latino", 1, 0),
-    RACE_RCD_Black    = if_else(RACE_RC == "Black, Not Latino", 1, 0),
-    RACE_RCD_WhiteMix = if_else(RACE_RC == "White Mixed-Race, Not Latino or Black", 1, 0),
-    RACE_RCD_Other    = if_else(RACE_RC == "Other race", 1, 0),
-    RACE_RCD_Missing  = if_else(RACE_RC == "Refuse to answer", 1, 0),
-    #> Employment
-    EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
-                          EMPLOYB == 1 ~ "Employed/Student",
-                          EMPLOYC == 1 ~ "Employed/Student",
-                          EMPLOYD == 1 ~ "Unemployed/Disabled",
-                          EMPLOYE == 1 ~ "Unemployed/Disabled",
-                          EMPLOYF == 1 ~ "Unemployed/Disabled",
-                          EMPLOY == 8 ~ "Refuse to answer"), #None refused to answer
-    EMPLOY_RCD_Employed = if_else(EMPLOY_RC == "Employed/Student", 1, 0),
-    EMPLOY_RCD_Missing  = if_else(EMPLOY_RC == "Refuse to answer", 1, 0),
-    #> Income
-    MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
-    MONEY_RC_Log = log(MONEY_RC + 1),
     #> HIV History
     DIAGHIV_RC = case_when(DIAGHIV <= 2019 ~ DIAGHIV),
     TIMESINCEHIV = year(TODAY) - DIAGHIV_RC, #Does not include those born with HIV
     BORNHIV_MCD = if_else(DOBY == HIVDiagnosisYear_MCD, 1, 0),
     TIMESINCEHIV_MCD = year(TODAY) - HIVDiagnosisYear_MCD, #Includes those born with HIV
+    #> Insurance
+    INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
+                          INSURE == 97 ~ "Don't know",
+                          INSURE == 98 ~ "Refuse to answer", #None refused to answer
+                          TRUE ~ "Insured"), 
+    INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
+    INSURE_RCD_Unknown = if_else(INSURE_RC == "Don't know", 1, 0),
+    INSURE_RCD_Missing = if_else(INSURE_RC == "Refuse to answer", 1, 0),
+    ADAP_RCD_Yes     = if_else(ADAP == 1, 1, 0),
+    ADAP_RCD_Unknown = if_else(ADAP == 7, 1, 0), #'Skipped' treated as 'No'
     #> Medical Care
     CARED6_RCD_Yes     = if_else(CARED6 > 0 & CARED6 < 998, 1, 0),
     CARED6_RCD_Missing = if_else(CARED6 >= 998, 1, 0),
@@ -491,16 +501,6 @@ acasi <- acasiJoinInner %>%
     ARTADHR_RCD_Neutral  = if_else(ARTADHR_RC == "Neutral", 1, 0),
     ARTADHR_RCD_Positive = if_else(ARTADHR_RC == "Positive", 1, 0),
     ARTADHR_RCD_Missing  = if_else(ARTADHR_RC == "Missing", 1, 0),
-    #> Insurance
-    INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
-                          INSURE == 97 ~ "Don't know",
-                          INSURE == 98 ~ "Refuse to answer", #None refused to answer
-                          TRUE ~ "Insured"), 
-    INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
-    INSURE_RCD_Unknown = if_else(INSURE_RC == "Don't know", 1, 0),
-    INSURE_RCD_Missing = if_else(INSURE_RC == "Refuse to answer", 1, 0),
-    ADAP_RCD_Yes     = if_else(ADAP == 1, 1, 0),
-    ADAP_RCD_Unknown = if_else(ADAP == 7, 1, 0), #'Skipped' treated as 'No'
     #> HIV Disclosure
     DISC_RC = case_when(DISCA == 1 ~ "No one",
                         DISCB == 1 | DISCC == 1 ~ "Partner/Sex partner",
@@ -801,25 +801,26 @@ acasi_analysis <- acasi %>%
          SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
          surveylanguage_RCD_Eng,
          AGE, #Age
-         GENDER_RCD_Female, GENDER_RCD_Trans, GENDER_RCD_Other, #Gender
-         ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
          RACE_RCD_Latino, RACE_RCD_Black, RACE_RCD_WhiteMix, RACE_RCD_Other, #Ethnicity & Race
+         GENDER_RCD_Female, GENDER_RCD_Trans, GENDER_RCD_Other, GENDER_RCD_Missing, #Gender
+         ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
          GRADE_RCD_PostK, GRADE_RCD_Grad, #Education
          MONEY_RC_Log, #Income
          STAY7D_RCD_Stable, STAY7D_RCD_Institution, STAY7D_RCD_Other, STAY7D_RCD_Refuse, #Housing
          BORNHIV, TIMESINCEHIV,
          BORNHIV_MCD, TIMESINCEHIV_MCD,
+         ViralSupp_MCD,
+         INSURE_RCD_Insured, INSURE_RCD_Unknown, INSURE_RCD_Missing, #Healthcare utilization: Insurance
          CARED6_RCD_Yes, CARED6_RCD_Missing, #Healthcare utilization: Recent care
          CAREHV06_MCD_RCD_Yes, CAREHV06_MCD_RCD_Missing,
-         # ARTNOW, #Healthcare utilization: Treatment
-         # ARTADHR, #Healthcare utilization: Adherence
-         INSURE_RCD_Insured, INSURE_RCD_Unknown, ADAP_RCD_Yes, ADAP_RCD_Unknown, #Healthcare utilization: Insurance
+         ARTNOW_RCD_Yes, ARTNOW_RCD_Missing, #Healthcare utilization: Treatment
+         ARTADHR_RCD_Neutral, ARTADHR_RCD_Positive, ARTADHR_RCD_Missing, #Healthcare utilization: Adherence
          HE_RC_HAL, HE_RC_HSE, #Youth Health Engagement scale
          CARE_RC, #Provider Empathy (CARE) scale
          # starts_with("SSND"), starts_with("SSUSE"), #Support services needed and used ###
          # starts_with("CNEED"), -CNEED3ES, -CNEED4, -CNEED5, CNEED3ES, CNEED4, CNEED5, #Competing needs ###
-         DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, #Disclosure
          STIGMA_RC, #HIV-related stigma
+         DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, #Disclosure
          MENTALH_RC, MENTALH4_RC,#Mental health
          DRUG_RCD_Alcohol, DRUG_RCD_Tobacco, DRUG_RCD_Marijuana, DRUG_RCD_Other, 
          DRUG_RCD_None, DRUG_RCD_Refuse, #Substance use: non-injected
