@@ -483,6 +483,9 @@ acasi <- acasiJoinInner %>%
     #> Medical Care
     CARED6_RCD_Yes     = if_else(CARED6 > 0 & CARED6 < 998, 1, 0),
     CARED6_RCD_Missing = if_else(CARED6 >= 998, 1, 0),
+    CAREHV06_RC = case_when(CARELHIV == 1 ~ CAREHV06,
+                            CARELHIV == 0 ~ 0L,
+                            CARELHIV == 8 ~ 998L),
     # CAREHV06_RCD_Yes = if_else(CAREHV06 > 0 & CAREHV06 <= 99, 1, 0),
     # CAREHV06_RCD_Missing = if_else(CAREHV06 == 998 | CAREHV06 == 999, 1, 0),
     CAREHV06_MCD_RCD_Yes = if_else(!is.na(CAREHV06_MCD) &

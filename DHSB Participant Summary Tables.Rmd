@@ -56,13 +56,9 @@ demo <- acasi %>%
                                       . >  99  ~ "Refuse to answer")))) %>%
   unite("SitePID", SITE_RC, PID, remove = FALSE) %>%
   arrange(SITE_RC, PID) %>%
-  rename(# `Sex at Birth` = SEXBRTH,
+  # rename(`Sex at Birth` = SEXBRTH,
          # `Relationship Status` = RELSTAT_RC,
-         Education = GRADE_RC,
-         `Residence, Last 7 Days` = STAY7D_RC,
-         # `Ever Jailed` = JAILL,
-         `Ethnicity and Race` = RACE_RC,
-         `HIV Diagnosis` = SCREEN5)
+         # `Ever Jailed` = JAILL)
 ```
 
 ```{r}
@@ -86,7 +82,7 @@ table1 <- bind_rows(
   table_OneFactor(demo, varString = "Age Groups",
                   varRelevel = c("18-24 Years")),
   #Ethnicity/Race
-  table_OneFactor(demo, varString = "Ethnicity and Race", 
+  table_OneFactor(demo, varString = "RACE_RC", header = "Ethnicity and Race", 
                   varRelevel = c("Latino",
                                  "Black, Not Latino",
                                  "White, Not Latino",
@@ -105,7 +101,7 @@ table1 <- bind_rows(
                                  "Gay or lesbian",
                                  "Bisexual")),
   #Education
-  table_OneFactor(demo, varString = "Education", 
+  table_OneFactor(demo, varString = "GRADE_RC", header = "Education",
                   varRelevel = c("High school, equivalent or less",
                                  "Some post-K12")),
   # #Employment
@@ -114,7 +110,8 @@ table1 <- bind_rows(
   table_Continuous(demo, variable = "MONEY_RC", stat = "median", 
                    name = "Income, Last Month"),
   #Residence
-  table_OneFactor(demo, varString = "Residence, Last 7 Days", 
+  table_OneFactor(demo, varString = "STAY7D_RC", 
+                  header = "Residence, Last 7 Days",
                   varRelevel = c("Stable housing",
                                  "Unstable housing",
                                  "Institution"))
@@ -127,7 +124,7 @@ table1 <- bind_rows(
 #####Table 2: participant health care summary
 table2 <- bind_rows(
   #HIV Diagnosis
-  table_OneFactor(demo, varString = "HIV Diagnosis",
+  table_OneFactor(demo, varString = "SCREEN5", header = "HIV Diagnosis",
                   varRelevel = c("Within past 12 months",
                                  "More than 12 months ago")),
   #Viral Suppression
@@ -137,8 +134,8 @@ table2 <- bind_rows(
   table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
   #Health care history, 6 months
   bind_rows(
-    table_OneFactor(demo, header = "Recent Health Care",
-                    varString = "CARED6") %>%
+    table_OneFactor(demo, varString = "CARED6", 
+                    header = "Recent Health Care") %>%
       filter(Variable != "   No") %>%
       mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
                                 "   Doctor's visit, non-HIV, 6 months")),
