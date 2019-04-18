@@ -391,19 +391,19 @@ acasi <- acasiJoinInner %>%
     ORIENT_RCD_Bi      = if_else(ORIENT_RC == "Bisexual", 1, 0),
     ORIENT_RCD_Other   = if_else(ORIENT_RC == "Other orientation", 1, 0),
     ORIENT_RCD_Missing = if_else(ORIENT_RC == "Refuse to answer", 1, 0),
-    # #> Relationship Status
-    # RELSTAT_RC = fct_recode(as.factor(RELSTAT),
-    #                         "Single"            = "1",
-    #                         "Dating"            = "2",
-    #                         "Dating"            = "3",
-    #                         "Partnered/Married" = "4",
-    #                         "Partnered/Married" = "5",
-    #                         "Other status"      = "6",
-    #                         "Refuse to answer"  = "8"), #None refused to answer
-    # RELSTAT_RCD_Dating    = if_else(RELSTAT_RC == "Dating", 1, 0),
-    # RELSTAT_RCD_Partnered = if_else(RELSTAT_RC == "Partnered/Married", 1, 0),
-    # RELSTAT_RCD_Other     = if_else(RELSTAT_RC == "Other status", 1, 0),
-    # RELSTAT_RCD_Missing   = if_else(RELSTAT_RC == "Refuse to answer", 1, 0),
+    #> Relationship Status
+    RELSTAT_RC = fct_recode(as.factor(RELSTAT),
+                            "Single"            = "1",
+                            "Dating"            = "2",
+                            "Dating"            = "3",
+                            "Partnered/Married" = "4",
+                            "Partnered/Married" = "5",
+                            "Other status"      = "6",
+                            "Refuse to answer"  = "8"), #None refused to answer
+    RELSTAT_RCD_Dating    = if_else(RELSTAT_RC == "Dating", 1, 0),
+    RELSTAT_RCD_Partnered = if_else(RELSTAT_RC == "Partnered/Married", 1, 0),
+    RELSTAT_RCD_Other     = if_else(RELSTAT_RC == "Other status", 1, 0),
+    RELSTAT_RCD_Missing   = if_else(RELSTAT_RC == "Refuse to answer", 1, 0),
     #> Education
     # INSCHOOL_RCD = if_else(INSCHOOL == 1, 1, 0), #None refused to answer
     GRADE_RC = fct_recode(as.factor(GRADE),
@@ -450,16 +450,16 @@ acasi <- acasiJoinInner %>%
     RACE_RCD_WhiteMix = if_else(RACE_RC == "White Mixed-Race, Not Latino or Black", 1, 0),
     RACE_RCD_Other    = if_else(RACE_RC == "Other race", 1, 0),
     RACE_RCD_Missing  = if_else(RACE_RC == "Refuse to answer", 1, 0),
-    # #> Employment
-    # EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
-    #                       EMPLOYB == 1 ~ "Employed/Student",
-    #                       EMPLOYC == 1 ~ "Employed/Student",
-    #                       EMPLOYD == 1 ~ "Unemployed/Disabled",
-    #                       EMPLOYE == 1 ~ "Unemployed/Disabled",
-    #                       EMPLOYF == 1 ~ "Unemployed/Disabled",
-    #                       EMPLOY == 8 ~ "Refuse to answer"), #None refused to answer
-    # EMPLOY_RCD_Employed = if_else(EMPLOY_RC == "Employed/Student", 1, 0),
-    # EMPLOY_RCD_Missing  = if_else(EMPLOY_RC == "Refuse to answer", 1, 0),
+    #> Employment
+    EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
+                          EMPLOYB == 1 ~ "Employed/Student",
+                          EMPLOYC == 1 ~ "Employed/Student",
+                          EMPLOYD == 1 ~ "Unemployed/Disabled",
+                          EMPLOYE == 1 ~ "Unemployed/Disabled",
+                          EMPLOYF == 1 ~ "Unemployed/Disabled",
+                          EMPLOY == 8 ~ "Refuse to answer"), #None refused to answer
+    EMPLOY_RCD_Employed = if_else(EMPLOY_RC == "Employed/Student", 1, 0),
+    EMPLOY_RCD_Missing  = if_else(EMPLOY_RC == "Refuse to answer", 1, 0),
     #> Income
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     MONEY_RC_Log = log(MONEY_RC + 1),
@@ -499,8 +499,8 @@ acasi <- acasiJoinInner %>%
     INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
     INSURE_RCD_Unknown = if_else(INSURE_RC == "Don't know", 1, 0),
     INSURE_RCD_Missing = if_else(INSURE_RC == "Refuse to answer", 1, 0),
-    # ADAP_RCD_Yes     = if_else(ADAP == 1, 1, 0),
-    # ADAP_RCD_Unknown = if_else(ADAP == 7, 1, 0), #'Skipped' treated as 'No'
+    ADAP_RCD_Yes     = if_else(ADAP == 1, 1, 0),
+    ADAP_RCD_Unknown = if_else(ADAP == 7, 1, 0), #'Skipped' treated as 'No'
     #> HIV Disclosure
     DISC_RC = case_when(DISCA == 1 ~ "No one",
                         DISCB == 1 | DISCC == 1 ~ "Partner/Sex partner",
