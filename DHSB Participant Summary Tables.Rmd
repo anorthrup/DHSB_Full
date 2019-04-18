@@ -55,7 +55,7 @@ demo <- acasi %>%
                                       . <= 99  ~ "No",
                                       . >  99  ~ "Refuse to answer")))) %>%
   unite("SitePID", SITE_RC, PID, remove = FALSE) %>%
-  arrange(SITE_RC, PID) %>%
+  arrange(SITE_RC, PID)
   # rename(`Sex at Birth` = SEXBRTH,
          # `Relationship Status` = RELSTAT_RC,
          # `Ever Jailed` = JAILL)
@@ -128,7 +128,8 @@ table2 <- bind_rows(
                   varRelevel = c("Within past 12 months",
                                  "More than 12 months ago")),
   #Viral Suppression
-  table_OneFactor(demo, varString = "ViralSupp", header = "Viral Suppression",
+  table_OneFactor(demo, varString = "ViralSupp_MCD", 
+                  header = "Viral Suppression",
                   varRelevel = c("Suppressed")),
   #Insurance
   table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
@@ -139,8 +140,8 @@ table2 <- bind_rows(
       filter(Variable != "   No") %>%
       mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
                                 "   Doctor's visit, non-HIV, 6 months")),
-    table_OneFactor(demo, header = "Recent Health Care",
-                    varString = "CAREHV06") %>%
+    table_OneFactor(demo, varString = "CAREHV06_RC", 
+                    header = "Recent Health Care") %>%
       filter(str_detect(Variable, "Refuse|Yes")) %>%
       arrange(desc(Variable)) %>%
       mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
