@@ -3,6 +3,7 @@
 
 #####Read libraries
 library(tidyverse)
+library(lubridate)
 library(sjlabelled)
 library(rio)
 
@@ -73,7 +74,7 @@ mcd_history <- read_csv("Data merged across sites/MCD/MCD_Participant_Summary_Hi
   mutate(SiteSpecificID = replace(SiteSpecificID, 
                                   which(SiteID == "WUSL"), 
                                   str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
-  fri_rekey()
+  fri_rekey() #Change FRI SiteSpecificIDs to match PIDs in ACASI surveys
   #> Lab Test Results
 mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W3_SASdates.csv") %>%
   SasNumToDate() %>%
@@ -84,7 +85,7 @@ mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W
   mutate(SiteSpecificID = replace(SiteSpecificID, 
                                   which(SiteID == "WUSL"), 
                                   str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
-  fri_rekey()
+  fri_rekey() #Change FRI SiteSpecificIDs to match PIDs in ACASI surveys
   #> Ambulatory Visits
 mcd_ambVisits <- read_csv("Data merged across sites/MCD/MCD_Ambulatory_Visits_W0-W3_SASdates.csv",
                           col_types = cols(
@@ -95,7 +96,7 @@ mcd_ambVisits <- read_csv("Data merged across sites/MCD/MCD_Ambulatory_Visits_W0
   mutate(SiteSpecificID = replace(SiteSpecificID, 
                        which(SiteID == "WUSL"), 
                        str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
-  fri_rekey()
+  fri_rekey() #Change FRI SiteSpecificIDs to match PIDs in ACASI surveys
   
 #####Clean and combine data
 #Check for NAs, split NAs and complete cases into separate data friends
@@ -253,7 +254,7 @@ acasi00mTrim <- acasi00m %>%
          RELSTAT, #SES: Relationship
          starts_with("ORIENT"), #SES: Orientation
          starts_with("LIVED"), starts_with("STAY7"), #Housing
-         JAILL, #JAILLX, JAIL6X, #Incarceration 
+         # JAILL, JAILLX, JAIL6X, #Incarceration #> Removed
          BORNHIV, DIAGHIV, SCREEN5, #Length with HIV: First HIV Diagnosis
          matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
          CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
@@ -318,9 +319,13 @@ acasi <- acasiJoinInner %>%
   #Add MCD variables
   left_join(., 
             mcd_history %>%
-              select(SITE1, PID, HIVDiagnosisYear), 
+              select(SITE1, PID, HIVDiagnosisYear) %>%
+              rename(HIVDiagnosisYear_MCD = HIVDiagnosisYear), 
             by = c("SITE1", "PID")) %>%
-  left_join(., mcd_labTests, by = c("SITE1", "PID")) %>%
+  left_join(., 
+            mcd_labTests %>%
+              rename(ViralSupp_MCD = ViralSupp), 
+            by = c("SITE1", "PID")) %>%
   left_join(., 
             left_join(acasiJoinInner %>% #Create binary variable from MCD to determine if there was an ambulatory visit within 6 months
                         select(SITE1, PID, TODAY),
@@ -328,12 +333,21 @@ acasi <- acasiJoinInner %>%
                       by = c("SITE1", "PID")) %>%
               mutate(TODAY = as.Date(TODAY, origin = "1960-01-01"),
                      DIFF = TODAY - ServiceDate,
-                     CAREHV06_RC_MCD = if_else(TODAY - ServiceDate <= 183 &
+                     CAREHV06_MCD = if_else(TODAY - ServiceDate <= 183 &
                                                  TODAY - ServiceDate >= 0, 1, 0)) %>%
               group_by(SITE1, PID) %>%
-              summarize(CAREHV06_RC_MCD = if_else(any(CAREHV06_RC_MCD == 1), 1, 0)), 
+              summarize(CAREHV06_MCD = if_else(any(CAREHV06_MCD == 1), 1, 0)), 
             by = c("SITE1", "PID")) %>%
   mutate(
+    #Variable transformations
+    #> Procedure:
+    ##> 1) Create (if necessary) and re-level factors, collapse levels into fewer options (RC = Recode)
+    ##> 2) Create dummy variables (RCD = Recode Dummy)
+    ###>     Treat 'Refused to answer' as separate answer rather than NA
+    ##> 3) Change 'Refused to answer' or 'Skipped' to NA for continuous variables
+    ##> 4) Make other transformations to continuous variables
+    
+    #> Site
     SITE_RC = fct_recode(as.factor(SITE1),
                          "Corpus Christi" = "CBW", "Los Angeles" = "FRI", 
                          "New York" = "NYSDA", "Chicago" = "HBHC", 
@@ -349,14 +363,8 @@ acasi <- acasiJoinInner %>%
     SITE_RCD_SFDPH = if_else(SITE1 == "SFDPH", 1, 0),
     SITE_RCD_WFU   = if_else(SITE1 == "WFU", 1, 0),
     SITE_RCD_WUSL  = if_else(SITE1 == "WUSL", 1, 0),
-    #Variable transformations
-    #> Procedure:
-    ##> 1) Create (if necessary) and re-level factors, collapse levels into fewer options (RC = Recode)
-    ##> 2) Create dummy variables (RCD = Recode Dummy)
-    ###>     Treat 'Refused to answer' as separate answer rather than NA
-    ##> 3) Change 'Refused to answer' or 'Skipped' to NA for continuous variables
-    ##> 4) Make other transformations to continuous variables
-    
+    #> Survey language
+    surveylanguage_RCD_Eng = if_else(surveylanguage == "English", 1, 0),
     #> Gender Identity
     GENDER_RC = fct_recode(as.factor(GENDER),
                            "Male (cis man)"     = "1", 
@@ -366,9 +374,10 @@ acasi <- acasiJoinInner %>%
                            "Other gender"       = "5", 
                            "Other gender"       = "6",
                            "Refuse to answer"   = "8"), #None refused to answer
-    GENDER_RCD_Female = if_else(GENDER_RC == "Female (cis woman)", 1, 0),
-    GENDER_RCD_Trans  = if_else(GENDER_RC == "Trans-identified", 1, 0),
-    GENDER_RCD_Other  = if_else(GENDER_RC == "Other gender", 1, 0),
+    GENDER_RCD_Female  = if_else(GENDER_RC == "Female (cis woman)", 1, 0),
+    GENDER_RCD_Trans   = if_else(GENDER_RC == "Trans-identified", 1, 0),
+    GENDER_RCD_Other   = if_else(GENDER_RC == "Other gender", 1, 0),
+    GENDER_RCD_Missing = if_else(GENDER_RC == "Refuse to answer", 1, 0),
     #> Sexual Orientation
     ORIENT_RC = fct_recode(as.factor(ORIENT),
                            "Straight"          = "1", 
@@ -378,23 +387,25 @@ acasi <- acasiJoinInner %>%
                            "Other orientation" = "5", 
                            "Other orientation" = "7",
                            "Refuse to answer"  = "8"), #None refused to answer
-    ORIENT_RCD_Gay   = if_else(ORIENT_RC == "Gay or lesbian", 1, 0),
-    ORIENT_RCD_Bi    = if_else(ORIENT_RC == "Bisexual", 1, 0),
-    ORIENT_RCD_Other = if_else(ORIENT_RC == "Other orientation", 1, 0),
-    #> Relationship Status
-    RELSTAT_RC = fct_recode(as.factor(RELSTAT),
-                            "Single"            = "1",
-                            "Dating"            = "2",
-                            "Dating"            = "3",
-                            "Partnered/Married" = "4",
-                            "Partnered/Married" = "5",
-                            "Other status"      = "6",
-                            "Refuse to answer"  = "8"), #None refused to answer
-    RELSTAT_RCD_Dating    = if_else(RELSTAT_RC == "Dating", 1, 0),
-    RELSTAT_RCD_Partnered = if_else(RELSTAT_RC == "Partnered/Married", 1, 0),
-    RELSTAT_RCD_Other     = if_else(RELSTAT_RC == "Other status", 1, 0),
+    ORIENT_RCD_Gay     = if_else(ORIENT_RC == "Gay or lesbian", 1, 0),
+    ORIENT_RCD_Bi      = if_else(ORIENT_RC == "Bisexual", 1, 0),
+    ORIENT_RCD_Other   = if_else(ORIENT_RC == "Other orientation", 1, 0),
+    ORIENT_RCD_Missing = if_else(ORIENT_RC == "Refuse to answer", 1, 0),
+    # #> Relationship Status
+    # RELSTAT_RC = fct_recode(as.factor(RELSTAT),
+    #                         "Single"            = "1",
+    #                         "Dating"            = "2",
+    #                         "Dating"            = "3",
+    #                         "Partnered/Married" = "4",
+    #                         "Partnered/Married" = "5",
+    #                         "Other status"      = "6",
+    #                         "Refuse to answer"  = "8"), #None refused to answer
+    # RELSTAT_RCD_Dating    = if_else(RELSTAT_RC == "Dating", 1, 0),
+    # RELSTAT_RCD_Partnered = if_else(RELSTAT_RC == "Partnered/Married", 1, 0),
+    # RELSTAT_RCD_Other     = if_else(RELSTAT_RC == "Other status", 1, 0),
+    # RELSTAT_RCD_Missing   = if_else(RELSTAT_RC == "Refuse to answer", 1, 0),
     #> Education
-    INSCHOOL_RCD = if_else(INSCHOOL == 1, 1, 0), #None refused to answer
+    # INSCHOOL_RCD = if_else(INSCHOOL == 1, 1, 0), #None refused to answer
     GRADE_RC = fct_recode(as.factor(GRADE),
                           "High school, equivalent or less"         = "1", 
                           "High school, equivalent or less"         = "2", 
@@ -404,8 +415,9 @@ acasi <- acasiJoinInner %>%
                           "College graduate or trade certification" = "6",
                           "College graduate or trade certification" = "7", 
                           "Refuse to answer"                        = "8"), #None refused to answer
-    GRADE_RCD_PostK = if_else(GRADE_RC == "Some post-K12", 1, 0),
-    GRADE_RCD_Grad  = if_else(GRADE_RC == "College graduate or trade certification", 1, 0),
+    GRADE_RCD_PostK   = if_else(GRADE_RC == "Some post-K12", 1, 0),
+    GRADE_RCD_Grad    = if_else(GRADE_RC == "College graduate or trade certification", 1, 0),
+    GRADE_RCD_Missing = if_else(GRADE_RC == "Refuse to answer", 1, 0),
     #> Residence, Last 7 Days
     STAY7D_RC = fct_recode(as.factor(STAY7D),
                            "Stable housing"   =  "1", 
@@ -415,16 +427,16 @@ acasi <- acasiJoinInner %>%
                            "Unstable housing" =  "5", 
                            "Unstable housing" =  "6",
                            "Unstable housing" =  "7", 
-                           "Unstable housing" =  "8",
+                           "Unstable housing" =  "8", #None
                            "Institution"      =  "9", 
                            "Institution"      = "10",
                            "Institution"      = "11", 
                            "Other residence"  = "12",
-                           "Refuse to answer" = "98"),
+                           "Refuse to answer" = "98"), #None refused to answer
     STAY7D_RCD_Stable      = if_else(STAY7D_RC == "Stable housing", 1, 0),
     STAY7D_RCD_Institution = if_else(STAY7D_RC == "Institution", 1, 0),
     STAY7D_RCD_Other       = if_else(STAY7D_RC == "Other residence", 1, 0),
-    STAY7D_RCD_Refuse      = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
+    STAY7D_RCD_Missing     = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
     #> Ethnicity & Race
     RACE_RC = case_when(LATINO == 1 ~ "Latino",
                         RACEC == 1 ~ "Black, Not Latino",
@@ -437,21 +449,48 @@ acasi <- acasiJoinInner %>%
     RACE_RCD_Black    = if_else(RACE_RC == "Black, Not Latino", 1, 0),
     RACE_RCD_WhiteMix = if_else(RACE_RC == "White Mixed-Race, Not Latino or Black", 1, 0),
     RACE_RCD_Other    = if_else(RACE_RC == "Other race", 1, 0),
-    #> Employment
-    EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
-                          EMPLOYB == 1 ~ "Employed/Student",
-                          EMPLOYC == 1 ~ "Employed/Student",
-                          EMPLOYD == 1 ~ "Unemployed/Disabled",
-                          EMPLOYE == 1 ~ "Unemployed/Disabled",
-                          EMPLOYF == 1 ~ "Unemployed/Disabled",
-                          EMPLOY == 8 ~ "Refuse to answer"), #None refused to answer
-    EMPLOY_RCD_Employed = if_else(EMPLOY_RC == "Employed/Student", 1, 0),
+    RACE_RCD_Missing  = if_else(RACE_RC == "Refuse to answer", 1, 0),
+    # #> Employment
+    # EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
+    #                       EMPLOYB == 1 ~ "Employed/Student",
+    #                       EMPLOYC == 1 ~ "Employed/Student",
+    #                       EMPLOYD == 1 ~ "Unemployed/Disabled",
+    #                       EMPLOYE == 1 ~ "Unemployed/Disabled",
+    #                       EMPLOYF == 1 ~ "Unemployed/Disabled",
+    #                       EMPLOY == 8 ~ "Refuse to answer"), #None refused to answer
+    # EMPLOY_RCD_Employed = if_else(EMPLOY_RC == "Employed/Student", 1, 0),
+    # EMPLOY_RCD_Missing  = if_else(EMPLOY_RC == "Refuse to answer", 1, 0),
     #> Income
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     MONEY_RC_Log = log(MONEY_RC + 1),
     #> HIV History
-    BORNHIV_RCD = if_else(BORNHIV == 1, 1, 0), #None refused to answer
     DIAGHIV_RC = case_when(DIAGHIV <= 2019 ~ DIAGHIV),
+    TIMESINCEHIV = year(TODAY) - DIAGHIV_RC, #Does not include those born with HIV
+    BORNHIV_MCD = if_else(DOBY == HIVDiagnosisYear_MCD, 1, 0),
+    TIMESINCEHIV_MCD = year(TODAY) - HIVDiagnosisYear_MCD, #Includes those born with HIV
+    #> Medical Care
+    CARED6_RCD_Yes     = if_else(CARED6 > 0 & CARED6 < 998, 1, 0),
+    CARED6_RCD_Missing = if_else(CARED6 >= 998, 1, 0),
+    # CAREHV06_RCD_Yes = if_else(CAREHV06 > 0 & CAREHV06 <= 99, 1, 0),
+    # CAREHV06_RCD_Missing = if_else(CAREHV06 == 998 | CAREHV06 == 999, 1, 0),
+    CAREHV06_MCD_RCD_Yes = if_else(!is.na(CAREHV06_MCD) &
+                                     CAREHV06_MCD > 0, 1, 0),
+    CAREHV06_MCD_RCD_Missing = if_else(is.na(CAREHV06_MCD), 1, 0),
+    #> ART Usage
+    ARTNOW_RCD_Yes     = if_else(ARTNOW == 1, 1, 0),
+    ARTNOW_RCD_Missing = if_else(ARTNOW == 8 | ARTNOW == 9, 1, 0),
+    ARTADHR_RC = fct_recode(as.factor(ARTADHR),
+                            "Negative" = "1",
+                            "Negative" = "2",
+                            "Neutral"  = "3",
+                            "Positive" = "4",
+                            "Positive" = "5",
+                            "Positive" = "6",
+                            "Missing"  = "8", #None refused
+                            "Missing"  = "9"), #Many skipped
+    ARTADHR_RCD_Neutral  = if_else(ARTADHR_RC == "Neutral", 1, 0),
+    ARTADHR_RCD_Positive = if_else(ARTADHR_RC == "Positive", 1, 0),
+    ARTADHR_RCD_Missing  = if_else(ARTADHR_RC == "Missing", 1, 0),
     #> Insurance
     INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
                           INSURE == 97 ~ "Don't know",
@@ -459,8 +498,9 @@ acasi <- acasiJoinInner %>%
                           TRUE ~ "Insured"), 
     INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
     INSURE_RCD_Unknown = if_else(INSURE_RC == "Don't know", 1, 0),
-    ADAP_RCD_Yes     = if_else(ADAP == 1, 1, 0),
-    ADAP_RCD_Unknown = if_else(ADAP == 7, 1, 0), #'Skipped' treated as 'No'
+    INSURE_RCD_Missing = if_else(INSURE_RC == "Refuse to answer", 1, 0),
+    # ADAP_RCD_Yes     = if_else(ADAP == 1, 1, 0),
+    # ADAP_RCD_Unknown = if_else(ADAP == 7, 1, 0), #'Skipped' treated as 'No'
     #> HIV Disclosure
     DISC_RC = case_when(DISCA == 1 ~ "No one",
                         DISCB == 1 | DISCC == 1 ~ "Partner/Sex partner",
@@ -574,11 +614,11 @@ acasi <- acasiJoinInner %>%
   #> Mobile Phone Usage, 9 items (MTUSPX03 through MTUSPX11)
   mutate(
     MTUSPX_RC_Smartphone = case_when(
-      rowSums(is.na(select(., one_of(paste0("MTUSPX", 
+      rowSums(is.na(select(., one_of(paste0("MTUSPX",
                                             str_pad(3:11, width = 2, pad = 0),
                                             "_RC"
       ))))) < 9 ~ #Is number of NA < number of items?
-        rowSums(select(., one_of(paste0("MTUSPX", 
+        rowSums(select(., one_of(paste0("MTUSPX",
                                         str_pad(3:11, width = 2, pad = 0),
                                         "_RC"
         ))), na.rm = TRUE) #If so, sum columns
@@ -640,96 +680,96 @@ acasi <- acasiJoinInner %>%
         na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  
-  #S56 variables
-  mutate(
-    #> Devices used (S56_1); none is reference; can interact
-    S56_1_RCD_Cell    = if_else(S56_1A == 1, 1, 0),
-    S56_1_RCD_Tablet  = if_else(S56_1B == 1, 1, 0),
-    S56_1_RCD_Laptop  = if_else(S56_1D == 1, 1, 0),
-    S56_1_RCD_Desktop = if_else(S56_1E == 1, 1, 0),
-    S56_1_RCD_Other   = if_else(S56_1C == 1 | S56_1F == 1, 1, 0),
-    #> Where devices used (S56_2); skipped is reference; can interact
-    S56_2_RCD_Home       = if_else(S56_2A == 1 | S56_2B == 1, 1, 0),
-    S56_2_RCD_Friends    = if_else(S56_2C == 1, 1, 0),
-    S56_2_RCD_Public     = if_else(S56_2D == 1 | S56_2E == 1 | S56_2F == 1, 1, 0),
-    S56_2_RCD_SchoolWork = if_else(S56_2G == 1 | S56_2H == 1, 1, 0),
-    S56_2_RCD_Other      = if_else(S56_2I == 1, 1, 0),
-    #> Cell phone access (S56_3); none refused to answer; no access is reference; no interaction
-    S56_3_RCD_Cell = if_else(S56_3 == 1, 1, 0),
-    S56_3_RCD_Minutes = if_else(S56_3 == 2, 1, 0),
-    S56_3_RCD_Data = if_else(S56_3 == 3, 1, 0),
-    S56_3_RCD_Access = if_else(S56_3 %in% c(4, 5), 1, 0),
-    #> Communication frequency (S56_4, S56_7, S56_13, S56_16); never is reference; no interaction
-    S56_RC_Freq = case_when(
-      rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 1) > 0 ~ "Several times a day",
-      rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 2) > 0 ~ "Once a day",
-      rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 3) > 0 ~ "Once every couple of days",
-      rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 4) > 0 ~ "About once a week",
-      rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 5) > 0 ~ "Less than once a week",
-      rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 6) > 0 ~ "Never",
-      TRUE ~ "Refuse to answer"
-    ),
-    S56_RCD_Freq_SeveralPerDay = if_else(S56_RC_Freq == "Several times a day", 1, 0),
-    S56_RCD_Freq_OncePerDay    = if_else(S56_RC_Freq == "Once a day", 1, 0),
-    S56_RCD_Freq_CoupleDays    = if_else(S56_RC_Freq == "Once every couple of days", 1, 0),
-    S56_RCD_Freq_OncePerWeek   = if_else(S56_RC_Freq == "About once a week", 1, 0),
-    S56_RCD_Freq_LTWeekly      = if_else(S56_RC_Freq == "Less than once a week", 1, 0),
-    S56_RCD_Freq_Never         = if_else(S56_RC_Freq == "Never", 1, 0),
-    #> Communication partners (S56_5, S56_8, S56_14, S56_17)
-    S56_RCD_Who_Family =
-      if_else(rowSums(select(., S56_5A, S56_8A, S56_14A, S56_17A,
-                             S56_5B, S56_8B, S56_14B, S56_17B) == 1) > 0, 1, 0),
-    S56_RCD_Who_Partner =
-      if_else(rowSums(select(., S56_5C, S56_8C, S56_14C, S56_17C) == 1) > 0, 1, 0),
-    S56_RCD_Who_Lover = 
-      if_else(rowSums(select(., S56_5D, S56_8D, S56_14D, S56_17D) == 1) > 0, 1, 0),
-    S56_RCD_Who_Friends = 
-      if_else(rowSums(select(., S56_5E, S56_8E, S56_14E, S56_17E,
-                             S56_5F, S56_8F, S56_14F, S56_17F,
-                             S56_5G, S56_8G, S56_14G, S56_17G) == 1) > 0, 1, 0),
-    S56_RCD_Who_Service = 
-      if_else(rowSums(select(., S56_5I, S56_8I, S56_14I, S56_17I) == 1) > 0, 1, 0),
-    S56_RCD_Who_WorkSchool = 
-      if_else(rowSums(select(., S56_5J, S56_8J, S56_14J, S56_17J,
-                             S56_5K, S56_8K, S56_14K, S56_17K,
-                             S56_5L, S56_8L, S56_14L, S56_17L) == 1) > 0, 1, 0),
-    S56_RCD_Who_Utility = 
-      if_else(rowSums(select(., S56_5M, S56_8M, S56_14M, S56_17M) == 1) > 0, 1, 0),
-    S56_RCD_Who_Other = 
-      if_else(rowSums(select(., S56_5H, S56_8H, S56_14H, S56_17H,
-                             S56_5N, S56_8N, S56_14N, S56_17N,
-                             S56_5O, S56_8O, S56_14O, S56_17O) == 1) > 0, 1, 0),
-    #> Communication about (S56_6, S56_9, S56_15, S56_18)
-    S56_RCD_What_Lifestyle = if_else(
-      rowSums(select(., paste0("S56_6", c(LETTERS[1:7], "O")),
-                     paste0("S56_9", c(LETTERS[1:7], "O")),
-                     paste0("S56_15", c(LETTERS[1:7], "O")),
-                     paste0("S56_18", c(LETTERS[1:7], "O"))) == 1) > 0, 1, 0
-    ),
-    S56_RCD_What_Relations = if_else(
-      rowSums(select(., paste0("S56_6", LETTERS[8:10]),
-                     paste0("S56_9", LETTERS[8:10]),
-                     paste0("S56_15", LETTERS[8:10]),
-                     paste0("S56_18", LETTERS[8:10])) == 1) > 0, 1, 0
-    ),
-    S56_RCD_What_Sexual = if_else(
-      rowSums(select(., paste0("S56_6", c("K", "M")),
-                     paste0("S56_9", c("K", "M")),
-                     paste0("S56_15", c("K", "M")),
-                     paste0("S56_18", c("K", "M"))) == 1) > 0, 1, 0
-    ),
-    S56_RCD_What_LGBTQ = if_else(
-      rowSums(select(., paste0("S56_6", c("L", "N")),
-                     paste0("S56_9", c("L", "N")),
-                     paste0("S56_15", c("L", "N")),
-                     paste0("S56_18", c("L", "N"))) == 1) > 0, 1, 0
-    )
-  ) %>%
+
+  # #S56 variables
+  # mutate(
+  #   #> Devices used (S56_1); none is reference; can interact
+  #   S56_1_RCD_Cell    = if_else(S56_1A == 1, 1, 0),
+  #   S56_1_RCD_Tablet  = if_else(S56_1B == 1, 1, 0),
+  #   S56_1_RCD_Laptop  = if_else(S56_1D == 1, 1, 0),
+  #   S56_1_RCD_Desktop = if_else(S56_1E == 1, 1, 0),
+  #   S56_1_RCD_Other   = if_else(S56_1C == 1 | S56_1F == 1, 1, 0),
+  #   #> Where devices used (S56_2); skipped is reference; can interact
+  #   S56_2_RCD_Home       = if_else(S56_2A == 1 | S56_2B == 1, 1, 0),
+  #   S56_2_RCD_Friends    = if_else(S56_2C == 1, 1, 0),
+  #   S56_2_RCD_Public     = if_else(S56_2D == 1 | S56_2E == 1 | S56_2F == 1, 1, 0),
+  #   S56_2_RCD_SchoolWork = if_else(S56_2G == 1 | S56_2H == 1, 1, 0),
+  #   S56_2_RCD_Other      = if_else(S56_2I == 1, 1, 0),
+  #   #> Cell phone access (S56_3); none refused to answer; no access is reference; no interaction
+  #   S56_3_RCD_Cell = if_else(S56_3 == 1, 1, 0),
+  #   S56_3_RCD_Minutes = if_else(S56_3 == 2, 1, 0),
+  #   S56_3_RCD_Data = if_else(S56_3 == 3, 1, 0),
+  #   S56_3_RCD_Access = if_else(S56_3 %in% c(4, 5), 1, 0),
+  #   #> Communication frequency (S56_4, S56_7, S56_13, S56_16); never is reference; no interaction
+  #   S56_RC_Freq = case_when(
+  #     rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 1) > 0 ~ "Several times a day",
+  #     rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 2) > 0 ~ "Once a day",
+  #     rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 3) > 0 ~ "Once every couple of days",
+  #     rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 4) > 0 ~ "About once a week",
+  #     rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 5) > 0 ~ "Less than once a week",
+  #     rowSums(select(., S56_4, S56_7, S56_13, S56_16) == 6) > 0 ~ "Never",
+  #     TRUE ~ "Refuse to answer"
+  #   ),
+  #   S56_RCD_Freq_SeveralPerDay = if_else(S56_RC_Freq == "Several times a day", 1, 0),
+  #   S56_RCD_Freq_OncePerDay    = if_else(S56_RC_Freq == "Once a day", 1, 0),
+  #   S56_RCD_Freq_CoupleDays    = if_else(S56_RC_Freq == "Once every couple of days", 1, 0),
+  #   S56_RCD_Freq_OncePerWeek   = if_else(S56_RC_Freq == "About once a week", 1, 0),
+  #   S56_RCD_Freq_LTWeekly      = if_else(S56_RC_Freq == "Less than once a week", 1, 0),
+  #   S56_RCD_Freq_Never         = if_else(S56_RC_Freq == "Never", 1, 0),
+  #   #> Communication partners (S56_5, S56_8, S56_14, S56_17)
+  #   S56_RCD_Who_Family =
+  #     if_else(rowSums(select(., S56_5A, S56_8A, S56_14A, S56_17A,
+  #                            S56_5B, S56_8B, S56_14B, S56_17B) == 1) > 0, 1, 0),
+  #   S56_RCD_Who_Partner =
+  #     if_else(rowSums(select(., S56_5C, S56_8C, S56_14C, S56_17C) == 1) > 0, 1, 0),
+  #   S56_RCD_Who_Lover =
+  #     if_else(rowSums(select(., S56_5D, S56_8D, S56_14D, S56_17D) == 1) > 0, 1, 0),
+  #   S56_RCD_Who_Friends =
+  #     if_else(rowSums(select(., S56_5E, S56_8E, S56_14E, S56_17E,
+  #                            S56_5F, S56_8F, S56_14F, S56_17F,
+  #                            S56_5G, S56_8G, S56_14G, S56_17G) == 1) > 0, 1, 0),
+  #   S56_RCD_Who_Service =
+  #     if_else(rowSums(select(., S56_5I, S56_8I, S56_14I, S56_17I) == 1) > 0, 1, 0),
+  #   S56_RCD_Who_WorkSchool =
+  #     if_else(rowSums(select(., S56_5J, S56_8J, S56_14J, S56_17J,
+  #                            S56_5K, S56_8K, S56_14K, S56_17K,
+  #                            S56_5L, S56_8L, S56_14L, S56_17L) == 1) > 0, 1, 0),
+  #   S56_RCD_Who_Utility =
+  #     if_else(rowSums(select(., S56_5M, S56_8M, S56_14M, S56_17M) == 1) > 0, 1, 0),
+  #   S56_RCD_Who_Other =
+  #     if_else(rowSums(select(., S56_5H, S56_8H, S56_14H, S56_17H,
+  #                            S56_5N, S56_8N, S56_14N, S56_17N,
+  #                            S56_5O, S56_8O, S56_14O, S56_17O) == 1) > 0, 1, 0),
+  #   #> Communication about (S56_6, S56_9, S56_15, S56_18)
+  #   S56_RCD_What_Lifestyle = if_else(
+  #     rowSums(select(., paste0("S56_6", c(LETTERS[1:7], "O")),
+  #                    paste0("S56_9", c(LETTERS[1:7], "O")),
+  #                    paste0("S56_15", c(LETTERS[1:7], "O")),
+  #                    paste0("S56_18", c(LETTERS[1:7], "O"))) == 1) > 0, 1, 0
+  #   ),
+  #   S56_RCD_What_Relations = if_else(
+  #     rowSums(select(., paste0("S56_6", LETTERS[8:10]),
+  #                    paste0("S56_9", LETTERS[8:10]),
+  #                    paste0("S56_15", LETTERS[8:10]),
+  #                    paste0("S56_18", LETTERS[8:10])) == 1) > 0, 1, 0
+  #   ),
+  #   S56_RCD_What_Sexual = if_else(
+  #     rowSums(select(., paste0("S56_6", c("K", "M")),
+  #                    paste0("S56_9", c("K", "M")),
+  #                    paste0("S56_15", c("K", "M")),
+  #                    paste0("S56_18", c("K", "M"))) == 1) > 0, 1, 0
+  #   ),
+  #   S56_RCD_What_LGBTQ = if_else(
+  #     rowSums(select(., paste0("S56_6", c("L", "N")),
+  #                    paste0("S56_9", c("L", "N")),
+  #                    paste0("S56_15", c("L", "N")),
+  #                    paste0("S56_18", c("L", "N"))) == 1) > 0, 1, 0
+  #   )
+  # ) %>%
   # mutate(
   #   S56_RCD_What_None = if_else(rowSums(select(., starts_with("S56_RCD_What")) == 1) == 0, 1, 0)
   # ) %>%
-  
+
   #Outcomes
   #> Sexual Health (Lifetime)
   mutate_at(vars(S56_25B, S56_25C, S56_25D, S56_25E, S56_25F, S56_25G),
@@ -759,25 +799,19 @@ acasi_analysis <- acasi %>%
   select(PID,
          SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
          SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
+         surveylanguage_RCD_Eng,
          AGE, #Age
-         # SEXBRTH, #SES: Sex/Gender #> Removed
          GENDER_RCD_Female, GENDER_RCD_Trans, GENDER_RCD_Other, #Gender
+         ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
          RACE_RCD_Latino, RACE_RCD_Black, RACE_RCD_WhiteMix, RACE_RCD_Other, #Ethnicity & Race
-         INSCHOOL_RCD, #Education
          GRADE_RCD_PostK, GRADE_RCD_Grad, #Education
          MONEY_RC_Log, #Income
-         EMPLOY_RCD_Employed, #Employment
-         RELSTAT_RCD_Dating, RELSTAT_RCD_Partnered, RELSTAT_RCD_Other, #Relationship
-         ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
-         # starts_with("LIVED"), #Housing
          STAY7D_RCD_Stable, STAY7D_RCD_Institution, STAY7D_RCD_Other, STAY7D_RCD_Refuse, #Housing
-         # JAILL, #JAILLX, JAIL6X, #Incarceration 
-         BORNHIV_RCD, DIAGHIV_RC, #Length with HIV: First HIV Diagnosis
-         # matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
-         # CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
-         # starts_with("CAREHV"), #Healthcare utilization: Retention in care
-         # ends_with("LST"), CD4LOW, INFECTN, AIDSDIAG, #Healthcare utilization: Quality of care
-         # ARTPRESC, ARTL, ARTLAGE, ARTREC, ARTNOW, #Healthcare utilization: Treatment
+         BORNHIV, TIMESINCEHIV,
+         BORNHIV_MCD, TIMESINCEHIV_MCD,
+         CARED6_RCD_Yes, CARED6_RCD_Missing, #Healthcare utilization: Recent care
+         CAREHV06_MCD_RCD_Yes, CAREHV06_MCD_RCD_Missing,
+         # ARTNOW, #Healthcare utilization: Treatment
          # ARTADHR, #Healthcare utilization: Adherence
          INSURE_RCD_Insured, INSURE_RCD_Unknown, ADAP_RCD_Yes, ADAP_RCD_Unknown, #Healthcare utilization: Insurance
          HE_RC_HAL, HE_RC_HSE, #Youth Health Engagement scale
@@ -799,7 +833,8 @@ acasi_analysis <- acasi %>%
          MTUSNX_RC, #MTUSN,
          MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg, MTUAX02_RC, MTUAX07_RC,
          starts_with("Outcome")
-  )
+  ) %>%
+  select_if(~length(which(. == 0)) < length(.))
 
 #Insurance 'Other' included as 'Insured' until further notice.
 
@@ -817,7 +852,7 @@ x2 <- inner_join(acasi00m %>%
                    filter(!is.na(ViralSupp_Screen)) %>%
                    select(-SCREEN7),
                  acasi2 %>%
-                   select(SITE1, PID, ViralSupp) %>%
-                   filter(!is.na(ViralSupp)),
+                   select(SITE1, PID, ViralSupp_MCD) %>%
+                   filter(!is.na(ViralSupp_MCD)),
                  by = c("SITE1", "PID"))
-chisq.test(x2$ViralSupp, x2$ViralSupp_Screen)
+chisq.test(x2$ViralSupp_MCD, x2$ViralSupp_Screen)
