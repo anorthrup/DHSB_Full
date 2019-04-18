@@ -43,10 +43,9 @@ demo <- acasi %>%
                               "Don't know"   = "7", "Refuse to answer"        = "8"),
          # SEXBRTH = fct_recode(as.factor(SEXBRTH),
          #                      "Male" = "1", "Female" = "2", "Refuse to answer" = "8"),
-         ViralSupp = fct_recode(as.factor(ViralSupp),
-                                "Not suppressed" = "0",
-                                "Suppressed"     = "1"),
-         MONEY_RC_Log = log(MONEY_RC + 1)) %>%
+         ViralSupp_MCD = fct_recode(as.factor(ViralSupp_MCD),
+                                    "Not suppressed" = "0",
+                                    "Suppressed"     = "1")) %>%
   # mutate_at(vars(JAILL), 
   #           list(as.factor)) %>%
   # mutate_at(vars(JAILL), 
@@ -112,7 +111,7 @@ table1 <- bind_rows(
   # #Employment
   # table_OneFactor(demo, varString = "EMPLOY_RC", header = "Employment Status"),
   #Income
-  table_Continuous(demo, variable = "MONEY", stat = "median", 
+  table_Continuous(demo, variable = "MONEY_RC", stat = "median", 
                    name = "Income, Last Month"),
   #Residence
   table_OneFactor(demo, varString = "Residence, Last 7 Days", 
@@ -273,7 +272,7 @@ kable(table1 %>%
   group_rows("Sexual Orientation, N (%)", 13, 16) %>%
   group_rows("Education, N (%)", 17, 19) %>%
   group_rows("Income, Median [IQR]", 20, 20) %>%
-  group_rows("Residence, Last 7 Days, N (%)", 21, 25)
+  group_rows("Residence, Last 7 Days, N (%)", 21, 24)
 ```
 
 ### Table 2
@@ -284,7 +283,7 @@ kable(table2 %>%
       ) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows("HIV Diagnosis, N (%)", 1, 3) %>%
-  group_rows("Viral Suppression, N(%)", 4, 6) %>%
+  group_rows("Viral Suppression, N (%)", 4, 6) %>%
   group_rows("Insurance, N (%)", 7, 9) %>%
   group_rows("Recent Health Care, N (%)", 10, 12) %>%
   add_indent(c(12)) %>%
