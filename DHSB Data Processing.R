@@ -514,22 +514,16 @@ acasi <- acasiJoinInner %>%
                                  DISCJ == 1, 1, 0),
     DISC_RCD_Missing = if_else(!DISC %in% c(1:10), 1, 0),
     #> Substance Use
-    DRUG_RC = case_when(DRUG1LA == 1 ~ "Alcohol",
-                        DRUG1LB == 1 ~ "Tobacco",
-                        DRUG1LC == 1 ~ "Marijuana",
-                        rowSums(
-                          select(.,
-                                 one_of(paste0("DRUG1L", LETTERS[4:12]),
-                                        paste0("DRUG2L", LETTERS[1:10]))               
-                          ) == 1) > 0 ~ "Other drug(s)",
-                        DRUG1LM == 1 & DRUG2LK == 1 ~ "None",
-                        TRUE ~ "Missing"),
-    DRUG_RCD_Alcohol    = if_else(DRUG_RC == "Alcohol", 1, 0),
-    DRUG_RCD_Tobacco    = if_else(DRUG_RC == "Tobacco", 1, 0),
-    DRUG_RCD_Marijuana  = if_else(DRUG_RC == "Marijuana", 1, 0),
-    DRUG_RCD_Other      = if_else(DRUG_RC == "Other drug(s)", 1, 0),
-    DRUG_RCD_None       = if_else(DRUG_RC == "None", 1, 0),
-    DRUG_RCD_Missing    = if_else(DRUG_RC == "Missing", 1, 0),
+    DRUG_RCD_Alcohol    = if_else(DRUG1LA == 1, 1, 0),
+    DRUG_RCD_Tobacco    = if_else(DRUG1LB == 1, 1, 0),
+    DRUG_RCD_Marijuana  = if_else(DRUG1LC == 1, 1, 0),
+    DRUG_RCD_Other      = if_else(
+      rowSums(
+        select(.,
+               one_of(paste0("DRUG1L", LETTERS[4:12]),
+                      paste0("DRUG2L", LETTERS[1:10]))               
+        ) == 1) > 0, 1, 0),
+    DRUG_RCD_Missing    = if_else(DRUG1L == 98 & DRUG2L == 98, 1, 0),
     INJECTL_RCD_Inject  = if_else(INJECTL == 1, 1, 0),
     INJECTL_RCD_Missing = if_else(!INJECTL %in% c(1, 0), 1, 0)
   ) %>%
