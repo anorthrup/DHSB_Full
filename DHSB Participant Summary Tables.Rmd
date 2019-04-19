@@ -45,15 +45,19 @@ demo <- acasi %>%
          #                      "Male" = "1", "Female" = "2", "Refuse to answer" = "8"),
          ViralSupp_MCD = fct_recode(as.factor(ViralSupp_MCD),
                                     "Not suppressed" = "0",
-                                    "Suppressed"     = "1")) %>%
+                                    "Suppressed"     = "1"),
+         DISC_RCD_None = if_else(DISCA == 1, 1, 0),
+         DRUG_RCD_None = if_else(DRUG1LM == 1 & DRUG2LK == 1, 1, 0)) %>%
   # mutate_at(vars(JAILL), 
   #           list(as.factor)) %>%
   # mutate_at(vars(JAILL), 
   #           list(fct_recode), "Yes" = "1", "No" = "0", "Don't know" = "7", "Refuse to answer" = "8") %>%
   mutate_at(vars(matches("(CARE)([[:alpha:]]+)(\\d+)")),
-            list(~as.factor(case_when(. == 0   ~ "Yes",
-                                      . <= 99  ~ "No",
-                                      . >  99  ~ "Refuse to answer")))) %>%
+            list(~as.factor(case_when(. == 0  ~ "No",
+                                      . <= 98 ~ "Yes",
+                                      . >= 98 ~ "Missing")))) %>%
+  mutate(INJECTL_RC = case_when(INJECTL == 1 ~ "Injected drugs",
+                                INJECTL == 0 ~ "Did not inject drugs")) %>%
   unite("SitePID", SITE_RC, PID, remove = FALSE) %>%
   arrange(SITE_RC, PID)
   # rename(`Sex at Birth` = SEXBRTH,
@@ -128,9 +132,9 @@ table2 <- bind_rows(
                   varRelevel = c("Within past 12 months",
                                  "More than 12 months ago")),
   #Viral Suppression
-  table_OneFactor(demo, varString = "ViralSupp_MCD", 
-                  header = "Viral Suppression",
-                  varRelevel = c("Suppressed")),
+  table_OneFactor(demo, varString = "ViralSupp_MCD",
+                  header = "Viral Suppression") %>%
+    filter(Variable != "   Not suppressed"),
   #Insurance
   table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
   #Health care history, 6 months
@@ -142,12 +146,10 @@ table2 <- bind_rows(
                                 "   Doctor's visit, non-HIV, 6 months")),
     table_OneFactor(demo, varString = "CAREHV06_RC", 
                     header = "Recent Health Care") %>%
-      filter(str_detect(Variable, "Refuse|Yes")) %>%
+      filter(str_detect(Variable, "Yes")) %>%
       arrange(desc(Variable)) %>%
       mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
-                                "   Doctor's visit, HIV, 6 months"),
-             Variable = replace(Variable, str_which(Variable, "Refuse"),
-                                                    "      Refuse to answer"))
+                                "   Doctor's visit, HIV, 6 months"))
     ),
   #Youth Health Engagement
   #> Health Access Literacy
@@ -176,16 +178,12 @@ table2 <- bind_rows(
                    header = "HIV-Related Stigma, Mean (SD)"),
   #HIV Disclosure
   table_ManyBinary(demo, header = "Disclosure of HIV Status",
-                   variables = c("DISCA" = "No one",
-                                 "DISCB" = "Partner or spouse",
-                                 "DISCC" = "Sex partner(s)",
-                                 "DISCD" = "Family member(s)",
-                                 "DISCE" = "Friend(s)",
-                                 "DISCF" = "Health care providers",
-                                 "DISCG" = "Coach or teacher",
-                                 "DISCH" = "Pastor/Rabbi/Clergy",
-                                 "DISCI" = "Staff from site",
-                                 "DISCJ" = "Other")),
+                   variables = c(
+                     "DISC_RCD_None"    = "No one",
+                     "DISC_RCD_Partner" = "Partner/Sex Partner",
+                     "DISC_RCD_Family"  = "Friends/Family",
+                     "DISC_RCD_Other"   = "Other person(s)"
+                   )),
   #Physical and Mental Health
   table_Continuous(demo, variable = "MENTALH_RC",
                    name = "Mental Health, 3 items",
@@ -193,40 +191,18 @@ table2 <- bind_rows(
   table_Continuous(demo, variable = "MENTALH4",
                    name = "Mental and Physical Health, 1 item"),
   #Substance Use
-  table_ManyBinary(demo, header = "Substance Use", n = 0,
-                   keep = c("DRUG1LA", "DRUG1LB", "DRUG1LC", "DRUG_RCD_None",
-                            "INJECTL"),
-                   variables = c("DRUG1LA" = "Alcohol",
-                                 "DRUG1LB" = "Tobacco",
-                                 "DRUG1LC" = "Marijuana",
-                                 "DRUG1LD" = "Synthetic marijuana",
-                                 "DRUG1LE" = "Marijuana laced with PCP",
-                                 "DRUG1LF" = "Methamphetamine",
-                                 "DRUG1LG" = "Amphetamines",
-                                 "DRUG1LH" = "Molly, MDMA, Ecstasy",
-                                 "DRUG1LI" = "LSD, other hallucinogens",
-                                 "DRUG1LJ" = "Poppers, other inhalants",
-                                 "DRUG1LK" = "Powder cocaine",
-                                 "DRUG1LL" = "Crack cocaine",
-                                 "DRUG2LA" = "Heroin",
-                                 "DRUG2LB" = "Special K",
-                                 "DRUG2LC" = "Primos (marijuana and rock)",
-                                 "DRUG2LD" = "Synthetic cathinones (bath salts)",
-                                 "DRUG2LE" = "Codeine cough syrup",
-                                 "DRUG2LF" = "Painkillers",
-                                 "DRUG2LG" = "Tranquilizers",
-                                 "DRUG2LH" = "ADHD medication",
-                                 "DRUG2LI" = "Over the counter drugs",
-                                 "DRUG2LJ" = "Other non-injected drugs",
-                                 "DRUG_RCD_None" = "None",
-                                 "INJECTL" = "Injected drugs")) %>%
-    mutate(Variable = fct_relevel(factor(Variable, levels = unique(Variable)),
-                                  "Substance Use, N (%)",
-                                  "   Skipped/Refuse/Missing",
-                                  "   Alcohol", "   Tobacco", "   Marijuana", 
-                                  "   Injected drugs", "   Other")) %>%
-    arrange(Variable) %>%
-    mutate(Variable = as.character(Variable)),
+  bind_rows(
+    table_ManyBinary(demo, header = "Substance Use",
+                   variables = c(
+                     "DRUG_RCD_None"      = "None",
+                     "DRUG_RCD_Alcohol"   = "Alcohol",
+                     "DRUG_RCD_Tobacco"   = "Tobacco",
+                     "DRUG_RCD_Marijuana" = "Marijuana",
+                     "DRUG_RCD_Other"     = "Other non-injected drug(s)"
+                   )),
+    table_OneFactor(demo, varString = "INJECTL_RC", header = "Substance Use") %>%
+      filter(Variable == "   Injected drugs")
+  ),
   #MTUAS
   #> Email Usage
   table_Continuous(demo, variable = "MTUEX_RC",
@@ -281,19 +257,18 @@ kable(table2 %>%
       ) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows("HIV Diagnosis, N (%)", 1, 3) %>%
-  group_rows("Viral Suppression, N (%)", 4, 6) %>%
-  group_rows("Insurance, N (%)", 7, 9) %>%
-  group_rows("Recent Health Care, N (%)", 10, 12) %>%
-  add_indent(c(12)) %>%
-  group_rows("Youth Health Enagement, Mean (SD)", 13, 14) %>%
-  group_rows("Provider Empathy, Mean (SD)", 15, 15) %>%
+  group_rows("Viral Suppression, N (%)", 4, 4) %>%
+  group_rows("Insurance, N (%)", 5, 7) %>%
+  group_rows("Recent Health Care, N (%)", 8, 9) %>%
+  group_rows("Youth Health Enagement, Mean (SD)", 10, 11) %>%
+  group_rows("Provider Empathy, Mean (SD)", 12, 12) %>%
   # group_rows("Relationship Status, N (%)", 16, 19) %>%
-  group_rows("Social Support, Mean (SD)", 16, 16) %>%
-  group_rows("HIV-Related Stigma, Mean (SD)", 17, 17) %>%
-  group_rows("Disclosure of HIV Status, N (%)", 18, 27) %>%
-  group_rows("Physical and Mental Health, Mean (SD)", 28, 29) %>%
-  group_rows("Substance Use, N (%)", 30, 36) %>%
-  group_rows("Media and Technology Use and Attitudes Subscales", 37, 44)
+  group_rows("Social Support, Mean (SD)", 13, 13) %>%
+  group_rows("HIV-Related Stigma, Mean (SD)", 14, 14) %>%
+  group_rows("Disclosure of HIV Status, N (%)", 15, 18) %>%
+  group_rows("Physical and Mental Health, Mean (SD)", 19, 20) %>%
+  group_rows("Substance Use, N (%)", 21, 26) %>%
+  group_rows("Media and Technology Use and Attitudes Subscales", 27, 34)
 ```
 
 ```{r eval = FALSE}
