@@ -512,7 +512,7 @@ acasi <- acasiJoinInner %>%
     DISC_RCD_Other   = if_else(DISCF == 1 | DISCG == 1 |
                                  DISCH == 1 | DISCI == 1 |
                                  DISCJ == 1, 1, 0),
-    DISC_RCD_Missing = if_else(DISC %in% c(1:10), 1, 0),
+    DISC_RCD_Missing = if_else(!DISC %in% c(1:10), 1, 0),
     #> Substance Use
     DRUG_RC = case_when(DRUG1LA == 1 ~ "Alcohol",
                         DRUG1LB == 1 ~ "Tobacco",
