@@ -507,17 +507,12 @@ acasi <- acasiJoinInner %>%
     ARTADHR_RCD_Positive = if_else(ARTADHR_RC == "Positive", 1, 0),
     ARTADHR_RCD_Missing  = if_else(ARTADHR_RC == "Missing", 1, 0),
     #> HIV Disclosure
-    DISC_RC = case_when(DISCA == 1 ~ "No one",
-                        DISCB == 1 | DISCC == 1 ~ "Partner/Sex partner",
-                        DISCD == 1 | DISCE == 1 ~ "Friends/Family",
-                        DISCF == 1 | DISCG == 1 |
-                          DISCH == 1 | DISCI == 1 |
-                          DISCJ == 1 ~ "Other person",
-                        TRUE ~ "Missing"), #None refused to answer
-    DISC_RCD_Partner = if_else(DISC_RC == "Partner/Sex partner", 1, 0),
-    DISC_RCD_Family  = if_else(DISC_RC == "Friends/Family", 1, 0),
-    DISC_RCD_Other   = if_else(DISC_RC == "Other person", 1, 0),
-    DISC_RCD_Missing = if_else(DISC_RC == "Missing", 1, 0),
+    DISC_RCD_Partner = if_else(DISCB == 1 | DISCC == 1, 1, 0),
+    DISC_RCD_Family  = if_else(DISCD == 1 | DISCE == 1, 1, 0),
+    DISC_RCD_Other   = if_else(DISCF == 1 | DISCG == 1 |
+                                 DISCH == 1 | DISCI == 1 |
+                                 DISCJ == 1, 1, 0),
+    DISC_RCD_Missing = if_else(DISC %in% c(1:10), 1, 0),
     #> Substance Use
     DRUG_RC = case_when(DRUG1LA == 1 ~ "Alcohol",
                         DRUG1LB == 1 ~ "Tobacco",
