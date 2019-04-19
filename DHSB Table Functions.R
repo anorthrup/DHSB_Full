@@ -148,39 +148,9 @@ table_OneFactor <- function (x, varString, header = varString,
   }
   
   varQuo <- quo(!!sym(varString))
-  #Print 'Refuse to answer' values
-  y <- x %>% 
-    select(varString) %>%
-    map(~which(. == "Refuse to answer" | . == "Skipped" | is.na(.))) %>%
-    unlist() %>%
-    unname()
-  if (any(y > 0)) {
-    print("The following rows contain contain 'Refuse to answer', 'Skipped' or 'NA':")
-    print(y)
-    missing <- x %>%
-      select(SITE_RC, !!varQuo) %>%
-      mutate_at(
-        vars(one_of(varString)), 
-        list(~replace(., 
-                      which(. == "Refuse to answer" | . == "Skipped"), 
-                      NA))) %>%
-      mutate(NumNA = if_else(rowSums(is.na(.)) > 0, 1, 0)) %>%
-      {
-        bind_cols(
-          summarize(., Overall = as.character(sum(NumNA))),
-          group_by(., SITE_RC) %>%
-            summarize(N = as.character(sum(NumNA))) %>%
-            spread(SITE_RC, N)
-        )
-      } %>%
-      mutate(Variable = "Skipped/Refuse/Missing")
-  } else {
-    missing <- NULL
-  }
-  
   x <- x %>%
     select(SITE_RC, varString) %>%
-    filter(!!varQuo != "Skipped" & !!varQuo != "Refuse to answer") %>%
+    filter(!(!!varQuo %in% c("Skipped", "Refuse to answer", "Missing"))) %>%
     mutate_at(vars(one_of(varString)), list(factor))
   
   freqLevels <- x %>%
@@ -208,38 +178,30 @@ table_OneFactor <- function (x, varString, header = varString,
               list(~fct_recode(factor(., levels = c(freqLevels, keep)),
                               !!!levRecode))) %>%
                               { #Create two data frames and bind them together: summary of overall, summary by site
-                                full_join(
+                                bind_rows(
                                   select(., varString) %>% #Overall summary
                                     table() %>%
                                     as.data.frame(., stringsAsFactors = FALSE) %>%
                                     setNames(c("Variable", "N")) %>%
-                                    mutate(Percent = scales::percent(N / sum(N), accuracy = 0.1)),
+                                    mutate(Site = "Overall",
+                                           Percent = scales::percent(N / sum(N), accuracy = 0.1),
+                                           N = paste0(N, "/", sum(N))),
                                   select(., SITE_RC, varString) %>% #Summary by site
                                     table() %>%
                                     as.data.frame(., stringsAsFactors = FALSE) %>%
                                     setNames(c("Site", "Variable", "N")) %>%
                                     group_by(Site) %>%
                                     mutate(Percent = scales::percent(N / sum(N), accuracy = 0.1)) %>%
-                                    unite("Frequency", N, Percent, sep = " (") %>%
-                                    mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)"),
-                                           Variable = as.character(Variable)) %>%
-                                    spread(Site, Frequency),
-                                  by = "Variable"
+                                    mutate(N = as.character(N))
                                 )
                               } %>%
-    unite("Overall", N, Percent, sep = " (") %>%
-    mutate(Overall = str_replace(Overall, "(.*)", "\\1)")) %>%
-    mutate(Variable = fct_relevel(factor(Variable, levels = unique(Variable)),
+    unite("Frequency", N, Percent, sep = " (") %>%
+    mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)")) %>%
+    spread(Site, Frequency) %>%
+    mutate(Variable = fct_relevel(factor(Variable, levels = c(freqLevels, keep)),
                                   varRelevel)) %>%
     arrange(Variable) %>%
-    mutate(Variable = as.character(Variable)) %>%
-    {
-      bind_rows( #Create totals row and bind to previous summary table
-        missing,
-        select(., everything()) #Previous summary table
-      )
-    } %>%
-    mutate(Variable = str_replace(Variable, "(.*)", "   \\1")) %>%
+    mutate(Variable = str_replace(as.character(Variable), "(.*)", "   \\1")) %>%
     select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
            Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
            `Winston-Salem`, `St. Louis`) %>%
