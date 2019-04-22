@@ -193,13 +193,13 @@ table2 <- bind_rows(
   #Substance Use
   bind_rows(
     table_ManyBinary(demo, header = "Substance Use",
-                   variables = c(
-                     "DRUG_RCD_None"      = "None",
-                     "DRUG_RCD_Alcohol"   = "Alcohol",
-                     "DRUG_RCD_Tobacco"   = "Tobacco",
-                     "DRUG_RCD_Marijuana" = "Marijuana",
-                     "DRUG_RCD_Other"     = "Other non-injected drug(s)"
-                   )),
+                     variables = c(
+                       "DRUG_RCD_None"      = "None",
+                       "DRUG_RCD_Alcohol"   = "Alcohol",
+                       "DRUG_RCD_Tobacco"   = "Tobacco",
+                       "DRUG_RCD_Marijuana" = "Marijuana",
+                       "DRUG_RCD_Other"     = "Other non-injected drug(s)"
+                     )),
     table_OneFactor(demo, varString = "INJECTL_RC", header = "Substance Use") %>%
       filter(Variable == "   Injected drugs")
   ),
@@ -268,7 +268,7 @@ kable(table2 %>%
   group_rows("Disclosure of HIV Status, N (%)", 15, 18) %>%
   group_rows("Physical and Mental Health, Mean (SD)", 19, 20) %>%
   group_rows("Substance Use, N (%)", 21, 26) %>%
-  group_rows("Media and Technology Use and Attitudes Subscales", 27, 34)
+  group_rows("Media and Technology Use and Attitudes Subscales, Mean (SD)", 27, 34)
 ```
 
 ```{r eval = FALSE}

@@ -15,34 +15,6 @@ table_ManyBinary <- function (x, header, variables, n = NULL, keep = NULL) {
     keep = NULL
   }
   
-  #Document non-binary values
-  y <- x %>% 
-    select(names(variables)) %>%
-    map(~unique(.[!. %in% c(0, 1)])) %>%
-    unlist()
-  if (any(y > 0)) {
-    print("Rows with the following values in the listed columns were removed:")
-    print(y)
-    #Count number of skipped/refused
-    nonbinary <- x %>%
-      select(SITE_RC, names(variables)) %>%
-      mutate_at(
-        vars(one_of(names(variables))), 
-        list(~replace(., which(!. %in% c(0, 1)), NA))) %>%
-      mutate(NumNA = if_else(rowSums(is.na(.)) > 0, 1, 0)) %>%
-      {
-        bind_cols(
-          summarize(., Overall = as.character(sum(NumNA))),
-          group_by(., SITE_RC) %>%
-            summarize(N = as.character(sum(NumNA))) %>%
-            spread(SITE_RC, N)
-        )
-      } %>%
-      mutate(Variable = "Skipped/Refuse/Missing")
-  } else {
-    nonbinary <- NULL
-  }
-  
   x <- x %>%
     #Narrow x to only necessary columns
     select(SITE_RC, names(variables)) %>%
@@ -94,12 +66,15 @@ table_ManyBinary <- function (x, header, variables, n = NULL, keep = NULL) {
         bind_cols(map_int(., sum) %>% 
                     as.data.frame() %>%
                     rownames_to_column("Variable"),
+                  map_int(., length) %>%
+                    as.data.frame(),
                   map_dbl(., mean) %>%
                     as.data.frame())
       } %>%
-      setNames(c("Variable", "Sum", "Mean")) %>%
+      setNames(c("Variable", "Sum", "Length", "Mean")) %>%
       mutate(Mean = scales::percent(Mean, accuracy = 0.1)) %>%
-      unite("Overall", Sum, Mean, sep = " (") %>%
+      unite("Fraction", Sum, Length, sep = "/") %>%
+      unite("Overall", Fraction, Mean, sep = " (") %>%
       mutate(Overall = gsub("(.*)", "\\1)", Overall)),
     #Summarize by site
     x %>%
@@ -126,13 +101,6 @@ table_ManyBinary <- function (x, header, variables, n = NULL, keep = NULL) {
     mutate(Variable = variables[
       map_int(Variable, ~which(names(variables) %in% .))
       ]) %>%
-    #Row containing number of skipped/refused/missing
-      {
-        bind_rows(
-          nonbinary,
-          select(., everything()) #Previous table
-        )
-      } %>%
     select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
            Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
            `Winston-Salem`, `St. Louis`) %>%
