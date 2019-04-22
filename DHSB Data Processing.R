@@ -245,8 +245,8 @@ acasi00mTrim <- acasi00m %>%
   select(SITE1, PID, TODAY,
          surveylanguage, INTRVWER, SITE, #SES: Survey
          SCREEN1, starts_with("AGE"), starts_with("DOB"), #SES: Age
-         # SEXBRTH, #SES: Sex/Gender #> Removed
          LATINO, starts_with("RACE"), #SES: Race
+         SEXBRTH,
          starts_with("GENDER"), #SES: Sex/Gender
          starts_with("ORIENT"), #SES: Orientation
          INSCHOOL, GRADE, #SES: Education
@@ -254,30 +254,25 @@ acasi00mTrim <- acasi00m %>%
          starts_with("EMPLOY"), #SES: Employment
          RELSTAT, #SES: Relationship
          starts_with("LIVED"), starts_with("STAY7"), #Housing
-         # JAILL, JAILLX, JAIL6X, #Incarceration #> Removed
          BORNHIV, DIAGHIV, SCREEN5, #Length with HIV: First HIV Diagnosis
          starts_with("INSURE"), ADAP, #Healthcare utilization: Insurance
          matches("CARE[[:alpha:]]6"), #Healthcare utilization: Recent care
-         CARELHIV, CARLHIVA, CD4FST, VIRALFST, #Healthcare utilization: Engagement in care
-         starts_with("CAREHV"), #Healthcare utilization: Retention in care
-         ends_with("LST"), CD4LOW, INFECTN, AIDSDIAG, #Healthcare utilization: Quality of care
-         ARTPRESC, ARTL, ARTLAGE, ARTREC, ARTNOW, #Healthcare utilization: Treatment
+         CARELHIV, starts_with("CAREHV"), #Healthcare utilization: Retention in care
+         ARTNOW, #Healthcare utilization: Treatment
          ARTADHR, #Healthcare utilization: Adherence
          starts_with("HE"), #Youth Health Engagement scale
          matches("CARE\\d{2}"), #Provider Empathy (CARE) scale
-         starts_with("SSND"), starts_with("SSUSE"), #Support services needed and used ###
-         starts_with("CNEED"), -CNEED3ES, -CNEED4, -CNEED5, CNEED3ES, CNEED4, CNEED5, #Competing needs ###
          starts_with("DISC"), #Disclosure
          starts_with("STIGMA"), #HIV-related stigma
          starts_with("MENTALH"), #Mental health
          matches("DRUG\\dL"), matches("DRUG\\d6"), #Substance use: non-injected
-         INJECTL, INJECT6, starts_with("INJEC6X"), #Substance use: injected
+         INJECTL, #Substance use: injected
          starts_with("SOCIALS"), #Social support
          #Media Technology Usage and Attitudes Scale
          starts_with("MTUEX"),
          starts_with("MTUSPX"),
          starts_with("MTUIX"),
-         starts_with("MTUSN"), -MTUSNJS, -starts_with("MTUSNX"), MTUSNJS, starts_with("MTUSNX"),
+         starts_with("MTUSNX"),
          starts_with("MTUAX")) 
 
 #Remove 06m variables
@@ -309,6 +304,40 @@ acasiJoinInner <- inner_join(acasi00mTrim,
 acasiJoin00m <- anti_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID"))
 acasiJoin06m <- anti_join(acasi06mTrim, acasi00m, by = c("SITE1", "PID"))
 
+#####Correct answers for participants who marked 'Other'
+acasiOther <- left_join(
+  acasiJoinInner,
+  import("C:/Users/anorthrup/Box Sync/ETAC/Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+         sheet = "GENDERS"),
+  by = c("SITE1", "PID")
+) %>%
+  left_join(
+    .,
+    import("C:/Users/anorthrup/Box Sync/ETAC/Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+           sheet = "RACEFS"),
+    by = c("SITE1", "PID")
+  ) %>%
+  left_join(
+    .,
+    import("C:/Users/anorthrup/Box Sync/ETAC/Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+           sheet = "ORIENTS"),
+    by = c("SITE1", "PID")
+  ) %>%
+  left_join(
+    .,
+    import("C:/Users/anorthrup/Box Sync/ETAC/Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+           sheet = "STAY7DS"),
+    by = c("SITE1", "PID")
+  ) %>%
+  left_join(
+    .,
+    import("C:/Users/anorthrup/Box Sync/ETAC/Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+           sheet = "INSUREHS"),
+    by = c("SITE1", "PID")
+  ) %>%
+  select(SITE1, PID, GENDERRECODE, RACERECODE, ORIENTRECODE, STAYRECODE, 
+         INSURERECODE)
+
 #####Creation of new variables
 #####Collapse existing demographic variables and create scales
 
@@ -338,6 +367,8 @@ acasi <- acasiJoinInner %>%
               group_by(SITE1, PID) %>%
               summarize(CAREHV06_MCD = if_else(any(CAREHV06_MCD == 1), 1, 0)), 
             by = c("SITE1", "PID")) %>%
+  #Add recodes for participants who marked 'Other'
+  left_join(., acasiOther, by = c("SITE1", "PID")) %>%
   mutate(
     #Variable transformations
     #> Procedure:
@@ -372,6 +403,7 @@ acasi <- acasiJoinInner %>%
                           "White Mixed-Race, Not Latino or Black",
                         RACEE == 1 ~ "White, Not Latino",
                         LATINO == 8 & RACE == 8 ~ "Refuse to answer", #None refused to answer
+                        !is.na(RACERECODE) ~ RACERECODE,
                         TRUE ~ "Other race"),
     RACE_RCD_Latino   = if_else(RACE_RC == "Latino", 1, 0),
     RACE_RCD_Black    = if_else(RACE_RC == "Black, Not Latino", 1, 0),
@@ -387,6 +419,8 @@ acasi <- acasiJoinInner %>%
                            "Other gender"       = "5", 
                            "Other gender"       = "6",
                            "Refuse to answer"   = "8"), #None refused to answer
+    GENDER_RC = if_else(!is.na(GENDERRECODE), 
+                        GENDERRECODE, as.character(GENDER_RC)),
     GENDER_RCD_Female  = if_else(GENDER_RC == "Female (cis woman)", 1, 0),
     GENDER_RCD_Trans   = if_else(GENDER_RC == "Trans-identified", 1, 0),
     GENDER_RCD_Other   = if_else(GENDER_RC == "Other gender", 1, 0),
@@ -400,6 +434,8 @@ acasi <- acasiJoinInner %>%
                            "Other orientation" = "5", 
                            "Other orientation" = "7",
                            "Refuse to answer"  = "8"), #None refused to answer
+    ORIENT_RC = if_else(!is.na(ORIENTRECODE), 
+                        ORIENTRECODE, as.character(ORIENT_RC)),
     ORIENT_RCD_Gay     = if_else(ORIENT_RC == "Gay or lesbian", 1, 0),
     ORIENT_RCD_Bi      = if_else(ORIENT_RC == "Bisexual", 1, 0),
     ORIENT_RCD_Other   = if_else(ORIENT_RC == "Other orientation", 1, 0),
@@ -434,16 +470,6 @@ acasi <- acasiJoinInner %>%
     #> Income
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     MONEY_RC_Log = log(MONEY_RC + 1),
-    #> Employment
-    EMPLOY_RC = case_when(EMPLOYA == 1 ~ "Employed/Student",
-                          EMPLOYB == 1 ~ "Employed/Student",
-                          EMPLOYC == 1 ~ "Employed/Student",
-                          EMPLOYD == 1 ~ "Unemployed/Disabled",
-                          EMPLOYE == 1 ~ "Unemployed/Disabled",
-                          EMPLOYF == 1 ~ "Unemployed/Disabled",
-                          EMPLOY == 8 ~ "Refuse to answer"), #None refused to answer
-    EMPLOY_RCD_Employed = if_else(EMPLOY_RC == "Employed/Student", 1, 0),
-    EMPLOY_RCD_Missing  = if_else(EMPLOY_RC == "Refuse to answer", 1, 0),
     #> Residence, Last 7 Days
     STAY7D_RC = fct_recode(as.factor(STAY7D),
                            "Stable housing"   =  "1", 
@@ -453,12 +479,14 @@ acasi <- acasiJoinInner %>%
                            "Unstable housing" =  "5", 
                            "Unstable housing" =  "6",
                            "Unstable housing" =  "7", 
-                           "Unstable housing" =  "8", #None
-                           "Institution"      =  "9", 
+                           "Unstable housing" =  "8",
+                           "Unstable housing" =  "9", 
                            "Institution"      = "10",
                            "Institution"      = "11", 
                            "Other residence"  = "12",
                            "Refuse to answer" = "98"), #None refused to answer
+    STAY7D_RC = if_else(!is.na(STAYRECODE), 
+                        STAYRECODE, as.character(STAY7D_RC)),
     STAY7D_RCD_Stable      = if_else(STAY7D_RC == "Stable housing", 1, 0),
     STAY7D_RCD_Institution = if_else(STAY7D_RC == "Institution", 1, 0),
     STAY7D_RCD_Other       = if_else(STAY7D_RC == "Other residence", 1, 0),
@@ -473,13 +501,13 @@ acasi <- acasiJoinInner %>%
                           INSURE == 97 ~ "Don't know",
                           INSURE == 98 ~ "Refuse to answer",
                           INSURE == 99 ~ "Skipped", #None refused to answer
-                          TRUE ~ "Insured"), 
+                          INSUREB == 1 | INSUREC == 1 | INSURED == 1 |
+                            INSUREE == 1 | INSUREF == 1 | INSUREG == 1 ~ "Insured",
+                          TRUE ~ INSURERECODE),
     INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
     INSURE_RCD_Unknown = if_else(INSURE_RC == "Don't know", 1, 0),
     INSURE_RCD_Missing = if_else(INSURE_RC == "Refuse to answer" |
                                    INSURE_RC == "Skipped", 1, 0),
-    ADAP_RCD_Yes     = if_else(ADAP == 1, 1, 0),
-    ADAP_RCD_Unknown = if_else(ADAP == 7, 1, 0), #'Skipped' treated as 'No'
     #> Medical Care
     CARED6_RCD_Yes     = if_else(CARED6 > 0 & CARED6 < 998, 1, 0),
     CARED6_RCD_Missing = if_else(CARED6 >= 998, 1, 0),
@@ -821,7 +849,7 @@ acasi_analysis <- acasi %>%
          DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, DISC_RCD_Missing, #Disclosure
          MENTALH_RC, MENTALH4_RC,#Mental health
          DRUG_RCD_Alcohol, DRUG_RCD_Tobacco, DRUG_RCD_Marijuana, DRUG_RCD_Other, 
-         DRUG_RCD_None, DRUG_RCD_Missing, #Substance use: non-injected
+         DRUG_RCD_Missing, #Substance use: non-injected
          INJECTL_RCD_Inject, INJECTL_RCD_Missing, #Substance use: injected
          SOCIALS_RC, #Social support
          #Media Technology Usage and Attitudes Scale
