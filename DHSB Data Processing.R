@@ -440,21 +440,7 @@ acasi <- acasiJoinInner %>%
     ORIENT_RCD_Bi      = if_else(ORIENT_RC == "Bisexual", 1, 0),
     ORIENT_RCD_Other   = if_else(ORIENT_RC == "Other orientation", 1, 0),
     ORIENT_RCD_Missing = if_else(ORIENT_RC == "Refuse to answer", 1, 0),
-    #> Relationship Status
-    RELSTAT_RC = fct_recode(as.factor(RELSTAT),
-                            "Single"            = "1",
-                            "Dating"            = "2",
-                            "Dating"            = "3",
-                            "Partnered/Married" = "4",
-                            "Partnered/Married" = "5",
-                            "Other status"      = "6",
-                            "Refuse to answer"  = "8"), #None refused to answer
-    RELSTAT_RCD_Dating    = if_else(RELSTAT_RC == "Dating", 1, 0),
-    RELSTAT_RCD_Partnered = if_else(RELSTAT_RC == "Partnered/Married", 1, 0),
-    RELSTAT_RCD_Other     = if_else(RELSTAT_RC == "Other status", 1, 0),
-    RELSTAT_RCD_Missing   = if_else(RELSTAT_RC == "Refuse to answer", 1, 0),
     #> Education
-    # INSCHOOL_RCD = if_else(INSCHOOL == 1, 1, 0), #None refused to answer
     GRADE_RC = fct_recode(as.factor(GRADE),
                           "High school, equivalent or less"         = "1", 
                           "High school, equivalent or less"         = "2", 
