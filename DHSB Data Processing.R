@@ -475,7 +475,6 @@ acasi <- acasiJoinInner %>%
                         STAYRECODE, as.character(STAY7D_RC)),
     STAY7D_RCD_Stable      = if_else(STAY7D_RC == "Stable housing", 1, 0),
     STAY7D_RCD_Institution = if_else(STAY7D_RC == "Institution", 1, 0),
-    STAY7D_RCD_Other       = if_else(STAY7D_RC == "Other residence", 1, 0),
     STAY7D_RCD_Missing     = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
     #> HIV History
     DIAGHIV_RC = case_when(DIAGHIV <= 2019 ~ DIAGHIV),
@@ -730,8 +729,7 @@ acasi_analysis <- acasi %>%
          ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
          GRADE_RCD_PostK, GRADE_RCD_Grad, #Education
          MONEY_RC_Log, #Income
-         STAY7D_RCD_Stable, STAY7D_RCD_Institution, 
-         STAY7D_RCD_Other, STAY7D_RCD_Missing, #Housing
+         STAY7D_RCD_Stable, STAY7D_RCD_Institution, STAY7D_RCD_Missing, #Housing
          BORNHIV, TIMESINCEHIV,
          BORNHIV_MCD, TIMESINCEHIV_MCD,
          ViralSupp_MCD,
