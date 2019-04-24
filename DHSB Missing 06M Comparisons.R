@@ -4,6 +4,7 @@
 #####Read libraries
 library(tidyverse)
 library(rio)
+library(arm)
 
 #####Load data
 setwd("C:/Users/anorthrup/Box Sync/ETAC")
@@ -64,32 +65,26 @@ acasiCompare <- bind_rows(
   filter(AGE >= 18) %>%
   left_join(., acasiOther, by = c("SITE1", "PID")) %>%
   mutate(
-    #Variable transformations
-    #> Procedure:
-    ##> 1) Create (if necessary) and re-level factors, collapse levels into fewer options (RC = Recode)
-    ##> 2) Create dummy variables (RCD = Recode Dummy)
-    ###>     Treat 'Refused to answer' as separate answer rather than NA
-    ##> 3) Change 'Refused to answer' or 'Skipped' to NA for continuous variables
-    ##> 4) Make other transformations to continuous variables
-    
-    #> Site
-    SITE_RC = fct_recode(as.factor(SITE1),
-                         "Corpus Christi" = "CBW", "Los Angeles" = "FRI", 
-                         "New York" = "NYSDA", "Chicago" = "HBHC", 
-                         "Cleveland"  = "MHS", "Hershey" = "PSU", 
-                         "Philadelphia" = "PFC", "San Francisco" = "SFDPH", 
-                         "Winston-Salem"  = "WFU", "St. Louis" = "WUSL"),
-    SITE_RCD_FRI   = if_else(SITE1 == "FRI", 1, 0),
-    SITE_RCD_NYSDA = if_else(SITE1 == "NYSDA", 1, 0),
-    SITE_RCD_HBHC  = if_else(SITE1 == "HBHC", 1, 0),
-    SITE_RCD_MHS   = if_else(SITE1 == "MHS", 1, 0),
-    SITE_RCD_PSU   = if_else(SITE1 == "PSU", 1, 0),
-    SITE_RCD_PFC   = if_else(SITE1 == "PFC", 1, 0),
-    SITE_RCD_SFDPH = if_else(SITE1 == "SFDPH", 1, 0),
-    SITE_RCD_WFU   = if_else(SITE1 == "WFU", 1, 0),
-    SITE_RCD_WUSL  = if_else(SITE1 == "WUSL", 1, 0),
-    #> Survey language
-    surveylanguage_RCD_Eng = if_else(surveylanguage == "English", 1, 0),
+    AGE_RC = as.factor(case_when(AGE < 25 ~ "18-24 Years",
+                                 AGE >= 25 ~ "25-34 Years")),
+    # #> Site
+    # SITE_RC = fct_recode(as.factor(SITE1),
+    #                      "Corpus Christi" = "CBW", "Los Angeles" = "FRI", 
+    #                      "New York" = "NYSDA", "Chicago" = "HBHC", 
+    #                      "Cleveland"  = "MHS", "Hershey" = "PSU", 
+    #                      "Philadelphia" = "PFC", "San Francisco" = "SFDPH", 
+    #                      "Winston-Salem"  = "WFU", "St. Louis" = "WUSL"),
+    # SITE_RCD_FRI   = if_else(SITE1 == "FRI", 1, 0),
+    # SITE_RCD_NYSDA = if_else(SITE1 == "NYSDA", 1, 0),
+    # SITE_RCD_HBHC  = if_else(SITE1 == "HBHC", 1, 0),
+    # SITE_RCD_MHS   = if_else(SITE1 == "MHS", 1, 0),
+    # SITE_RCD_PSU   = if_else(SITE1 == "PSU", 1, 0),
+    # SITE_RCD_PFC   = if_else(SITE1 == "PFC", 1, 0),
+    # SITE_RCD_SFDPH = if_else(SITE1 == "SFDPH", 1, 0),
+    # SITE_RCD_WFU   = if_else(SITE1 == "WFU", 1, 0),
+    # SITE_RCD_WUSL  = if_else(SITE1 == "WUSL", 1, 0),
+    # #> Survey language
+    # surveylanguage_RCD_Eng = if_else(surveylanguage == "English", 1, 0),
     #> Ethnicity & Race
     RACE_RC = case_when(LATINO == 1 ~ "Latino",
                         RACEC == 1 ~ "Black, Not Latino",
@@ -99,11 +94,11 @@ acasiCompare <- bind_rows(
                         LATINO == 8 & RACE == 8 ~ "Refuse to answer", #None refused to answer
                         !is.na(RACERECODE) ~ RACERECODE,
                         TRUE ~ "Other race"),
-    RACE_RCD_Latino   = if_else(RACE_RC == "Latino", 1, 0),
-    RACE_RCD_Black    = if_else(RACE_RC == "Black, Not Latino", 1, 0),
-    RACE_RCD_WhiteMix = if_else(RACE_RC == "White Mixed-Race, Not Latino or Black", 1, 0),
-    RACE_RCD_Other    = if_else(RACE_RC == "Other race", 1, 0),
-    RACE_RCD_Missing  = if_else(RACE_RC == "Refuse to answer", 1, 0),
+    # RACE_RCD_Latino   = if_else(RACE_RC == "Latino", 1, 0),
+    # RACE_RCD_Black    = if_else(RACE_RC == "Black, Not Latino", 1, 0),
+    # RACE_RCD_WhiteMix = if_else(RACE_RC == "White Mixed-Race, Not Latino or Black", 1, 0),
+    # RACE_RCD_Other    = if_else(RACE_RC == "Other race", 1, 0),
+    # RACE_RCD_Missing  = if_else(RACE_RC == "Refuse to answer", 1, 0),
     #> Gender Identity
     GENDER_RC = fct_recode(as.factor(GENDER),
                            "Male (cis man)"     = "1", 
@@ -115,10 +110,10 @@ acasiCompare <- bind_rows(
                            "Refuse to answer"   = "8"), #None refused to answer
     GENDER_RC = if_else(!is.na(GENDERRECODE), 
                         GENDERRECODE, as.character(GENDER_RC)),
-    GENDER_RCD_Female  = if_else(GENDER_RC == "Female (cis woman)", 1, 0),
-    GENDER_RCD_Trans   = if_else(GENDER_RC == "Trans-identified", 1, 0),
-    GENDER_RCD_Other   = if_else(GENDER_RC == "Other gender", 1, 0),
-    GENDER_RCD_Missing = if_else(GENDER_RC == "Refuse to answer", 1, 0),
+    # GENDER_RCD_Female  = if_else(GENDER_RC == "Female (cis woman)", 1, 0),
+    # GENDER_RCD_Trans   = if_else(GENDER_RC == "Trans-identified", 1, 0),
+    # GENDER_RCD_Other   = if_else(GENDER_RC == "Other gender", 1, 0),
+    # GENDER_RCD_Missing = if_else(GENDER_RC == "Refuse to answer", 1, 0),
     #> Sexual Orientation
     ORIENT_RC = fct_recode(as.factor(ORIENT),
                            "Straight"          = "1", 
@@ -130,10 +125,10 @@ acasiCompare <- bind_rows(
                            "Refuse to answer"  = "8"), #None refused to answer
     ORIENT_RC = if_else(!is.na(ORIENTRECODE), 
                         ORIENTRECODE, as.character(ORIENT_RC)),
-    ORIENT_RCD_Gay     = if_else(ORIENT_RC == "Gay or lesbian", 1, 0),
-    ORIENT_RCD_Bi      = if_else(ORIENT_RC == "Bisexual", 1, 0),
-    ORIENT_RCD_Other   = if_else(ORIENT_RC == "Other orientation", 1, 0),
-    ORIENT_RCD_Missing = if_else(ORIENT_RC == "Refuse to answer", 1, 0),
+    # ORIENT_RCD_Gay     = if_else(ORIENT_RC == "Gay or lesbian", 1, 0),
+    # ORIENT_RCD_Bi      = if_else(ORIENT_RC == "Bisexual", 1, 0),
+    # ORIENT_RCD_Other   = if_else(ORIENT_RC == "Other orientation", 1, 0),
+    # ORIENT_RCD_Missing = if_else(ORIENT_RC == "Refuse to answer", 1, 0),
     #> Education
     GRADE_RC = fct_recode(as.factor(GRADE),
                           "High school, equivalent or less"         = "1", 
@@ -144,9 +139,9 @@ acasiCompare <- bind_rows(
                           "College graduate or trade certification" = "6",
                           "College graduate or trade certification" = "7", 
                           "Refuse to answer"                        = "8"), #None refused to answer
-    GRADE_RCD_PostK   = if_else(GRADE_RC == "Some post-K12", 1, 0),
-    GRADE_RCD_Grad    = if_else(GRADE_RC == "College graduate or trade certification", 1, 0),
-    GRADE_RCD_Missing = if_else(GRADE_RC == "Refuse to answer", 1, 0),
+    # GRADE_RCD_PostK   = if_else(GRADE_RC == "Some post-K12", 1, 0),
+    # GRADE_RCD_Grad    = if_else(GRADE_RC == "College graduate or trade certification", 1, 0),
+    # GRADE_RCD_Missing = if_else(GRADE_RC == "Refuse to answer", 1, 0),
     #> Income
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     MONEY_RC_Log = log(MONEY_RC + 1),
@@ -167,14 +162,9 @@ acasiCompare <- bind_rows(
                            "Refuse to answer" = "98"), #None refused to answer
     STAY7D_RC = if_else(!is.na(STAYRECODE), 
                         STAYRECODE, as.character(STAY7D_RC)),
-    STAY7D_RCD_Stable      = if_else(STAY7D_RC == "Stable housing", 1, 0),
-    STAY7D_RCD_Institution = if_else(STAY7D_RC == "Institution", 1, 0),
-    STAY7D_RCD_Missing     = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
-    #> HIV History
-    DIAGHIV_RC = case_when(DIAGHIV <= 2019 ~ DIAGHIV),
-    TIMESINCEHIV = year(TODAY) - DIAGHIV_RC, #Does not include those born with HIV
-    BORNHIV_MCD = if_else(DOBY == HIVDiagnosisYear_MCD, 1, 0),
-    TIMESINCEHIV_MCD = year(TODAY) - HIVDiagnosisYear_MCD, #Includes those born with HIV
+    # STAY7D_RCD_Stable      = if_else(STAY7D_RC == "Stable housing", 1, 0),
+    # STAY7D_RCD_Institution = if_else(STAY7D_RC == "Institution", 1, 0),
+    # STAY7D_RCD_Missing     = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
     #> Insurance
     INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
                           INSURE == 97 ~ "Don't know",
@@ -182,10 +172,55 @@ acasiCompare <- bind_rows(
                           INSURE == 99 ~ "Skipped", #None refused to answer
                           INSUREB == 1 | INSUREC == 1 | INSURED == 1 |
                             INSUREE == 1 | INSUREF == 1 | INSUREG == 1 ~ "Insured",
-                          TRUE ~ INSURERECODE),
-    INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
-    INSURE_RCD_Unknown = if_else(INSURE_RC == "Don't know", 1, 0),
-    INSURE_RCD_Missing = if_else(INSURE_RC == "Refuse to answer" |
-                                   INSURE_RC == "Skipped", 1, 0)
-  )
-  
+                          TRUE ~ INSURERECODE)
+    # INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
+    # INSURE_RCD_Unknown = if_else(INSURE_RC == "Don't know", 1, 0),
+    # INSURE_RCD_Missing = if_else(INSURE_RC == "Refuse to answer" |
+    #                                INSURE_RC == "Skipped", 1, 0)
+  ) %>%
+  #Participants with incomplete 06m surveys needing 'Other' correction
+  mutate(STAY7D_RC = replace(STAY7D_RC,
+                             which(SITE1 == "MHS" & PID == "3714"),
+                             "Unstable housing"))
+
+#####Make comparisons
+chiAcasi <- function (x, variable) {
+  output <- x %>%
+    select(completeSurveys, variable) %>%
+    table() %>%
+    chisq.test()
+    tibble(
+      Variable = variable,
+      `X-squared` = output$statistic,
+      df = output$parameter,
+      p = output$p.value
+    )
+}
+
+bind_rows(
+  chiAcasi(acasiCompare, "AGE_RC"),
+  chiAcasi(acasiCompare %>% 
+             mutate(RACE_RC = replace(RACE_RC,
+                                      which(RACE_RC == "White Mixed-Race, Not Latino or Black"),
+                                      "White, Not Latino")),
+             # filter(RACE_RC != "White Mixed-Race, Not Latino or Black"), 
+           "RACE_RC"),
+  chiAcasi(acasiCompare, "GENDER_RC"),
+  chiAcasi(acasiCompare, "ORIENT_RC"),
+  chiAcasi(acasiCompare, "GRADE_RC"),
+  chiAcasi(acasiCompare %>%
+             mutate(STAY7D_RC = replace(STAY7D_RC, 
+                                        which(STAY7D_RC == "Institution"),
+                                        "Unstable housing")),
+           "STAY7D_RC"),
+  chiAcasi(acasiCompare, "INSURE_RC")
+) %>%
+  mutate(Note = "",
+         Note = replace(Note, which(Variable == "RACE_RC"),
+                        "'White, Mixed' incorporated into 'White, Not Latino'"),
+         Note = replace(Note, which(Variable == "STAY7D_RC"),
+                        "'Institution' incorporated into 'Unstable housing'"))
+
+logitAge <- glm(completeSurveys ~ AGE, data = acasiCompare, family = "binomial")
+binnedplot(x = predict(logitAge),
+           y = resid(logitAge))
