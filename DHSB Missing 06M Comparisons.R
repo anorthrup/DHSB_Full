@@ -4,7 +4,6 @@
 #####Read libraries
 library(tidyverse)
 library(rio)
-library(arm)
 
 #####Load data
 setwd("C:/Users/anorthrup/Box Sync/ETAC")
@@ -184,6 +183,7 @@ acasiCompare <- bind_rows(
                              "Unstable housing"))
 
 #####Make comparisons
+#Categorical variables
 chiAcasi <- function (x, variable) {
   output <- x %>%
     select(completeSurveys, variable) %>%
@@ -221,6 +221,38 @@ bind_rows(
          Note = replace(Note, which(Variable == "STAY7D_RC"),
                         "'Institution' incorporated into 'Unstable housing'"))
 
+#Continuous Variables
+logitAcasi <- function (model, variable) {
+  modelSum <- summary(model)
+  modelCoef <- modelSum$coefficients %>%
+    as.data.frame() %>%
+    rownames_to_column("Parameter")
+  tibble(
+    Variable = variable,
+    `Z statistic` = modelCoef$`z value`[which(modelCoef$Parameter == variable)],
+    p = modelCoef$`Pr(>|z|)`[which(modelCoef$Parameter == variable)]
+  )
+}
+
+#AGE
 logitAge <- glm(completeSurveys ~ AGE, data = acasiCompare, family = "binomial")
-binnedplot(x = predict(logitAge),
-           y = resid(logitAge))
+arm::binnedplot(x = predict(logitAge),
+                y = resid(logitAge))
+ggplot(acasiCompare, aes(x = MONEY_RC_Log, y = completeSurveys)) +
+  geom_point() +
+  geom_smooth(method = "loess")
+
+#MONEY
+logitMoney <- glm(completeSurveys ~ MONEY_RC_Log, data = acasiCompare, family = "binomial")
+arm::binnedplot(x = predict(logitMoney),
+                y = resid(logitMoney))
+ggplot(acasiCompare, aes(x = MONEY_RC_Log, y = completeSurveys)) +
+  geom_point() +
+  geom_smooth(method = "loess")
+
+bind_rows(
+  logitAcasi(logitAge, "AGE"),
+  logitAcasi(logitMoney, "MONEY_RC_Log")
+)
+
+
