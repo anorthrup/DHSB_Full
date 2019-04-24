@@ -66,24 +66,6 @@ acasiCompare <- bind_rows(
   mutate(
     AGE_RC = as.factor(case_when(AGE < 25 ~ "18-24 Years",
                                  AGE >= 25 ~ "25-34 Years")),
-    # #> Site
-    # SITE_RC = fct_recode(as.factor(SITE1),
-    #                      "Corpus Christi" = "CBW", "Los Angeles" = "FRI", 
-    #                      "New York" = "NYSDA", "Chicago" = "HBHC", 
-    #                      "Cleveland"  = "MHS", "Hershey" = "PSU", 
-    #                      "Philadelphia" = "PFC", "San Francisco" = "SFDPH", 
-    #                      "Winston-Salem"  = "WFU", "St. Louis" = "WUSL"),
-    # SITE_RCD_FRI   = if_else(SITE1 == "FRI", 1, 0),
-    # SITE_RCD_NYSDA = if_else(SITE1 == "NYSDA", 1, 0),
-    # SITE_RCD_HBHC  = if_else(SITE1 == "HBHC", 1, 0),
-    # SITE_RCD_MHS   = if_else(SITE1 == "MHS", 1, 0),
-    # SITE_RCD_PSU   = if_else(SITE1 == "PSU", 1, 0),
-    # SITE_RCD_PFC   = if_else(SITE1 == "PFC", 1, 0),
-    # SITE_RCD_SFDPH = if_else(SITE1 == "SFDPH", 1, 0),
-    # SITE_RCD_WFU   = if_else(SITE1 == "WFU", 1, 0),
-    # SITE_RCD_WUSL  = if_else(SITE1 == "WUSL", 1, 0),
-    # #> Survey language
-    # surveylanguage_RCD_Eng = if_else(surveylanguage == "English", 1, 0),
     #> Ethnicity & Race
     RACE_RC = case_when(LATINO == 1 ~ "Latino",
                         RACEC == 1 ~ "Black, Not Latino",
@@ -93,11 +75,6 @@ acasiCompare <- bind_rows(
                         LATINO == 8 & RACE == 8 ~ "Refuse to answer", #None refused to answer
                         !is.na(RACERECODE) ~ RACERECODE,
                         TRUE ~ "Other race"),
-    # RACE_RCD_Latino   = if_else(RACE_RC == "Latino", 1, 0),
-    # RACE_RCD_Black    = if_else(RACE_RC == "Black, Not Latino", 1, 0),
-    # RACE_RCD_WhiteMix = if_else(RACE_RC == "White Mixed-Race, Not Latino or Black", 1, 0),
-    # RACE_RCD_Other    = if_else(RACE_RC == "Other race", 1, 0),
-    # RACE_RCD_Missing  = if_else(RACE_RC == "Refuse to answer", 1, 0),
     #> Gender Identity
     GENDER_RC = fct_recode(as.factor(GENDER),
                            "Male (cis man)"     = "1", 
@@ -109,10 +86,6 @@ acasiCompare <- bind_rows(
                            "Refuse to answer"   = "8"), #None refused to answer
     GENDER_RC = if_else(!is.na(GENDERRECODE), 
                         GENDERRECODE, as.character(GENDER_RC)),
-    # GENDER_RCD_Female  = if_else(GENDER_RC == "Female (cis woman)", 1, 0),
-    # GENDER_RCD_Trans   = if_else(GENDER_RC == "Trans-identified", 1, 0),
-    # GENDER_RCD_Other   = if_else(GENDER_RC == "Other gender", 1, 0),
-    # GENDER_RCD_Missing = if_else(GENDER_RC == "Refuse to answer", 1, 0),
     #> Sexual Orientation
     ORIENT_RC = fct_recode(as.factor(ORIENT),
                            "Straight"          = "1", 
@@ -124,10 +97,6 @@ acasiCompare <- bind_rows(
                            "Refuse to answer"  = "8"), #None refused to answer
     ORIENT_RC = if_else(!is.na(ORIENTRECODE), 
                         ORIENTRECODE, as.character(ORIENT_RC)),
-    # ORIENT_RCD_Gay     = if_else(ORIENT_RC == "Gay or lesbian", 1, 0),
-    # ORIENT_RCD_Bi      = if_else(ORIENT_RC == "Bisexual", 1, 0),
-    # ORIENT_RCD_Other   = if_else(ORIENT_RC == "Other orientation", 1, 0),
-    # ORIENT_RCD_Missing = if_else(ORIENT_RC == "Refuse to answer", 1, 0),
     #> Education
     GRADE_RC = fct_recode(as.factor(GRADE),
                           "High school, equivalent or less"         = "1", 
@@ -138,9 +107,6 @@ acasiCompare <- bind_rows(
                           "College graduate or trade certification" = "6",
                           "College graduate or trade certification" = "7", 
                           "Refuse to answer"                        = "8"), #None refused to answer
-    # GRADE_RCD_PostK   = if_else(GRADE_RC == "Some post-K12", 1, 0),
-    # GRADE_RCD_Grad    = if_else(GRADE_RC == "College graduate or trade certification", 1, 0),
-    # GRADE_RCD_Missing = if_else(GRADE_RC == "Refuse to answer", 1, 0),
     #> Income
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     MONEY_RC_Log = log(MONEY_RC + 1),
@@ -161,9 +127,6 @@ acasiCompare <- bind_rows(
                            "Refuse to answer" = "98"), #None refused to answer
     STAY7D_RC = if_else(!is.na(STAYRECODE), 
                         STAYRECODE, as.character(STAY7D_RC)),
-    # STAY7D_RCD_Stable      = if_else(STAY7D_RC == "Stable housing", 1, 0),
-    # STAY7D_RCD_Institution = if_else(STAY7D_RC == "Institution", 1, 0),
-    # STAY7D_RCD_Missing     = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
     #> Insurance
     INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
                           INSURE == 97 ~ "Don't know",
@@ -172,10 +135,6 @@ acasiCompare <- bind_rows(
                           INSUREB == 1 | INSUREC == 1 | INSURED == 1 |
                             INSUREE == 1 | INSUREF == 1 | INSUREG == 1 ~ "Insured",
                           TRUE ~ INSURERECODE)
-    # INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
-    # INSURE_RCD_Unknown = if_else(INSURE_RC == "Don't know", 1, 0),
-    # INSURE_RCD_Missing = if_else(INSURE_RC == "Refuse to answer" |
-    #                                INSURE_RC == "Skipped", 1, 0)
   ) %>%
   #Participants with incomplete 06m surveys needing 'Other' correction
   mutate(STAY7D_RC = replace(STAY7D_RC,
@@ -251,4 +210,19 @@ compareContinuous <- bind_rows(
   logitAcasi(logitMoney, "MONEY_RC_Log")
 )
 
-
+##### Create Excel sheet
+wb <- createWorkbook("Comparison of Included and Excluded Participants.xlsx")
+wb <- loadWorkbook("Comparison of Included and Excluded Participants.xlsx")
+#Categorical variables
+removeWorksheet(wb, "Categorical")
+addWorksheet(wb, "Categorical")
+writeData(wb, sheet = "Categorical", compareCategorical)
+setColWidths(wb, sheet = "Categorical", cols = 1:ncol(compareCategorical),
+             widths = "auto")
+#Continuous variables
+removeWorksheet(wb, "Continuous")
+addWorksheet(wb, "Continuous")
+writeData(wb, sheet = "Continuous", compareContinuous)
+setColWidths(wb, sheet = "Continuous", cols = 1:ncol(compareContinuous),
+             widths = "auto")
+saveWorkbook(wb, "Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/Comparison of Included and Excluded Participants.xlsx", overwrite = TRUE)
