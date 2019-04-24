@@ -172,9 +172,7 @@ compareCategorical <- bind_rows(
 ) %>%
   mutate(Note = "",
          Note = replace(Note, which(Variable == "RACE_RC"),
-                        "'White, Mixed' incorporated into 'White, Not Latino'"),
-         Note = replace(Note, which(Variable == "STAY7D_RC"),
-                        "'Institution' incorporated into 'Unstable housing'"))
+                        "'White, Mixed' incorporated into 'White, Not Latino'"))
 
 #Continuous Variables
 logitAcasi <- function (model, variable) {
