@@ -467,8 +467,8 @@ acasi <- acasiJoinInner %>%
                            "Unstable housing" =  "7", 
                            "Unstable housing" =  "8",
                            "Unstable housing" =  "9", 
-                           "Institution"      = "10",
-                           "Institution"      = "11", 
+                           "Unstable housing" = "10",
+                           "Unstable housing" = "11", 
                            "Other residence"  = "12",
                            "Refuse to answer" = "98"), #None refused to answer
     STAY7D_RC = if_else(!is.na(STAYRECODE), 

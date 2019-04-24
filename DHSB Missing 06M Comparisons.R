@@ -155,8 +155,8 @@ acasiCompare <- bind_rows(
                            "Unstable housing" =  "7", 
                            "Unstable housing" =  "8",
                            "Unstable housing" =  "9", 
-                           "Institution"      = "10",
-                           "Institution"      = "11", 
+                           "Unstable housing" = "10",
+                           "Unstable housing" = "11", 
                            "Other residence"  = "12",
                            "Refuse to answer" = "98"), #None refused to answer
     STAY7D_RC = if_else(!is.na(STAYRECODE), 
@@ -197,7 +197,7 @@ chiAcasi <- function (x, variable) {
     )
 }
 
-bind_rows(
+compareCategorical <- bind_rows(
   chiAcasi(acasiCompare, "AGE_RC"),
   chiAcasi(acasiCompare %>% 
              mutate(RACE_RC = replace(RACE_RC,
@@ -208,11 +208,7 @@ bind_rows(
   chiAcasi(acasiCompare, "GENDER_RC"),
   chiAcasi(acasiCompare, "ORIENT_RC"),
   chiAcasi(acasiCompare, "GRADE_RC"),
-  chiAcasi(acasiCompare %>%
-             mutate(STAY7D_RC = replace(STAY7D_RC, 
-                                        which(STAY7D_RC == "Institution"),
-                                        "Unstable housing")),
-           "STAY7D_RC"),
+  chiAcasi(acasiCompare, "STAY7D_RC"),
   chiAcasi(acasiCompare, "INSURE_RC")
 ) %>%
   mutate(Note = "",
@@ -250,7 +246,7 @@ ggplot(acasiCompare, aes(x = MONEY_RC_Log, y = completeSurveys)) +
   geom_point() +
   geom_smooth(method = "loess")
 
-bind_rows(
+compareContinuous <- bind_rows(
   logitAcasi(logitAge, "AGE"),
   logitAcasi(logitMoney, "MONEY_RC_Log")
 )
