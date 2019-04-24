@@ -102,9 +102,8 @@ table1 <- bind_rows(
   #Residence
   table_OneFactor(demo, varString = "STAY7D_RC", 
                   header = "Residence, Last 7 Days",
-                  varRelevel = c("Stable housing",
-                                 "Unstable housing",
-                                 "Institution"))
+                  varRelevel = c("Stable housing")) %>%
+    add_row(Variable = "STAY7D_RC: Six participants in 'Institution' (hospital or prison) were incorporated into 'Unstable housing'.")
 )
 
 #####Table 2: participant health care summary
@@ -223,8 +222,11 @@ kable(table1 %>%
   group_rows("Sexual Orientation, N (%)", 13, 16) %>%
   group_rows("Education, N (%)", 17, 19) %>%
   group_rows("Income, Median [IQR]", 20, 20) %>%
-  group_rows("Residence, Last 7 Days, N (%)", 21, 24)
+  group_rows("Residence, Last 7 Days, N (%)", 21, 22)
 ```
+Footnotes:  
+
+* STAY7D_RC: Six participants in 'Institution' (hospital or prison) were incorporated into 'Unstable housing'.
 
 ### Table 2
 ```{r include = TRUE}
@@ -320,4 +322,3 @@ bind_rows(
   kable_styling(bootstrap_options = c("striped", "condensed"))
 
 ```
-
