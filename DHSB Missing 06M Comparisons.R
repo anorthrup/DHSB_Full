@@ -211,8 +211,8 @@ compareContinuous <- bind_rows(
 )
 
 ##### Create Excel sheet
-wb <- createWorkbook("Comparison of Included and Excluded Participants.xlsx")
-wb <- loadWorkbook("Comparison of Included and Excluded Participants.xlsx")
+wb <- createWorkbook("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/Comparison of Included and Excluded Participants.xlsx")
+# wb <- loadWorkbook("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/Comparison of Included and Excluded Participants.xlsx")
 #Categorical variables
 removeWorksheet(wb, "Categorical")
 addWorksheet(wb, "Categorical")
