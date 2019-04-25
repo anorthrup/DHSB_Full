@@ -533,29 +533,30 @@ acasi <- acasiJoinInner %>%
     #> HIV Disclosure
     DISC_RCD_Partner = if_else(DISCB == 1 | 
                                  DISCC == 1 |
-                                 str_detect(DISCRECODE, "Partner"),
+                                 grepl("Partner", DISCRECODE),
                                1, 0),
     DISC_RCD_Family  = if_else(DISCD == 1 | 
                                  DISCE == 1 |
-                                 str_detect(DISCRECODE, "Family"),
+                                 grepl("Family", DISCRECODE),
                                1, 0),
     DISC_RCD_Other   = if_else(DISCF == 1 | DISCG == 1 |
                                  DISCH == 1 | DISCI == 1 |
-                                 str_detect(DISCRECODE, "Other"), 1, 0),
+                                 grepl("Other", DISCRECODE), 1, 0),
     DISC_RCD_Missing = if_else(!DISC %in% c(1:10), 1, 0),
     #> Substance Use
     DRUG_RCD_Alcohol    = if_else(DRUG1LA == 1 | 
-                                    str_detect(DRUGRECODE, "Alcohol"), 1, 0),
+                                    grepl("Alcohol", DRUGRECODE), 1, 0),
     DRUG_RCD_Tobacco    = if_else(DRUG1LB == 1 |
-                                    str_detect(DRUGRECODE, "Tobacco"), 1, 0),
+                                    grepl("Tobacco", DRUGRECODE), 1, 0),
     DRUG_RCD_Marijuana  = if_else(DRUG1LC == 1 |
-                                    str_detect(DRUGRECODE, "Marijuana"), 1, 0),
+                                    grepl("Marijuana", DRUGRECODE), 1, 0),
     DRUG_RCD_Other      = if_else(
       rowSums(
         select(.,
                one_of(paste0("DRUG1L", LETTERS[4:12]),
                       paste0("DRUG2L", LETTERS[1:9]))               
-        ) == 1) > 0 | str_detect(DRUGRECODE, "Other"),
+        ) == 1) > 0 |
+        grepl("Other", DRUGRECODE),
       1, 0),
     DRUG_RCD_Missing    = if_else(DRUG1L == 98 & DRUG2L == 98, 1, 0),
     INJECTL_RCD_Inject  = if_else(INJECTL == 1, 1, 0),
