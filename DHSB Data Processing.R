@@ -492,6 +492,11 @@ acasi <- acasiJoinInner %>%
     TIMESINCEHIV = year(TODAY) - DIAGHIV_RC, #Does not include those born with HIV
     BORNHIV_MCD = if_else(DOBY == HIVDiagnosisYear_MCD, 1, 0),
     TIMESINCEHIV_MCD = year(TODAY) - HIVDiagnosisYear_MCD, #Includes those born with HIV
+    #> Viral Suppression
+    ViralSupp_RCD_Suppressed = if_else(!is.na(ViralSupp_MCD) & 
+                                         ViralSupp_MCD == 1,
+                                       1, 0),
+    ViralSupp_RCD_Missing = if_else(is.na(ViralSupp_MCD), 1, 0),
     #> Insurance
     INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
                           INSURE == 97 ~ "Don't know",
@@ -754,7 +759,7 @@ acasi_analysis <- acasi %>%
          STAY7D_RCD_Stable, STAY7D_RCD_Missing, #Housing
          BORNHIV, TIMESINCEHIV,
          BORNHIV_MCD, TIMESINCEHIV_MCD,
-         ViralSupp_MCD,
+         ViralSupp_RCD_Suppressed, ViralSupp_RCD_Suppressed,
          INSURE_RCD_Insured, INSURE_RCD_Unknown, INSURE_RCD_Missing, #Healthcare utilization: Insurance
          CARED6_RCD_Yes, CARED6_RCD_Missing, #Healthcare utilization: Recent care
          CAREHV06_MCD_RCD_Yes, CAREHV06_MCD_RCD_Missing,
