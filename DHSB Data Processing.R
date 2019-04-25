@@ -307,36 +307,48 @@ acasiJoin06m <- anti_join(acasi06mTrim, acasi00m, by = c("SITE1", "PID"))
 #####Correct answers for participants who marked 'Other'
 acasiOther <- left_join(
   acasiJoinInner,
-  import("C:/Users/anorthrup/Box Sync/ETAC/Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+  import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
          sheet = "GENDERS"),
   by = c("SITE1", "PID")
 ) %>%
   left_join(
     .,
-    import("C:/Users/anorthrup/Box Sync/ETAC/Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+    import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
            sheet = "RACEFS"),
     by = c("SITE1", "PID")
   ) %>%
   left_join(
     .,
-    import("C:/Users/anorthrup/Box Sync/ETAC/Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+    import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
            sheet = "ORIENTS"),
     by = c("SITE1", "PID")
   ) %>%
   left_join(
     .,
-    import("C:/Users/anorthrup/Box Sync/ETAC/Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+    import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
            sheet = "STAY7DS"),
     by = c("SITE1", "PID")
   ) %>%
   left_join(
     .,
-    import("C:/Users/anorthrup/Box Sync/ETAC/Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+    import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
            sheet = "INSUREHS"),
     by = c("SITE1", "PID")
   ) %>%
+  left_join(
+    .,
+    import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+           sheet = "DISCJS"),
+    by = c("SITE1", "PID")
+  ) %>%
+  left_join(
+    .,
+    import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+           sheet = "DRUG2LS"),
+    by = c("SITE1", "PID")
+  ) %>%
   select(SITE1, PID, GENDERRECODE, RACERECODE, ORIENTRECODE, STAYRECODE, 
-         INSURERECODE)
+         INSURERECODE, DISCRECODE, DRUGRECODE)
 
 #####Creation of new variables
 #####Collapse existing demographic variables and create scales
@@ -497,7 +509,7 @@ acasi <- acasiJoinInner %>%
     CARED6_RCD_Missing = if_else(CARED6 >= 998, 1, 0),
     CAREHV06_RC = case_when(CARELHIV == 1 ~ CAREHV06,
                             CARELHIV == 0 ~ 0L,
-                            CARELHIV == 8 ~ 998L),
+                            CARELHIV == 8 ~ 998L), #None refused
     # CAREHV06_RCD_Yes = if_else(CAREHV06 > 0 & CAREHV06 <= 99, 1, 0),
     # CAREHV06_RCD_Missing = if_else(CAREHV06 == 998 | CAREHV06 == 999, 1, 0),
     CAREHV06_MCD_RCD_Yes = if_else(!is.na(CAREHV06_MCD) &
@@ -519,22 +531,32 @@ acasi <- acasiJoinInner %>%
     ARTADHR_RCD_Positive = if_else(ARTADHR_RC == "Positive", 1, 0),
     ARTADHR_RCD_Missing  = if_else(ARTADHR_RC == "Missing", 1, 0),
     #> HIV Disclosure
-    DISC_RCD_Partner = if_else(DISCB == 1 | DISCC == 1, 1, 0),
-    DISC_RCD_Family  = if_else(DISCD == 1 | DISCE == 1, 1, 0),
+    DISC_RCD_Partner = if_else(DISCB == 1 | 
+                                 DISCC == 1 |
+                                 str_detect(DISCRECODE, "Partner"),
+                               1, 0),
+    DISC_RCD_Family  = if_else(DISCD == 1 | 
+                                 DISCE == 1 |
+                                 str_detect(DISCRECODE, "Family"),
+                               1, 0),
     DISC_RCD_Other   = if_else(DISCF == 1 | DISCG == 1 |
                                  DISCH == 1 | DISCI == 1 |
-                                 DISCJ == 1, 1, 0),
+                                 str_detect(DISCRECODE, "Other"), 1, 0),
     DISC_RCD_Missing = if_else(!DISC %in% c(1:10), 1, 0),
     #> Substance Use
-    DRUG_RCD_Alcohol    = if_else(DRUG1LA == 1, 1, 0),
-    DRUG_RCD_Tobacco    = if_else(DRUG1LB == 1, 1, 0),
-    DRUG_RCD_Marijuana  = if_else(DRUG1LC == 1, 1, 0),
+    DRUG_RCD_Alcohol    = if_else(DRUG1LA == 1 | 
+                                    str_detect(DRUGRECODE, "Alcohol"), 1, 0),
+    DRUG_RCD_Tobacco    = if_else(DRUG1LB == 1 |
+                                    str_detect(DRUGRECODE, "Tobacco"), 1, 0),
+    DRUG_RCD_Marijuana  = if_else(DRUG1LC == 1 |
+                                    str_detect(DRUGRECODE, "Marijuana"), 1, 0),
     DRUG_RCD_Other      = if_else(
       rowSums(
         select(.,
                one_of(paste0("DRUG1L", LETTERS[4:12]),
-                      paste0("DRUG2L", LETTERS[1:10]))               
-        ) == 1) > 0, 1, 0),
+                      paste0("DRUG2L", LETTERS[1:9]))               
+        ) == 1) > 0 | str_detect(DRUGRECODE, "Other"),
+      1, 0),
     DRUG_RCD_Missing    = if_else(DRUG1L == 98 & DRUG2L == 98, 1, 0),
     INJECTL_RCD_Inject  = if_else(INJECTL == 1, 1, 0),
     INJECTL_RCD_Missing = if_else(!INJECTL %in% c(1, 0), 1, 0)
