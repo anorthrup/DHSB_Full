@@ -470,6 +470,15 @@ acasi <- acasiJoinInner %>%
     #> Income
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     MONEY_RC_Log = log(MONEY_RC + 1),
+    MONEY_RCD_Zero = if_else(!is.na(MONEY_RC_Log) &  MONEY_RC_Log == 0, 1, 0),
+    MONEY_RCD_Low  = if_else(!is.na(MONEY_RC_Log) &  
+                               MONEY_RC_Log > 0 & 
+                               MONEY_RC_Log < median(MONEY_RC_Log[MONEY_RC_Log != 0], na.rm = TRUE),
+                             1, 0),
+    MONEY_RCD_High = if_else(!is.na(MONEY_RC_Log) & 
+                               MONEY_RC_Log >= median(MONEY_RC_Log[MONEY_RC_Log != 0], na.rm = TRUE),
+                             1, 0),
+    MONEY_RCD_Missing = if_else(is.na(MONEY_RC_Log), 1, 0),
     #> Residence, Last 7 Days
     STAY7D_RC = fct_recode(as.factor(STAY7D),
                            "Stable housing"   =  "1", 
@@ -764,9 +773,9 @@ acasi_analysis <- acasi %>%
          ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
          GRADE_RCD_PostK, GRADE_RCD_Grad, #Education
          MONEY_RC_Log, #Income
+         MONEY_RCD_Zero, MONEY_RCD_Low, MONEY_RCD_High, MONEY_RCD_Missing,
          STAY7D_RCD_Stable, STAY7D_RCD_Missing, #Housing
          BORNHIV, TIMESINCEHIV,
-         BORNHIV_MCD_BornWith, BORNHIV_MCD_Missing, TIMESINCEHIV_MCD,
          ViralSupp_RCD_Suppressed, ViralSupp_RCD_Suppressed,
          INSURE_RCD_Insured, INSURE_RCD_Unknown, INSURE_RCD_Missing, #Healthcare utilization: Insurance
          CARED6_RCD_Yes, CARED6_RCD_Missing, #Healthcare utilization: Recent care
