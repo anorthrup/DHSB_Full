@@ -489,7 +489,10 @@ acasi <- acasiJoinInner %>%
     STAY7D_RCD_Missing     = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
     #> HIV History
     DIAGHIV_RC = case_when(DIAGHIV <= 2019 ~ DIAGHIV),
-    TIMESINCEHIV = year(TODAY) - DIAGHIV_RC, #Does not include those born with HIV
+    TIMESINCEHIV = case_when(
+      DIAGHIV != 2099 ~ year(TODAY) - DIAGHIV_RC,
+      DIAGHIV == 2099 ~ year(TODAY) - DOBY
+    ), #Does not include those born with HIV
     BORNHIV_MCD_BornWith = if_else(!is.na(HIVDiagnosisYear_MCD) & 
                                      DOBY == HIVDiagnosisYear_MCD, 1, 0),
     BORNHIV_MCD_Missing = if_else(is.na(HIVDiagnosisYear_MCD), 1, 0),
