@@ -408,6 +408,8 @@ acasi <- acasiJoinInner %>%
     SITE_RCD_WUSL  = if_else(SITE1 == "WUSL", 1, 0),
     #> Survey language
     surveylanguage_RCD_Eng = if_else(surveylanguage == "English", 1, 0),
+    #> Age
+    AGE_RC = floor((ymd(TODAY) - ymd(DOB)) / 365.25),
     #> Ethnicity & Race
     RACE_RC = case_when(LATINO == 1 ~ "Latino",
                         RACEC == 1 ~ "Black, Not Latino",
@@ -491,7 +493,7 @@ acasi <- acasiJoinInner %>%
     DIAGHIV_RC = case_when(DIAGHIV <= 2019 ~ DIAGHIV),
     TIMESINCEHIV = case_when(
       DIAGHIV != 2099 ~ year(TODAY) - DIAGHIV_RC,
-      DIAGHIV == 2099 ~ year(TODAY) - DOBY
+      DIAGHIV == 2099 ~ as.numeric(AGE_RC)
     ), #Does not include those born with HIV
     BORNHIV_MCD_BornWith = if_else(!is.na(HIVDiagnosisYear_MCD) & 
                                      DOBY == HIVDiagnosisYear_MCD, 1, 0),
@@ -619,7 +621,8 @@ acasi <- acasiJoinInner %>%
   mutate(
     CARE_RC = case_when(
       rowSums(is.na(select(., matches("CARE\\d{2}_RC")))) < 10 ~ #Is number of NA < number of items?
-        rowSums(select(., matches("CARE\\d{2}_RC")), na.rm = TRUE) #If so, sum columns
+        rowSums(select(., matches("CARE\\d{2}_RC")), na.rm = TRUE), #If so, sum columns
+      TRUE ~ 0
     )
   ) %>%
   #> Physical and Mental Health, 4 items
@@ -753,7 +756,7 @@ acasi_analysis <- acasi %>%
          SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
          SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
          surveylanguage_RCD_Eng,
-         AGE, #Age
+         AGE_RC, #Age
          RACE_RCD_Latino, RACE_RCD_Black, RACE_RCD_WhiteMix, 
          RACE_RCD_Other, RACE_RCD_Missing, #Ethnicity & Race
          GENDER_RCD_Female, GENDER_RCD_Trans, 
@@ -771,7 +774,7 @@ acasi_analysis <- acasi %>%
          ARTNOW_RCD_Yes, ARTNOW_RCD_Missing, #Healthcare utilization: Treatment
          ARTADHR_RCD_Neutral, ARTADHR_RCD_Positive, ARTADHR_RCD_Missing, #Healthcare utilization: Adherence
          HE_RC_HAL, HE_RC_HSE, #Youth Health Engagement scale
-         CARE_RC, #Provider Empathy (CARE) scale
+         CARELHIV, CARE_RC, #Provider Empathy (CARE) scale, along with indicator of whether it is skipped (CARELHIV)
          STIGMA_RC, #HIV-related stigma
          DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, DISC_RCD_Missing, #Disclosure
          MENTALH_RC, MENTALH4_RC,#Mental health
