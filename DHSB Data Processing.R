@@ -800,7 +800,9 @@ acasi_analysis <- acasi %>%
          MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg, MTUAX02_RC, MTUAX07_RC,
          starts_with("outcome")
   ) %>%
-  select_if(~length(which(. == 0)) < length(.))
+  select_if(~length(which(. == 0)) < length(.)) %>%
+  mutate_at(vars(contains("_RCD"), BORNHIV, CARELHIV, contains("outcome")),
+            list(as.factor))
 
 save(acasi, acasi_analysis, acasiJoin00m, acasiJoin06m, acasiJoinInner,
      file = "Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
