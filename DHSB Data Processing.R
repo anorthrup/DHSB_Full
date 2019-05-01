@@ -391,6 +391,9 @@ acasi <- acasiJoinInner %>%
     ##> 4) Make other transformations to continuous variables
     
     #> Site
+    SITE1 = factor(SITE1, levels = c(
+      "CBW", "FRI", "NYSDA", "HBHC", "MHS", "PSU", "PFC", "SFDPH", "WFU", "WUSL"
+    )),
     SITE_RC = fct_recode(as.factor(SITE1),
                          "Corpus Christi" = "CBW", "Los Angeles" = "FRI", 
                          "New York" = "NYSDA", "Chicago" = "HBHC", 
@@ -757,13 +760,16 @@ acasi <- acasiJoinInner %>%
                      paste0("S56_15", c("K", "M")),
                      paste0("S56_18", c("K", "M"))) == 1) > 0, 1, 0
     )
-  )
+  ) %>%
+  mutate_at(vars(contains("_RCD"), BORNHIV, CARELHIV, contains("outcome")),
+            list(as.factor))
 
 ##### Create a data set for analysis excluding original variables
 acasi_analysis <- acasi %>%
   select(PID,
-         SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
-         SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
+         SITE1,
+         # SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
+         # SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
          surveylanguage_RCD_Eng,
          AGE_RC, #Age
          RACE_RCD_Latino, RACE_RCD_Black, RACE_RCD_WhiteMix, 
@@ -800,9 +806,7 @@ acasi_analysis <- acasi %>%
          MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg, MTUAX02_RC, MTUAX07_RC,
          starts_with("outcome")
   ) %>%
-  select_if(~length(which(. == 0)) < length(.)) %>%
-  mutate_at(vars(contains("_RCD"), BORNHIV, CARELHIV, contains("outcome")),
-            list(as.factor))
+  select_if(~length(which(. == 0)) < length(.))
 
 save(acasi, acasi_analysis, acasiJoin00m, acasiJoin06m, acasiJoinInner,
      file = "Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
