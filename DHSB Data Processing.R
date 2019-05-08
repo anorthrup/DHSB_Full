@@ -69,14 +69,14 @@ fri_rekey <- function (x) {
     rename(SITE1 = SiteID)
 }
 #> Participant History
-mcd_history <- read_csv("Data merged across sites/MCD/MCD_Participant_Summary_History_W0-W3_SASdates.csv") %>%
+mcd_history <- read_csv("Data merged across sites/MCD/MCD_Participant_Summary_History_W0-W4_SASdates.csv") %>%
   SasNumToDate() %>%
   mutate(SiteSpecificID = replace(SiteSpecificID, 
                                   which(SiteID == "WUSL"), 
                                   str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
   fri_rekey() #Change FRI SiteSpecificIDs to match PIDs in ACASI surveys
   #> Lab Test Results
-mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W3_SASdates.csv") %>%
+mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W4_SASdates.csv") %>%
   SasNumToDate() %>%
   select(SiteID, SiteSpecificID, ServiceDate, ViralSupp) %>%
   filter(!is.na(ViralSupp)) %>%
@@ -87,7 +87,7 @@ mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W
                                   str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
   fri_rekey() #Change FRI SiteSpecificIDs to match PIDs in ACASI surveys
   #> Ambulatory Visits
-mcd_ambVisits <- read_csv("Data merged across sites/MCD/MCD_Ambulatory_Visits_W0-W3_SASdates.csv",
+mcd_ambVisits <- read_csv("Data merged across sites/MCD/MCD_Ambulatory_Visits_W0-W4_SASdates.csv",
                           col_types = cols(
                             SiteSpecificID = col_character()
                           )) %>%
@@ -481,7 +481,7 @@ acasi <- acasiJoinInner %>%
     MONEY_RCD_High = if_else(!is.na(MONEY_RC_Log) & 
                                MONEY_RC_Log >= median(MONEY_RC_Log[MONEY_RC_Log != 0], na.rm = TRUE),
                              1, 0),
-    MONEY_RCD_Missing = if_else(is.na(MONEY_RC_Log), 1, 0),
+    MONEY_RCD_DontKnow = if_else(is.na(MONEY_RC_Log), 1, 0),
     #> Residence, Last 7 Days
     STAY7D_RC = fct_recode(as.factor(STAY7D),
                            "Stable housing"   =  "1", 
@@ -779,7 +779,7 @@ acasi_analysis <- acasi %>%
          ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
          GRADE_RCD_PostK, GRADE_RCD_Grad, #Education
          MONEY_RC_Log, #Income
-         MONEY_RCD_Zero, MONEY_RCD_Low, MONEY_RCD_High, MONEY_RCD_Missing,
+         MONEY_RCD_Zero, MONEY_RCD_Low, MONEY_RCD_High, MONEY_RCD_DontKnow,
          STAY7D_RCD_Stable, STAY7D_RCD_Missing, #Housing
          BORNHIV, TIMESINCEHIV,
          ViralSupp_RCD_Suppressed, ViralSupp_RCD_Suppressed,
