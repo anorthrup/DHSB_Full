@@ -412,7 +412,7 @@ acasi <- acasiJoinInner %>%
     #> Survey language
     surveylanguage_RCD_Eng = if_else(surveylanguage == "English", 1, 0),
     #> Age
-    AGE_RC = floor((ymd(TODAY) - ymd(DOB)) / 365.25),
+    AGE_RC = as.integer(floor((ymd(TODAY) - ymd(DOB)) / 365.25)),
     #> Ethnicity & Race
     RACE_RC = case_when(LATINO == 1 ~ "Latino",
                         RACEC == 1 ~ "Black, Not Latino",
