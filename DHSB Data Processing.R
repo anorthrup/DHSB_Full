@@ -688,39 +688,39 @@ acasi <- acasiJoinInner %>%
         rowSums(select(., one_of(paste0("MTUIX", c(1:4), "_RC"))), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  #> General Social Media Usage, 9 items (Excluded MTUSNX10:MTUSNX12; added for this study, not part of original subscale)
+  #> General Social Media Usage, 10 items (Excluded MTUSNX11:MTUSNX12; added for this study, not part of original subscale)
   mutate_at(vars(starts_with("MTUSNX")),
             list(RC = ~replace(., which(. == 99), 0))) %>% #99 = skipped; change 99 to 0 as those skipped indicated not using social media
   mutate_at(vars(matches("MTUSNX\\d+_RC")),
             list(~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
     MTUSNX_RC = case_when(
-      rowSums(is.na(select(., one_of(paste0("MTUSNX0", 1:9, "_RC"))))) < 9 ~ #Is number of NA < number of items?
-        rowSums(select(., one_of(paste0("MTUSNX0", 1:9, "_RC"))), na.rm = TRUE) #If so, sum columns
+      rowSums(is.na(select(., one_of(paste0("MTUSNX0", 1:10, "_RC"))))) < 10 ~ #Is number of NA < number of items?
+        rowSums(select(., one_of(paste0("MTUSNX0", 1:10, "_RC"))), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  #> Positive Attitudes Toward Technology, 6 items (MTUAX01, MTUAX03, MTUAX04, MTUAX09:MTUAX11)
+  #> Positive Attitudes Toward Technology, 7 items (MTUAX01:MTUAX04, MTUAX09:MTUAX11)
   mutate_at(vars(matches("MTUAX\\d{2}")),
             list(RC = ~replace(., which(. > 5), NA))) %>% #Values of 0-5 expected; 8 = refuse to answer; 9 = skipped (none)
   mutate(
     MTUAX_RC_Pos = case_when(
       rowSums(is.na(select(., one_of(
-        paste0("MTUAX", str_pad(c(1, 3:4, 9:11), width = 2, pad = 0), "_RC")
-      )))) < 6 ~ #Is number of NA < number of items?
+        paste0("MTUAX", str_pad(c(1:4, 9:11), width = 2, pad = 0), "_RC")
+      )))) < 7 ~ #Is number of NA < number of items?
         rowSums(select(., one_of(
-          paste0("MTUAX", str_pad(c(1, 3:4, 9:11), width = 2, pad = 0), "_RC")
+          paste0("MTUAX", str_pad(c(1:4, 9:11), width = 2, pad = 0), "_RC")
         )),
         na.rm = TRUE) #If so, sum columns
     )
   ) %>%
-  #> Anxiety About Being Without Technology or Dependence on Technology, 3 items (MTUAX05, MTUAX06, MTUAX08)
+  #> Anxiety About Being Without Technology or Dependence on Technology, 4 items (MTUAX05:MTUAX08)
   mutate(
     MTUAX_RC_Anx = case_when(
       rowSums(is.na(select(., one_of(
-        paste0("MTUAX", str_pad(c(5:6, 8), width = 2, pad = 0), "_RC")
-      )))) < 3 ~ #Is number of NA < number of items?
+        paste0("MTUAX", str_pad(c(5:8), width = 2, pad = 0), "_RC")
+      )))) < 4 ~ #Is number of NA < number of items?
         rowSums(select(., one_of(
-          paste0("MTUAX", str_pad(c(5:6, 8), width = 2, pad = 0), "_RC")
+          paste0("MTUAX", str_pad(c(5:8), width = 2, pad = 0), "_RC")
         )),
         na.rm = TRUE) #If so, sum columns
     )
@@ -789,7 +789,8 @@ acasi_analysis <- acasi %>%
          ARTNOW_RCD_Yes, ARTNOW_RCD_Missing, #Healthcare utilization: Treatment
          ARTADHR_RCD_Neutral, ARTADHR_RCD_Positive, ARTADHR_RCD_Missing, #Healthcare utilization: Adherence
          HE_RC_HAL, HE_RC_HSE, #Youth Health Engagement scale
-         CARELHIV, CARE_RC, #Provider Empathy (CARE) scale, along with indicator of whether it is skipped (CARELHIV)
+         CARELHIV, 
+         CARE_RC, #Provider Empathy (CARE) scale, along with indicator of whether it is skipped (CARELHIV)
          STIGMA_RC, #HIV-related stigma
          DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, DISC_RCD_Missing, #Disclosure
          MENTALH_RC, MENTALH4_RC,#Mental health
@@ -801,9 +802,9 @@ acasi_analysis <- acasi %>%
          MTUEX_RC, 
          MTUSPX_RC_Text, 
          MTUSPX_RC_Smartphone, 
-         MTUIX_RC, MTUIX5_RC, MTUIX6_RC,
+         MTUIX_RC,
          MTUSNX_RC,
-         MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg, MTUAX02_RC, MTUAX07_RC,
+         MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg,
          starts_with("outcome")
   ) %>%
   select_if(~length(which(. == 0)) < length(.))
