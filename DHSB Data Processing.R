@@ -766,8 +766,7 @@ acasi <- acasiJoinInner %>%
 
 ##### Create a data set for analysis excluding original variables
 acasi_analysis <- acasi %>%
-  select(PID,
-         # SITE1,
+  select(# SITE1,
          SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
          SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
          surveylanguage_RCD_Eng,
