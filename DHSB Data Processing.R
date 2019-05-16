@@ -802,7 +802,7 @@ acasi <- acasiJoinInner %>%
                      paste0("S56_18", c("K", "M"))) == 1) > 0, 1, 0
     )
   ) %>%
-  mutate_at(vars(contains("_RCD"), BORNHIV, CARELHIV, contains("outcome")),
+  mutate_at(vars(contains("_RCR"), contains("_RCD"), BORNHIV, CARELHIV, contains("outcome")),
             list(as.factor))
 
 ##### Create a data set for analysis excluding original variables
