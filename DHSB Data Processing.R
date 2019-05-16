@@ -400,6 +400,7 @@ acasi <- acasiJoinInner %>%
                          "Cleveland"  = "MHS", "Hershey" = "PSU", 
                          "Philadelphia" = "PFC", "San Francisco" = "SFDPH", 
                          "Winston-Salem"  = "WFU", "St. Louis" = "WUSL"),
+    SITE_RCR_CBW   = if_else(SITE1 == "CBW", 1, 0),
     SITE_RCD_FRI   = if_else(SITE1 == "FRI", 1, 0),
     SITE_RCD_NYSDA = if_else(SITE1 == "NYSDA", 1, 0),
     SITE_RCD_HBHC  = if_else(SITE1 == "HBHC", 1, 0),
@@ -422,6 +423,7 @@ acasi <- acasiJoinInner %>%
                         LATINO == 8 & RACE == 8 ~ "Refuse to answer", #None refused to answer
                         !is.na(RACERECODE) ~ RACERECODE,
                         TRUE ~ "Other race"),
+    RACE_RCR_White    = if_else(RACE_RC == "White, Not Latino", 1, 0),
     RACE_RCD_Latino   = if_else(RACE_RC == "Latino", 1, 0),
     RACE_RCD_Black    = if_else(RACE_RC == "Black, Not Latino", 1, 0),
     RACE_RCD_WhiteMix = if_else(RACE_RC == "White Mixed-Race, Not Latino or Black", 1, 0),
@@ -438,6 +440,7 @@ acasi <- acasiJoinInner %>%
                            "Refuse to answer"   = "8"), #None refused to answer
     GENDER_RC = if_else(!is.na(GENDERRECODE), 
                         GENDERRECODE, as.character(GENDER_RC)),
+    GENDER_RCR_Male    = if_else(GENDER_RC == "Male (cis man)", 1, 0),
     GENDER_RCD_Female  = if_else(GENDER_RC == "Female (cis woman)", 1, 0),
     GENDER_RCD_Trans   = if_else(GENDER_RC == "Trans-identified", 1, 0),
     GENDER_RCD_Other   = if_else(GENDER_RC == "Other gender", 1, 0),
@@ -453,10 +456,11 @@ acasi <- acasiJoinInner %>%
                            "Refuse to answer"  = "8"), #None refused to answer
     ORIENT_RC = if_else(!is.na(ORIENTRECODE), 
                         ORIENTRECODE, as.character(ORIENT_RC)),
-    ORIENT_RCD_Gay     = if_else(ORIENT_RC == "Gay or lesbian", 1, 0),
-    ORIENT_RCD_Bi      = if_else(ORIENT_RC == "Bisexual", 1, 0),
-    ORIENT_RCD_Other   = if_else(ORIENT_RC == "Other orientation", 1, 0),
-    ORIENT_RCD_Missing = if_else(ORIENT_RC == "Refuse to answer", 1, 0),
+    ORIENT_RCR_Straight = if_else(ORIENT_RC == "Straight", 1, 0),
+    ORIENT_RCD_Gay      = if_else(ORIENT_RC == "Gay or lesbian", 1, 0),
+    ORIENT_RCD_Bi       = if_else(ORIENT_RC == "Bisexual", 1, 0),
+    ORIENT_RCD_Other    = if_else(ORIENT_RC == "Other orientation", 1, 0),
+    ORIENT_RCD_Missing  = if_else(ORIENT_RC == "Refuse to answer", 1, 0),
     #> Education
     GRADE_RC = fct_recode(as.factor(GRADE),
                           "High school, equivalent or less"         = "1", 
@@ -467,6 +471,7 @@ acasi <- acasiJoinInner %>%
                           "College graduate or trade certification" = "6",
                           "College graduate or trade certification" = "7", 
                           "Refuse to answer"                        = "8"), #None refused to answer
+    GRADE_RCR_HS      = if_else(GRADE_RC == "High school, equivalent or less", 1, 0),
     GRADE_RCD_PostK   = if_else(GRADE_RC == "Some post-K12", 1, 0),
     GRADE_RCD_Grad    = if_else(GRADE_RC == "College graduate or trade certification", 1, 0),
     GRADE_RCD_Missing = if_else(GRADE_RC == "Refuse to answer", 1, 0),
@@ -481,7 +486,7 @@ acasi <- acasiJoinInner %>%
         MONEY_RC_Log >= median(MONEY_RC_Log[MONEY_RC_Log != 0], na.rm = TRUE) ~ "High",
       is.na(MONEY_RC_Log) ~ "Don't know"
     ),
-    MONEY_RCD_Zero     = if_else(MONEY_RC_Cat == "Zero", 1, 0),
+    MONEY_RCR_Zero     = if_else(MONEY_RC_Cat == "Zero", 1, 0),
     MONEY_RCD_Low      = if_else(MONEY_RC_Cat == "Low", 1, 0),
     MONEY_RCD_High     = if_else(MONEY_RC_Cat == "High", 1, 0),
     MONEY_RCD_DontKnow = if_else(MONEY_RC_Cat == "Don't know", 1, 0),
@@ -502,6 +507,7 @@ acasi <- acasiJoinInner %>%
                            "Refuse to answer" = "98"), #None refused to answer
     STAY7D_RC = if_else(!is.na(STAYRECODE), 
                         STAYRECODE, as.character(STAY7D_RC)),
+    STAY7D_RCR_Unstable    = if_else(STAY7D_RC == "Unstable housing", 1, 0),
     STAY7D_RCD_Stable      = if_else(STAY7D_RC == "Stable housing", 1, 0),
     STAY7D_RCD_Missing     = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
     #> HIV History
@@ -520,8 +526,9 @@ acasi <- acasiJoinInner %>%
       !is.na(ViralSupp_MCD) & ViralSupp_MCD == 0 ~ "Not suppressed",
       is.na(ViralSupp_MCD) ~ "Missing"
     ),
-    ViralSupp_RCD_Suppressed = if_else(ViralSupp_MCD_RC == "Suppressed", 1, 0),
-    ViralSupp_RCD_Missing = if_else(ViralSupp_MCD_RC == "Missing", 1, 0),
+    ViralSupp_RCR_Unsuppressed = if_else(ViralSupp_MCD_RC == "Not suppressed", 1, 0),
+    ViralSupp_RCD_Suppressed   = if_else(ViralSupp_MCD_RC == "Suppressed", 1, 0),
+    ViralSupp_RCD_Missing      = if_else(ViralSupp_MCD_RC == "Missing", 1, 0),
     #> Insurance
     INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
                           INSURE == 97 ~ "Don't know",
@@ -530,24 +537,44 @@ acasi <- acasiJoinInner %>%
                           INSUREB == 1 | INSUREC == 1 | INSURED == 1 |
                             INSUREE == 1 | INSUREF == 1 | INSUREG == 1 ~ "Insured",
                           TRUE ~ INSURERECODE),
-    INSURE_RCD_Insured = if_else(INSURE_RC == "Insured", 1, 0),
-    INSURE_RCD_Unknown = if_else(INSURE_RC == "Don't know", 1, 0),
-    INSURE_RCD_Missing = if_else(INSURE_RC == "Refuse to answer" |
+    INSURE_RCR_Uninsured = if_else(INSURE_RC == "Not insured", 1, 0),
+    INSURE_RCD_Insured   = if_else(INSURE_RC == "Insured", 1, 0),
+    INSURE_RCD_Unknown   = if_else(INSURE_RC == "Don't know", 1, 0),
+    INSURE_RCD_Missing   = if_else(INSURE_RC == "Refuse to answer" |
                                    INSURE_RC == "Skipped", 1, 0),
     #> Medical Care
-    CARED6_RCD_Yes     = if_else(CARED6 > 0 & CARED6 < 998, 1, 0),
-    CARED6_RCD_Missing = if_else(CARED6 >= 998, 1, 0),
-    CAREHV06_RC = case_when(CARELHIV == 1 ~ CAREHV06,
-                            CARELHIV == 0 ~ 0L,
-                            CARELHIV == 8 ~ 998L), #None refused
+    CARED6_RC = case_when(
+      CARED6 == 0 ~ "No",
+      CARED6 > 0 & CARED6 < 998 ~ "Yes",
+      CARED6 >= 998 ~ "Missing"
+    ),
+    CARED6_RCR_No      = if_else(CARED6_RC == "No", 1, 0),
+    CARED6_RCD_Yes     = if_else(CARED6_RC == "Yes", 1, 0),
+    CARED6_RCD_Missing = if_else(CARED6_RC == "Missing", 1, 0),
+    CAREHV06_RC = case_when(
+      CARELHIV == 1 & CAREHV06 > 0 ~ "Yes",
+      CARELHIV == 0 | CAREHV06 == 0 ~ "No",
+      CARELHIV == 8 ~ "Missing"
+    ), #None refused
     # CAREHV06_RCD_Yes = if_else(CAREHV06 > 0 & CAREHV06 <= 99, 1, 0),
     # CAREHV06_RCD_Missing = if_else(CAREHV06 == 998 | CAREHV06 == 999, 1, 0),
-    CAREHV06_MCD_RCD_Yes = if_else(!is.na(CAREHV06_MCD) &
-                                     CAREHV06_MCD > 0, 1, 0),
-    CAREHV06_MCD_RCD_Missing = if_else(is.na(CAREHV06_MCD), 1, 0),
+    CAREHV06_MCD_RC = case_when(
+      !is.na(CAREHV06_MCD) & CAREHV06_MCD > 0 ~ "Yes",
+      !is.na(CAREHV06_MCD) & CAREHV06_MCD == 0 ~ "No",
+      is.na(CAREHV06_MCD) ~ "Missing"
+    ),
+    CAREHV06_MCD_RCR_No      = if_else(CAREHV06_MCD_RC == "No", 1, 0),
+    CAREHV06_MCD_RCD_Yes     = if_else(CAREHV06_MCD_RC == "Yes", 1, 0),
+    CAREHV06_MCD_RCD_Missing = if_else(CAREHV06_MCD_RC == "Missing", 1, 0),
     #> ART Usage
-    ARTNOW_RCD_Yes     = if_else(ARTNOW == 1, 1, 0),
-    ARTNOW_RCD_Missing = if_else(ARTNOW == 8 | ARTNOW == 9, 1, 0),
+    ARTNOW_RC = case_when(
+      ARTNOW == 1 ~ "Yes",
+      ARTNOW == 0 ~ "No",
+      TRUE ~ "Missing"
+    ),
+    ARTNOW_RCR_No      = if_else(ARTNOW_RC == "No", 1, 0),
+    ARTNOW_RCD_Yes     = if_else(ARTNOW_RC == "Yes", 1, 0),
+    ARTNOW_RCD_Missing = if_else(ARTNOW_RC == "Missing", 1, 0),
     ARTADHR_RC = fct_recode(as.factor(ARTADHR),
                             "Negative" = "1",
                             "Negative" = "2",
@@ -557,6 +584,7 @@ acasi <- acasiJoinInner %>%
                             "Positive" = "6",
                             "Missing"  = "8", #None refused
                             "Missing"  = "9"), #Many skipped
+    ARTADHR_RCR_Negative = if_else(ARTADHR_RC == "Negative", 1, 0),
     ARTADHR_RCD_Neutral  = if_else(ARTADHR_RC == "Neutral", 1, 0),
     ARTADHR_RCD_Positive = if_else(ARTADHR_RC == "Positive", 1, 0),
     ARTADHR_RCD_Missing  = if_else(ARTADHR_RC == "Missing", 1, 0),
@@ -589,8 +617,14 @@ acasi <- acasiJoinInner %>%
         grepl("Other", DRUGRECODE),
       1, 0),
     DRUG_RCD_Missing    = if_else(DRUG1L == 98 & DRUG2L == 98, 1, 0),
-    INJECTL_RCD_Inject  = if_else(INJECTL == 1, 1, 0),
-    INJECTL_RCD_Missing = if_else(!INJECTL %in% c(1, 0), 1, 0)
+    INJECTL_RC = case_when(
+      INJECTL == 1 ~ "Yes",
+      INJECTL == 0 ~ "No",
+      TRUE ~ "Missing"
+    ),
+    INJECTL_RCR_No      = if_else(INJECTL_RC == "No", 1, 0),
+    INJECTL_RCD_Yes     = if_else(INJECTL_RC == "Yes", 1, 0),
+    INJECTL_RCD_Missing = if_else(INJECTL_RC == "Missing", 1, 0)
   ) %>%
     
   #Scales
@@ -773,26 +807,26 @@ acasi <- acasiJoinInner %>%
 ##### Create a data set for analysis excluding original variables
 acasi_analysis <- acasi %>%
   select(# SITE1,
-         SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
+         SITE_RCR_CBW, SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
          SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
          surveylanguage_RCD_Eng,
          AGE_RC, #Age
-         RACE_RCD_Latino, RACE_RCD_Black, RACE_RCD_WhiteMix, 
+         RACE_RCR_White, RACE_RCD_Latino, RACE_RCD_Black, RACE_RCD_WhiteMix, 
          RACE_RCD_Other, RACE_RCD_Missing, #Ethnicity & Race
-         GENDER_RCD_Female, GENDER_RCD_Trans, 
+         GENDER_RCR_Male, GENDER_RCD_Female, GENDER_RCD_Trans, 
          GENDER_RCD_Other, GENDER_RCD_Missing, #Gender
-         ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
-         GRADE_RCD_PostK, GRADE_RCD_Grad, #Education
+         ORIENT_RCR_Straight, ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
+         GRADE_RCR_HS, GRADE_RCD_PostK, GRADE_RCD_Grad, #Education
          MONEY_RC_Log, #Income
-         MONEY_RCD_Zero, MONEY_RCD_Low, MONEY_RCD_High, MONEY_RCD_DontKnow,
-         STAY7D_RCD_Stable, STAY7D_RCD_Missing, #Housing
+         MONEY_RCR_Zero, MONEY_RCD_Low, MONEY_RCD_High, MONEY_RCD_DontKnow,
+         STAY7D_RCR_Unstable, STAY7D_RCD_Stable, STAY7D_RCD_Missing, #Housing
          BORNHIV, TIMESINCEHIV,
-         ViralSupp_RCD_Suppressed, ViralSupp_RCD_Suppressed,
-         INSURE_RCD_Insured, INSURE_RCD_Unknown, INSURE_RCD_Missing, #Healthcare utilization: Insurance
-         CARED6_RCD_Yes, CARED6_RCD_Missing, #Healthcare utilization: Recent care
-         CAREHV06_MCD_RCD_Yes, CAREHV06_MCD_RCD_Missing,
-         ARTNOW_RCD_Yes, ARTNOW_RCD_Missing, #Healthcare utilization: Treatment
-         ARTADHR_RCD_Neutral, ARTADHR_RCD_Positive, ARTADHR_RCD_Missing, #Healthcare utilization: Adherence
+         ViralSupp_RCR_Unsuppressed, ViralSupp_RCD_Suppressed, ViralSupp_RCD_Suppressed,
+         INSURE_RCR_Uninsured, INSURE_RCD_Insured, INSURE_RCD_Unknown, INSURE_RCD_Missing, #Healthcare utilization: Insurance
+         CARED6_RCR_No, CARED6_RCD_Yes, CARED6_RCD_Missing, #Healthcare utilization: Recent care
+         CAREHV06_MCD_RCR_No, CAREHV06_MCD_RCD_Yes, CAREHV06_MCD_RCD_Missing,
+         ARTNOW_RCR_No, ARTNOW_RCD_Yes, ARTNOW_RCD_Missing, #Healthcare utilization: Treatment
+         ARTADHR_RCR_Negative, ARTADHR_RCD_Neutral, ARTADHR_RCD_Positive, ARTADHR_RCD_Missing, #Healthcare utilization: Adherence
          HE_RC_HAL, HE_RC_HSE, #Youth Health Engagement scale
          CARE_RC, #Provider Empathy (CARE) scale, along with indicator of whether it is skipped (CARELHIV)
          STIGMA_RC, #HIV-related stigma
@@ -800,7 +834,7 @@ acasi_analysis <- acasi %>%
          MENTALH_RC, MENTALH4_RC,#Mental health
          DRUG_RCD_Alcohol, DRUG_RCD_Tobacco, DRUG_RCD_Marijuana, DRUG_RCD_Other, 
          DRUG_RCD_Missing, #Substance use: non-injected
-         INJECTL_RCD_Inject, INJECTL_RCD_Missing, #Substance use: injected
+         INJECTL_RCR_No, INJECTL_RCD_Yes, INJECTL_RCD_Missing, #Substance use: injected
          SOCIALS_RC, #Social support
          #Media Technology Usage and Attitudes Scale
          MTUEX_RC, 
