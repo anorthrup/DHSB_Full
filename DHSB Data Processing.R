@@ -411,7 +411,8 @@ acasi <- acasiJoinInner %>%
     SITE_RCD_WFU   = if_else(SITE1 == "WFU", 1, 0),
     SITE_RCD_WUSL  = if_else(SITE1 == "WUSL", 1, 0),
     #> Survey language
-    surveylanguage_RCD_Eng = if_else(surveylanguage == "English", 1, 0),
+    surveylanguage_RCR_Span = if_else(surveylanguage == "Spanish", 1, 0),
+    surveylanguage_RCD_Eng  = if_else(surveylanguage == "English", 1, 0),
     #> Age
     AGE_RC = as.integer(floor((ymd(TODAY) - ymd(DOB)) / 365.25)),
     #> Ethnicity & Race
@@ -809,7 +810,7 @@ acasi_analysis <- acasi %>%
   select(# SITE1,
          SITE_RCR_CBW, SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
          SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
-         surveylanguage_RCD_Eng,
+         surveylanguage_RCR_Span, surveylanguage_RCD_Eng,
          AGE_RC, #Age
          RACE_RCR_White, RACE_RCD_Latino, RACE_RCD_Black, RACE_RCD_WhiteMix, 
          RACE_RCD_Other, RACE_RCD_Missing, #Ethnicity & Race
