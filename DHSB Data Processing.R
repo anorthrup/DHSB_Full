@@ -473,15 +473,18 @@ acasi <- acasiJoinInner %>%
     #> Income
     MONEY_RC = ifelse(MONEY %in% c(99997, 99998), NA, MONEY),
     MONEY_RC_Log = log(MONEY_RC + 1),
-    MONEY_RCD_Zero = if_else(!is.na(MONEY_RC_Log) &  MONEY_RC_Log == 0, 1, 0),
-    MONEY_RCD_Low  = if_else(!is.na(MONEY_RC_Log) &  
-                               MONEY_RC_Log > 0 & 
-                               MONEY_RC_Log < median(MONEY_RC_Log[MONEY_RC_Log != 0], na.rm = TRUE),
-                             1, 0),
-    MONEY_RCD_High = if_else(!is.na(MONEY_RC_Log) & 
-                               MONEY_RC_Log >= median(MONEY_RC_Log[MONEY_RC_Log != 0], na.rm = TRUE),
-                             1, 0),
-    MONEY_RCD_DontKnow = if_else(is.na(MONEY_RC_Log), 1, 0),
+    MONEY_RC_Cat = case_when(
+      !is.na(MONEY_RC_Log) & MONEY_RC_Log == 0 ~ "Zero",
+      !is.na(MONEY_RC_Log) & MONEY_RC_Log > 0 & 
+        MONEY_RC_Log < median(MONEY_RC_Log[MONEY_RC_Log != 0], na.rm = TRUE) ~ "Low",
+      !is.na(MONEY_RC_Log) & 
+        MONEY_RC_Log >= median(MONEY_RC_Log[MONEY_RC_Log != 0], na.rm = TRUE) ~ "High",
+      is.na(MONEY_RC_Log) ~ "Don't know"
+    ),
+    MONEY_RCD_Zero     = if_else(MONEY_RC_Cat == "Zero", 1, 0),
+    MONEY_RCD_Low      = if_else(MONEY_RC_Cat == "Low", 1, 0),
+    MONEY_RCD_High     = if_else(MONEY_RC_Cat == "High", 1, 0),
+    MONEY_RCD_DontKnow = if_else(MONEY_RC_Cat == "Don't know", 1, 0),
     #> Residence, Last 7 Days
     STAY7D_RC = fct_recode(as.factor(STAY7D),
                            "Stable housing"   =  "1", 
@@ -502,14 +505,14 @@ acasi <- acasiJoinInner %>%
     STAY7D_RCD_Stable      = if_else(STAY7D_RC == "Stable housing", 1, 0),
     STAY7D_RCD_Missing     = if_else(STAY7D_RC == "Refuse to answer", 1, 0),
     #> HIV History
-    DIAGHIV_RC = case_when(DIAGHIV <= 2019 ~ DIAGHIV),
     TIMESINCEHIV = case_when(
-      DIAGHIV != 2099 ~ year(TODAY) - DIAGHIV_RC,
+      DIAGHIV != 2099 ~ year(TODAY) - DIAGHIV,
       DIAGHIV == 2099 ~ as.numeric(AGE_RC)
-    ), #Does not include those born with HIV
-    BORNHIV_MCD_BornWith = if_else(!is.na(HIVDiagnosisYear_MCD) & 
-                                     DOBY == HIVDiagnosisYear_MCD, 1, 0),
-    BORNHIV_MCD_Missing = if_else(is.na(HIVDiagnosisYear_MCD), 1, 0),
+    ),
+    BORNHIV_MCD = case_when(
+      !is.na(HIVDiagnosisYear_MCD) & DOBY == HIVDiagnosisYear_MCD ~ 1,
+      !is.na(HIVDiagnosisYear_MCD) & DOBY != HIVDiagnosisYear_MCD ~ 0
+    ),
     TIMESINCEHIV_MCD = year(TODAY) - HIVDiagnosisYear_MCD, #Includes those born with HIV
     #> Viral Suppression
     ViralSupp_RCD_Suppressed = if_else(!is.na(ViralSupp_MCD) & 
@@ -695,8 +698,8 @@ acasi <- acasiJoinInner %>%
             list(~replace(., which(. > 9), NA))) %>% #Values of 0-9 expected; 98 = refuse to answer
   mutate(
     MTUSNX_RC = case_when(
-      rowSums(is.na(select(., one_of(paste0("MTUSNX0", 1:10, "_RC"))))) < 10 ~ #Is number of NA < number of items?
-        rowSums(select(., one_of(paste0("MTUSNX0", 1:10, "_RC"))), na.rm = TRUE) #If so, sum columns
+      rowSums(is.na(select(., one_of(c(paste0("MTUSNX0", 1:9, "_RC"), "MTUSNX10"))))) < 10 ~ #Is number of NA < number of items?
+        rowSums(select(., one_of(c(paste0("MTUSNX0", 1:9, "_RC"), "MTUSNX10"))), na.rm = TRUE) #If so, sum columns
     )
   ) %>%
   #> Positive Attitudes Toward Technology, 7 items (MTUAX01:MTUAX04, MTUAX09:MTUAX11)
