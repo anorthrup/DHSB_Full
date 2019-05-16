@@ -515,10 +515,13 @@ acasi <- acasiJoinInner %>%
     ),
     TIMESINCEHIV_MCD = year(TODAY) - HIVDiagnosisYear_MCD, #Includes those born with HIV
     #> Viral Suppression
-    ViralSupp_RCD_Suppressed = if_else(!is.na(ViralSupp_MCD) & 
-                                         ViralSupp_MCD == 1,
-                                       1, 0),
-    ViralSupp_RCD_Missing = if_else(is.na(ViralSupp_MCD), 1, 0),
+    ViralSupp_MCD_RC = case_when(
+      !is.na(ViralSupp_MCD) & ViralSupp_MCD == 1 ~ "Suppressed",
+      !is.na(ViralSupp_MCD) & ViralSupp_MCD == 0 ~ "Not suppressed",
+      is.na(ViralSupp_MCD) ~ "Missing"
+    ),
+    ViralSupp_RCD_Suppressed = if_else(ViralSupp_MCD_RC == "Suppressed", 1, 0),
+    ViralSupp_RCD_Missing = if_else(ViralSupp_MCD_RC == "Missing", 1, 0),
     #> Insurance
     INSURE_RC = case_when(INSUREA == 1 ~ "Not insured",
                           INSURE == 97 ~ "Don't know",
