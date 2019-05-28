@@ -426,19 +426,19 @@ kable(table3b %>%
         filter(!is.na(Overall))) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   # group_rows("Social Networking (SN) Apps Used, N (%)", 1, 5) %>%
-  group_rows("SN Used Most Often, N (%)", 1, 5) %>%
-  group_rows("SN Use Frequency, N (%)", 6, 10) %>%
+  group_rows("SN Used Most Often, N (%)", 1, 4) %>%
+  group_rows("SN Use Frequency, N (%)", 5, 8) %>%
   # group_rows("SN Activities, N (%)", 16, 20) %>%
   # group_rows("Communicate With Whom on SN Apps", 21, 25) %>%
   # group_rows("Communicate About on SN Apps", 26, 30) %>%
-  group_rows("PM Use Frequency, N (%)", 11, 15) %>%
+  group_rows("PM Use Frequency, N (%)", 9, 13) %>%
   # group_rows("Communicate With Whom on PM Apps", 36, 40) %>%
   # group_rows("Communicate About on PM Apps", 41, 45) %>%
   # group_rows("Dating/Hookup Apps Used", 46, 50) %>%
   # group_rows("Dating/Hookup App Used Most Often", 51, 55) %>%
   # group_rows("Dating/Hookup App Use Frequency", 56, 60) %>%
   # group_rows("Dating/Hookup App Activities", 61, 65) %>%
-  group_rows("Frequency of Other Uses of Internet", 16, 20)
+  group_rows("Frequency of Other Uses of Internet", 14, 18)
   # group_rows("Ever Used the Internet to...", 71, 77)
 ```
 
