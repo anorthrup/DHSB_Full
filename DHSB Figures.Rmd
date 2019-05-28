@@ -41,14 +41,15 @@ hsCatAge <- hlthSeekCat(figData, AgeGroup)
 hsSum <- hlthSeekSum(figData)
 hsSumAge <- hlthSeekSum(figData, AgeGroup)
 #Plot proportions for Health Seeking Categories
-plotCat(hsCat %>%
+fig1 <- plotCat(hsCat %>%
           filter(Timeframe == "Last 6 Mo"),
         fillVar = "Timeframe", facetCVar = "`Health Category`",
-        title = "Figure 1. Proportion of Respondents Searching Internet for Health Information",
+        title = "Proportion of Respondents Seeking Health Information Online",
         subtitle = "Last 6 Months",
         caption = "Data from internet searches excluding social networking activity",
         colors = c(6)) +
   theme(legend.position = "none")
+fig1
 # ##By age
 # plotCat(hsCatAge, fillVar = "AgeGroup", facetRVar = "Timeframe", facetCVar = "`Health Category`",
 #         title = "Figure 2. Proportion of Respondents Searching Internet for Health Information (By Age Group)",
@@ -95,15 +96,15 @@ plotCat(snCat, fillVar = "Platform", facetCVar = "Category", colors = c(4, 6, 8,
 #         subtitle = "Variables: S56_6, S56_9, S56_12, S56_15, S56_18 (6 Months)",
 #         caption = "* Question was only asked with regards to Social Networking Apps")
 #Plot proportions for Social Networking Summary
-plotSum(snSum %>%
+fig2 <- plotSum(snSum %>%
                mutate(Platform = fct_relevel(as.factor(Platform),
                                              "Private\nMessaging",
                                              "Social\nMedia",
                                              "Text\nMessaging")),
         fillVar = "Platform", colors = c(4, 6, 8, 9),
-        title = "Figure 2. Communications and Social Network Activity Among Respondents",
-        subtitle = "Variables: S56_6, S56_9, S56_15, S56_18 (6 Months)",
-        caption = "Data from internet searches excluding social networking activity")
+        title = "Communications and Social Network Activity",
+        subtitle = "Variables: S56_6, S56_9, S56_15, S56_18 (6 Months)")
+fig2
 # ##By age
 # plotSumGroup(snSumAge %>%
 #                mutate(Platform = fct_relevel(as.factor(Platform),
@@ -125,6 +126,7 @@ plotSum(snSum %>%
 
 ```{r eval = FALSE}
 #####Export to XLSX
+save(fig1, fig2, file = "Figures 1 and 2.RData")
 saveWorkbook(wb, "DHSB Characteristic Data.xlsx", overwrite = TRUE)
 ```
 
