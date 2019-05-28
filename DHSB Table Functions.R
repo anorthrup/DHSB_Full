@@ -214,7 +214,9 @@ table_Continuous <- function(x, variable, stat = "mean",
     mutate(Variable = paste0("   ", name, " [", Max, "]")) %>%
     select(Variable, Overall, levels(x$SITE_RC)) %>%
     {
-      if (!is.null(header)) add_row(., Variable = paste(header, "[Max Value]"), .before = 1) else .
+      if (!is.null(header)) add_row(., 
+                                    Variable = str_replace(header, "(.*)(, Mean \\(SD\\))", "\\1 [Max Value]\\2"), 
+                                    .before = 1) else .
     }
 }
 

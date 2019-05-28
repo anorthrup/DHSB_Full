@@ -186,7 +186,7 @@ table2 <- bind_rows(
   #> Email Usage
   table_Continuous(demo, variable = "MTUEX_RC",
                    name = "Email usage, 4 items",
-                   header = "Media and Technology Use and Attitudes Subscales"),
+                   header = "Media and Technology Use and Attitudes Subscales, Mean (SD)"),
   #> Text Messaging
   table_Continuous(demo, variable = "MTUSPX_RC_Text",
                    name = "Text messaging, 3 items"),
