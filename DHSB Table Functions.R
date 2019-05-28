@@ -185,8 +185,8 @@ table_Continuous <- function(x, variable, stat = "mean",
       if (stat == "mean") {
         summarize(.,
                   Metric = paste0(round(mean(!!varQuo, na.rm = TRUE), 1), 
-                                  " (", round(sd(!!varQuo, na.rm = TRUE), 1), ")"
-                  )
+                                  " (", round(sd(!!varQuo, na.rm = TRUE), 1), ")"),
+                  Max = max(!!varQuo, na.rm = TRUE)
         )
       } else if (stat == "median") {
         summarize(.,
@@ -194,7 +194,8 @@ table_Continuous <- function(x, variable, stat = "mean",
                                   " [",
                                   paste(quantile(!!varQuo, c(0.25, 0.75), na.rm = TRUE), collapse = ", "),
                                   "]"
-                  )
+                  ),
+                  Max = max(!!varQuo, na.rm = TRUE)
         )
       } else {
         stop ("'stat' must be set to 'mean' or 'median' only.")
@@ -208,11 +209,12 @@ table_Continuous <- function(x, variable, stat = "mean",
       group_by(SITE_RC) %>%
       siteSum(.) %>%
       mutate(SITE_RC = as.character(SITE_RC))) %>%
+    mutate(Max = max(Max)) %>%
     spread(SITE_RC, Metric) %>%
-    mutate(Variable = paste0("   ", name)) %>%
+    mutate(Variable = paste0("   ", name, " [", Max, "]")) %>%
     select(Variable, Overall, levels(x$SITE_RC)) %>%
     {
-      if (!is.null(header)) add_row(., Variable = header, .before = 1) else .
+      if (!is.null(header)) add_row(., Variable = paste(header, "[Max Value]"), .before = 1) else .
     }
 }
 

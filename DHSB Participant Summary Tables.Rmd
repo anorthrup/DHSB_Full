@@ -16,9 +16,9 @@ library(scales)
 library(kableExtra)
 
 #####Load data
-setwd("C:/Users/anorthrup/Box Sync/ETAC")
-load("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
-source("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/DHSB Table Functions.R")
+# setwd("C:/Users/anorthrup/Box Sync/ETAC")
+load("acasi.RData")
+source("DHSB Table Functions.R")
 ```
 
 ```{r}
@@ -36,6 +36,7 @@ source("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/DHSB Table Functions
 #####Format variables and rename
 demo <- acasi %>%
   select(-RACE, -starts_with("S56")) %>%
+  filter(!(is.na(HE_RC_HSE) | is.na(HE_RC_HAL))) %>%
   mutate(`Age Groups` = as.factor(case_when(AGE < 25 ~ "18-24 Years",
                                             AGE >= 25 ~ "25-34 Years")),
          SCREEN5 = fct_recode(as.factor(SCREEN5),
@@ -46,14 +47,15 @@ demo <- acasi %>%
                                     "Suppressed"     = "1"),
          DISC_RCD_None = if_else(DISCA == 1, 1, 0),
          DRUG_RCD_None = if_else(DRUG1LM == 1 & DRUG2LK == 1, 1, 0)) %>%
-  mutate_at(vars(matches("(CARE)([[:alpha:]]+)(\\d+)")),
-            list(~as.factor(case_when(. == 0  ~ "No",
-                                      . <= 98 ~ "Yes",
-                                      . >= 98 ~ "Missing")))) %>%
+  # mutate_at(vars(matches("(CARE)([[:alpha:]]+)(\\d+)")),
+  #           list(~as.factor(case_when(. == 0  ~ "No",
+  #                                     . <= 98 ~ "Yes",
+  #                                     . >= 98 ~ "Missing")))) %>%
   mutate(INJECTL_RC = case_when(INJECTL == 1 ~ "Injected drugs",
                                 INJECTL == 0 ~ "Did not inject drugs")) %>%
   unite("SitePID", SITE_RC, PID, remove = FALSE) %>%
-  arrange(SITE_RC, PID)
+  arrange(SITE_RC, PID) %>%
+  mutate_at(vars(matches("DISC_RCD|DRUG_RCD")), list(~as.numeric(as.character(.))))
 ```
 
 ```{r}
@@ -104,7 +106,8 @@ table1 <- bind_rows(
                   header = "Residence, Last 7 Days",
                   varRelevel = c("Stable housing")) %>%
     add_row(Variable = "STAY7D_RC: Six participants in 'Institution' (hospital or prison) were incorporated into 'Unstable housing'.")
-)
+) %>%
+  mutate(Variable = str_replace(Variable, "(Income, Last Month)(.*)", "\\1"))
 
 #####Table 2: participant health care summary
 table2 <- bind_rows(
@@ -120,7 +123,7 @@ table2 <- bind_rows(
   table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
   #Health care history, 6 months
   bind_rows(
-    table_OneFactor(demo, varString = "CARED6", 
+    table_OneFactor(demo, varString = "CARED6_RC", 
                     header = "Recent Health Care") %>%
       filter(Variable != "   No") %>%
       mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
@@ -182,30 +185,37 @@ table2 <- bind_rows(
   #MTUAS
   #> Email Usage
   table_Continuous(demo, variable = "MTUEX_RC",
-                   name = "Email usage",
+                   name = "Email usage, 4 items",
                    header = "Media and Technology Use and Attitudes Subscales"),
   #> Text Messaging
   table_Continuous(demo, variable = "MTUSPX_RC_Text",
-                   name = "Text messaging"),
+                   name = "Text messaging, 3 items"),
   #> Smartphone Usage
   table_Continuous(demo, variable = "MTUSPX_RC_Smartphone",
-                   name = "Smartphone usage"),
+                   name = "Smartphone usage, 9 items"),
   #> Internet Searching
   table_Continuous(demo, variable = "MTUIX_RC",
-                   name = "Internet searching"),
+                   name = "Internet searching, 4 items"),
   #> General Social Media Usage
   table_Continuous(demo, variable = "MTUSNX_RC",
-                   name = "General social media usage"),
+                   name = "General social media usage, 9 items"),
+  table_Continuous(demo, variable = "MTUSNX10_RC",
+                   name = "General social media usage: Seek sexual partners/relationships"),
   #> Positive Attitudes
   table_Continuous(demo, variable = "MTUAX_RC_Pos",
-                   name = "Positive Attitudes Toward Technology"),
+                   name = "Positive attitudes toward technology, 6 items"),
+  table_Continuous(demo, variable = "MTUAX02_RC",
+                   name = "Positive attitudes toward technology: Personal health info"),
   #> Anxieties
   table_Continuous(demo, variable = "MTUAX_RC_Anx",
-                   name = "Anxiety and Dependence on Technology"),
+                   name = "Anxiety and dependence on technology, 3 items"),
+  table_Continuous(demo, variable = "MTUAX07_RC",
+                   name = "Anxiety and dependence on technology: Personal health info"),
   #> Negative Attitudes
   table_Continuous(demo, variable = "MTUAX_RC_Neg",
-                   name = "Negative Attitudes Toward Technology")
+                   name = "Negative attitudes toward technology, 3 items")
 )
+save(table1, table2, file = "Tables Participants.RData")
 ```
 
 ### Table 1
@@ -235,18 +245,18 @@ kable(table2 %>%
       caption = "Table 2. HIV-related health, healthcare utilization, and other characteristics that may relate to digital health seeking"
       ) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
-  group_rows("HIV Diagnosis, N (%)", 1, 3) %>%
-  group_rows("Viral Suppression, N (%)", 4, 4) %>%
-  group_rows("Insurance, N (%)", 5, 7) %>%
-  group_rows("Recent Health Care, N (%)", 8, 9) %>%
-  group_rows("Youth Health Enagement, Mean (SD)", 10, 11) %>%
-  group_rows("Provider Empathy, Mean (SD)", 12, 12) %>%
-  group_rows("Social Support, Mean (SD)", 13, 13) %>%
-  group_rows("HIV-Related Stigma, Mean (SD)", 14, 14) %>%
+  group_rows("HIV Diagnosis [Max Value], N (%)", 1, 3) %>%
+  group_rows("Viral Suppression [Max Value], N (%)", 4, 4) %>%
+  group_rows("Insurance [Max Value], N (%)", 5, 7) %>%
+  group_rows("Recent Health Care [Max Value], N (%)", 8, 9) %>%
+  group_rows("Youth Health Enagement [Max Value], Mean (SD)", 10, 11) %>%
+  group_rows("Provider Empathy [Max Value], Mean (SD)", 12, 12) %>%
+  group_rows("Social Support [Max Value], Mean (SD)", 13, 13) %>%
+  group_rows("HIV-Related Stigma [Max Value], Mean (SD)", 14, 14) %>%
   group_rows("Disclosure of HIV Status, N (%)", 15, 18) %>%
-  group_rows("Physical and Mental Health, Mean (SD)", 19, 20) %>%
+  group_rows("Physical and Mental Health [Max Value], Mean (SD)", 19, 20) %>%
   group_rows("Substance Use, N (%)", 21, 26) %>%
-  group_rows("Media and Technology Use and Attitudes Subscales, Mean (SD)", 27, 34)
+  group_rows("Media and Technology Use and Attitudes Subscales [Max Value], Mean (SD)", 27, 37)
 ```
 
 ```{r eval = FALSE}
