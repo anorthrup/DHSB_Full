@@ -12,7 +12,8 @@ library(rio)
 #Need to save labels for codebook
 
 #00m
-data00mSAS <- import("Data merged across sites/acasibase.sas7bdat")
+
+data00mSAS <- import("C:/Users/anorthrup/Box Sync/ETAC/Data merged across sites/acasibase.sas7bdat")
 ##Save labels
 labels00m <- get_label(data00mSAS) %>% 
   as.data.frame(., stringsAsFactors = FALSE) %>%
@@ -27,7 +28,7 @@ data00mRaw <- read.csv("acasi00mSAS.csv", na.strings = c("", "NA"),
 unlink("acasi00mSAS.csv")
 
 #06m
-data06mSAS <- import("Data merged across sites/acasi06m.sas7bdat")
+data06mSAS <- import("C:/Users/anorthrup/Box Sync/ETAC/Data merged across sites/acasi06m.sas7bdat")
 ##Save labels
 labels06m <- get_label(data06mSAS) %>% 
   as.data.frame(., stringsAsFactors = FALSE) %>%
@@ -42,7 +43,7 @@ data06mRaw <- read.csv("acasi06mSAS.csv", na.strings = c("", "NA"),
 unlink("acasi06mSAS.csv")
 
 #Read FRI PIDs (PID and identifiers differ between ACASI and MCD)
-fri <- import("Data from sites/Friends_Research_Institute/Text Me Girl_PIDs.xlsx",
+fri <- import("C:/Users/anorthrup/Box Sync/ETAC/Data from sites/Friends_Research_Institute/Text Me Girl_PIDs.xlsx",
               col_names = FALSE) %>%
   setNames(c("SiteSpecificID", "PID", "Withdrawn")) %>%
   select(-Withdrawn) %>%
@@ -69,14 +70,14 @@ fri_rekey <- function (x) {
     rename(SITE1 = SiteID)
 }
 #> Participant History
-mcd_history <- read_csv("Data merged across sites/MCD/MCD_Participant_Summary_History_W0-W4_SASdates.csv") %>%
+mcd_history <- read_csv("C:/Users/anorthrup/Box Sync/ETAC/Data merged across sites/MCD/MCD_Participant_Summary_History_W0-W4_SASdates.csv") %>%
   SasNumToDate() %>%
   mutate(SiteSpecificID = replace(SiteSpecificID, 
                                   which(SiteID == "WUSL"), 
                                   str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
   fri_rekey() #Change FRI SiteSpecificIDs to match PIDs in ACASI surveys
   #> Lab Test Results
-mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W4_SASdates.csv") %>%
+mcd_labTests <- read_csv("C:/Users/anorthrup/Box Sync/ETAC/Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W4_SASdates.csv") %>%
   SasNumToDate() %>%
   select(SiteID, SiteSpecificID, ServiceDate, ViralSupp) %>%
   filter(!is.na(ViralSupp)) %>%
@@ -87,7 +88,7 @@ mcd_labTests <- read_csv("Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W
                                   str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
   fri_rekey() #Change FRI SiteSpecificIDs to match PIDs in ACASI surveys
   #> Ambulatory Visits
-mcd_ambVisits <- read_csv("Data merged across sites/MCD/MCD_Ambulatory_Visits_W0-W4_SASdates.csv",
+mcd_ambVisits <- read_csv("C:/Users/anorthrup/Box Sync/ETAC/Data merged across sites/MCD/MCD_Ambulatory_Visits_W0-W4_SASdates.csv",
                           col_types = cols(
                             SiteSpecificID = col_character()
                           )) %>%
@@ -304,51 +305,58 @@ acasiJoinInner <- inner_join(acasi00mTrim,
 acasiJoin00m <- anti_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID"))
 acasiJoin06m <- anti_join(acasi06mTrim, acasi00m, by = c("SITE1", "PID"))
 
-#####Correct answers for participants who marked 'Other'
+#####Reallocate responses for participants who marked 'Other'
 acasiOther <- left_join(
   acasiJoinInner,
-  import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+  import("ACASI Other Text_2019-05-28.xlsx",
          sheet = "GENDERS"),
   by = c("SITE1", "PID")
 ) %>%
   left_join(
     .,
-    import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+    import("ACASI Other Text_2019-05-28.xlsx",
            sheet = "RACEFS"),
     by = c("SITE1", "PID")
   ) %>%
   left_join(
     .,
-    import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+    import("ACASI Other Text_2019-05-28.xlsx",
            sheet = "ORIENTS"),
     by = c("SITE1", "PID")
   ) %>%
   left_join(
     .,
-    import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+    import("ACASI Other Text_2019-05-28.xlsx",
            sheet = "STAY7DS"),
     by = c("SITE1", "PID")
   ) %>%
   left_join(
     .,
-    import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+    import("ACASI Other Text_2019-05-28.xlsx",
            sheet = "INSUREHS"),
     by = c("SITE1", "PID")
   ) %>%
   left_join(
     .,
-    import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+    import("ACASI Other Text_2019-05-28.xlsx",
            sheet = "DISCJS"),
     by = c("SITE1", "PID")
   ) %>%
   left_join(
     .,
-    import("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/ACASI Other Text_2019-04-22.xlsx",
+    import("ACASI Other Text_2019-05-28.xlsx",
            sheet = "DRUG2LS"),
     by = c("SITE1", "PID")
   ) %>%
+  left_join(
+    .,
+    import("ACASI Other Text_2019-05-28.xlsx",
+           sheet = "S56_25S"),
+    by = c("SITE1", "PID")
+  ) %>%
   select(SITE1, PID, GENDERRECODE, RACERECODE, ORIENTRECODE, STAYRECODE, 
-         INSURERECODE, DISCRECODE, DRUGRECODE)
+         INSURERECODE, DISCRECODE, DRUGRECODE, 
+         outcome_SSex_RECODE, outcome_SGen_RECODE)
 
 #####Creation of new variables
 #####Collapse existing demographic variables and create scales
@@ -794,13 +802,15 @@ acasi <- acasiJoinInner %>%
     outcome_Search_SexHealth = if_else(
         rowSums(
           select(., S56_25B, S56_25C, S56_25D, S56_25E, S56_25F, S56_25G) == 1
-        ) > 0, 1, 0
+        ) > 0 | outcome_SSex_RECODE == 1,
+        1, 0
       ),
     #> Internet Searches for General Health (Lifetime)
     outcome_Search_GenHealth = if_else(
       rowSums(
-        select(., S56_25A, S56_25H, S56_25I, S56_25J, S56_25K, S56_25L) == 1
-      ) > 0, 1, 0
+        select(., S56_25A, S56_25H, S56_25I, S56_25J, S56_25K) == 1
+      ) > 0 | outcome_SGen_RECODE == 1,
+      1, 0
     ),
     #> Communication about Sexual Health
     outcome_Comms_SexHealth = if_else(
@@ -862,7 +872,6 @@ acasi_analysis <- acasi %>%
   select(-STAY7D_RCR_Unstable, -ViralSupp_RCR_Unsuppressed, -CARED6_RCR_No) %>%
   filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE)))
 
-save(acasi, acasi_analysis, acasiJoin00m, acasiJoin06m, acasiJoinInner,
-     file = "Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
+save(acasi, acasi_analysis, file = "acasi.RData")
 
 
