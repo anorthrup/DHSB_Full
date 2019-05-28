@@ -846,7 +846,7 @@ acasi_analysis <- acasi %>%
          DISC_RCD_Missing, #Disclosure
          MENTALH_RC, MENTALH4_RC,#Mental health
          DRUG_RCR_None, DRUG_RCD_Alcohol, DRUG_RCD_Tobacco, DRUG_RCD_Marijuana, 
-         DRUG_RCD_Other, DRUG_RCD_Missing, #Substance use: non-injected
+         DRUG_RCD_Other, #DRUG_RCD_Missing, #Substance use: non-injected
          INJECTL_RCR_No, INJECTL_RCD_Yes, INJECTL_RCD_Missing, #Substance use: injected
          SOCIALS_RC, #Social support
          #Media Technology Usage and Attitudes Scale
