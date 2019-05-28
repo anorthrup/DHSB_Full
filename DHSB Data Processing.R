@@ -869,7 +869,8 @@ acasi_analysis <- acasi %>%
          starts_with("outcome")
   ) %>%
   select_if(~length(which(. == 0)) < length(.)) %>%
-  select(-STAY7D_RCR_Unstable, -ViralSupp_RCR_Unsuppressed, -CARED6_RCR_No) %>%
+  select(-STAY7D_RCR_Unstable, -ViralSupp_RCR_Unsuppressed, -CARED6_RCR_No,
+         -ARTADHR_RCD_Missing) %>%
   filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE)))
 
 save(acasi, acasi_analysis, file = "acasi.RData")
