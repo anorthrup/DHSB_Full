@@ -128,7 +128,7 @@ table2 <- bind_rows(
       filter(Variable != "   No") %>%
       mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
                                 "   Doctor's visit, non-HIV, 6 months")),
-    table_OneFactor(demo, varString = "CAREHV06_RC", 
+    table_OneFactor(demo, varString = "CAREHV06_MCD_RC", 
                     header = "Recent Health Care") %>%
       filter(str_detect(Variable, "Yes")) %>%
       arrange(desc(Variable)) %>%
