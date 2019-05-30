@@ -799,13 +799,23 @@ acasi <- acasiJoinInner %>%
   #Outcomes
   mutate(
     #> Internet Searches for Sexual Health (Lifetime)
+    outcome_SSex_RECODE = replace(
+      outcome_SSex_RECODE,
+      which(is.na(outcome_SSex_RECODE)),
+      0
+    ),
     outcome_Search_SexHealth = if_else(
         rowSums(
           select(., S56_25B, S56_25C, S56_25D, S56_25E, S56_25F, S56_25G) == 1
-        ) > 0 | outcome_SSex_RECODE == 1,
+        ) > 0,# | outcome_SSex_RECODE == 1,
         1, 0
       ),
     #> Internet Searches for General Health (Lifetime)
+    outcome_SGen_RECODE = replace(
+      outcome_SGen_RECODE,
+      which(is.na(outcome_SGen_RECODE)),
+      0
+    ),
     outcome_Search_GenHealth = if_else(
       rowSums(
         select(., S56_25A, S56_25H, S56_25I, S56_25J, S56_25K) == 1
@@ -866,7 +876,7 @@ acasi_analysis <- acasi %>%
          MTUIX_RC,
          MTUSNX_RC,
          MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg,
-         starts_with("outcome")
+         outcome_Search_SexHealth, outcome_Search_GenHealth, outcome_Comms_SexHealth
   ) %>%
   select_if(~length(which(. == 0)) < length(.)) %>%
   select(-STAY7D_RCR_Unstable, -ViralSupp_RCR_Unsuppressed, -CARED6_RCR_No,
