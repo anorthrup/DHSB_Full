@@ -166,8 +166,15 @@ table_OneFactor <- function (x, varString, header = varString,
     unite("Frequency", N, Percent, sep = " (") %>%
     mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)")) %>%
     spread(Site, Frequency) %>%
-    mutate(Variable = fct_relevel(factor(Variable, levels = c(freqLevels, keep)),
-                                  varRelevel)) %>%
+    {
+      if (!is.null(n)) {
+        mutate(., Variable = fct_relevel(factor(Variable, levels = c(freqLevels[1:n], keep, "Other")),
+                                         varRelevel))
+      }else {
+        mutate(., Variable = fct_relevel(factor(Variable, levels = c(freqLevels, keep)),
+                                         varRelevel))
+      }
+    } %>%
     arrange(Variable) %>%
     mutate(Variable = str_replace(as.character(Variable), "(.*)", "   \\1")) %>%
     select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
