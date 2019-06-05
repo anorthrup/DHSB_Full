@@ -300,9 +300,17 @@ acasiJoinInner <- inner_join(acasi00mTrim,
                             "HBHC" = "4", "MHS"  = "5", "PSU" = "6", 
                             "PFC" = "7", "SFDPH" = "8", "WFU"  = "9", 
                             "WUSL" = "10"),
-         SITE1 = as.character(SITE1))
+         SITE1 = as.character(SITE1),
+         Set = 1)
   
-acasiJoin00m <- anti_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID"))
+acasiJoin00m <- anti_join(acasi00mTrim, acasi06mTrim, by = c("SITE1", "PID")) %>%
+  mutate(SITE1 = fct_recode(as.factor(SITE1),
+                            "CBW" = "1", "FRI" = "2", "NYSDA" = "3", 
+                            "HBHC" = "4", "MHS"  = "5", "PSU" = "6", 
+                            "PFC" = "7", "SFDPH" = "8", "WFU"  = "9", 
+                            "WUSL" = "10"),
+         SITE1 = as.character(SITE1),
+         Set = 0)
 acasiJoin06m <- anti_join(acasi06mTrim, acasi00m, by = c("SITE1", "PID"))
 
 #####Reallocate responses for participants who marked 'Other'
@@ -361,7 +369,10 @@ acasiOther <- left_join(
 #####Creation of new variables
 #####Collapse existing demographic variables and create scales
 
-acasi <- acasiJoinInner %>%
+acasi <- bind_rows(
+  acasiJoinInner,
+  acasiJoin00m
+) %>%
   arrange(SITE1) %>%
   mutate(SITE1 = as.character(SITE1)) %>%
   filter(AGE >= 18) %>%
@@ -836,7 +847,8 @@ acasi <- acasiJoinInner %>%
 
 ##### Create a data set for analysis excluding original variables
 acasi_analysis <- acasi %>%
-  select(# SITE1,
+  filter(Set == 1) %>% #Remove participants without 06m assessment
+  select(-Set,
          SITE_RCR_CBW, SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
          SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
          surveylanguage_RCR_Span, surveylanguage_RCD_Eng,
