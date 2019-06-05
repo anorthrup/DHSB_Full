@@ -375,7 +375,6 @@ acasi <- bind_rows(
 ) %>%
   arrange(SITE1) %>%
   mutate(SITE1 = as.character(SITE1)) %>%
-  filter(AGE >= 18) %>%
   #Add MCD variables
   left_join(., 
             mcd_history %>%
@@ -843,7 +842,8 @@ acasi <- bind_rows(
     )
   ) %>%
   mutate_at(vars(contains("_RCR"), contains("_RCD"), BORNHIV, CARELHIV, contains("outcome")),
-            list(as.factor))
+            list(as.factor)) %>%
+  filter(AGE_RC >= 18)
 
 ##### Create a data set for analysis excluding original variables
 acasi_analysis <- acasi %>%
