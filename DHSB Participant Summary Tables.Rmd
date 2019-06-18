@@ -1,7 +1,7 @@
 ---
 title: "Digital Health-Seeking Behaviors Tables"
 author: "Adam Northrup, Data Manager, ETAC"
-date: "April 22, 2019"
+date: "June 6, 2019"
 output: html_document
 ---
 ```{r include = FALSE}
@@ -35,6 +35,8 @@ source("DHSB Table Functions.R")
 
 #####Format variables and rename
 demo <- acasi %>%
+  filter(Set == 1) %>% #Remove participants without 06m assessment
+  filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE))) %>%
   select(-RACE, -starts_with("S56")) %>%
   filter(!(is.na(HE_RC_HSE) | is.na(HE_RC_HAL))) %>%
   mutate(`Age Groups` = as.factor(case_when(AGE < 25 ~ "18-24 Years",

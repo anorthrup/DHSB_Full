@@ -1,7 +1,7 @@
 ---
 title: "Digitial Health-Seeking Behaviors Figures"
 author: "Adam Northrup, Data Manager, ETAC"
-date: "April 10, 2019"
+date: "June 6, 2019"
 output: html_document
 ---
 
@@ -28,6 +28,8 @@ source("DHSB Figure Functions.R")
 ```{r}
 #####Create AgeGroup variable
 figData <- acasi %>%
+  filter(Set == 1) %>% #Remove participants without 06m assessment
+  filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE))) %>%
   mutate(AgeGroup = as.factor(case_when(AGE < 25 ~ "18-24 Years",
                                         AGE >= 25 ~ "25-34 Years"))) %>%
   unite("SitePID", SITE1, PID, sep = "_")
