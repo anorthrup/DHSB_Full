@@ -216,8 +216,9 @@ alphaValues <- bind_rows(
   alphaTable(alphaMTU_SocialMed,  "General Social Media Usage"),
   alphaTable(alphaMTU_Pos,        "Positive Attitudes Toward Technology"),
   alphaTable(alphaMTU_Anx,        "Anxiety About Being Without Technology or Dependence on Technology"),
-  alphaTable(alphaMTU_Neg,        "Negative Attitudes Toward Techology")
+  alphaTable(alphaMTU_Neg,        "Negative Attitudes Toward Technology")
 )
 alphaValues
 
 # write_csv(alphaValues, "Subscale Cronbachs Alphas.csv", na = "")
+save(alphaValues, file = "Cronbachs.RData")
