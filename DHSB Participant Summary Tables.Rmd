@@ -183,39 +183,7 @@ table2 <- bind_rows(
                      )),
     table_OneFactor(demo, varString = "INJECTL_RC", header = "Substance Use") %>%
       filter(Variable == "   Injected drugs")
-  ),
-  #MTUAS
-  #> Email Usage
-  table_Continuous(demo, variable = "MTUEX_RC",
-                   name = "Email usage, 4 items",
-                   header = "Media and Technology Use and Attitudes Subscales, Mean (SD)"),
-  #> Text Messaging
-  table_Continuous(demo, variable = "MTUSPX_RC_Text",
-                   name = "Text messaging, 3 items"),
-  #> Smartphone Usage
-  table_Continuous(demo, variable = "MTUSPX_RC_Smartphone",
-                   name = "Smartphone usage, 9 items"),
-  #> Internet Searching
-  table_Continuous(demo, variable = "MTUIX_RC",
-                   name = "Internet searching, 4 items"),
-  #> General Social Media Usage
-  table_Continuous(demo, variable = "MTUSNX_RC",
-                   name = "General social media usage, 9 items"),
-  table_Continuous(demo, variable = "MTUSNX10_RC",
-                   name = "General social media usage: Seek sexual partners/relationships"),
-  #> Positive Attitudes
-  table_Continuous(demo, variable = "MTUAX_RC_Pos",
-                   name = "Positive attitudes toward technology, 6 items"),
-  table_Continuous(demo, variable = "MTUAX02_RC",
-                   name = "Positive attitudes toward technology: Personal health info"),
-  #> Anxieties
-  table_Continuous(demo, variable = "MTUAX_RC_Anx",
-                   name = "Anxiety and dependence on technology, 3 items"),
-  table_Continuous(demo, variable = "MTUAX07_RC",
-                   name = "Anxiety and dependence on technology: Personal health info"),
-  #> Negative Attitudes
-  table_Continuous(demo, variable = "MTUAX_RC_Neg",
-                   name = "Negative attitudes toward technology, 3 items")
+  )
 )
 save(table1, table2, file = "Tables Participants.RData")
 ```

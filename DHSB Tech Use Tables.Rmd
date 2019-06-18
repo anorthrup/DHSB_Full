@@ -88,7 +88,51 @@ tech <- acasi %>%
 ```
 
 ```{r techSummary}
-table3a <- bind_rows(
+table3 <- bind_rows(
+  #MTUAS
+  bind_rows(
+    #> Email Usage
+  table_Continuous(x = tech, variable = "MTUEX_RC",
+                   name = "Email usage, 4 items",
+                   header = "MTUAS, Mean (SD)"),
+  #> Text Messaging
+  table_Continuous(tech, variable = "MTUSPX_RC_Text",
+                   name = "Text messaging, 3 items",
+                   header = "MTUAS, Mean (SD)"),
+  #> Smartphone Usage
+  table_Continuous(tech, variable = "MTUSPX_RC_Smartphone",
+                   name = "Smartphone usage, 9 items",
+                   header = "MTUAS, Mean (SD)"),
+  #> Internet Searching
+  table_Continuous(tech, variable = "MTUIX_RC",
+                   name = "Internet searching, 4 items",
+                   header = "MTUAS, Mean (SD)"),
+  #> General Social Media Usage
+  table_Continuous(tech, variable = "MTUSNX_RC",
+                   name = "General social media usage, 9 items",
+                   header = "MTUAS, Mean (SD)"),
+  # table_Continuous(tech, variable = "MTUSNX10_RC",
+  #                  name = "General social media usage: Seek sexual partners/relationships",
+  #                  header = "MTUAS, Mean (SD)"),
+  #> Positive Attitudes
+  table_Continuous(tech, variable = "MTUAX_RC_Pos",
+                   name = "Positive attitudes toward technology, 6 items",
+                   header = "MTUAS, Mean (SD)"),
+  # table_Continuous(tech, variable = "MTUAX02_RC",
+  #                  name = "Positive attitudes toward technology: Personal health info"),
+  #> Anxieties
+  table_Continuous(tech, variable = "MTUAX_RC_Anx",
+                   name = "Anxiety and dependence on technology, 3 items",
+                   header = "MTUAS, Mean (SD)"),
+  # table_Continuous(tech, variable = "MTUAX07_RC",
+  #                  name = "Anxiety and dependence on technology: Personal health info"),
+  #> Negative Attitudes
+  table_Continuous(tech, variable = "MTUAX_RC_Neg",
+                   name = "Negative attitudes toward technology, 3 items",
+                   header = "MTUAS, Mean (SD)")
+  ) %>%
+    filter(!(Variable == "MTUAS, Mean (SD) [Range], Mean (SD)" & is.na(Overall) & row_number() != 1)),
+  #Device Use
   table_ManyBinary(tech, n = 3, header = "Device Use", keep = "S56_1G",
                         variables = c("S56_1A" = "Cell Phone", 
                                       "S56_1B" = "Tablet", 
@@ -97,52 +141,66 @@ table3a <- bind_rows(
                                       "S56_1E" = "Desktop computer",
                                       "S56_1F" = "Other", 
                                       "S56_1G" = "No devices")),
-  table_OneFactor(tech, n = 3, varString = "S56_4",
-                       header = "Frequency of Sending/Receiving Texts",
-                       keep = "Never") %>%
-    add_row(Variable = "Text Messaging", .before = 1),
-  table_OneFactor(tech, n = 3, varString = "S56_7",
-                       header = "Frequency of Checking Email",
-                       keep = "Never") %>%
-    add_row(Variable = "Email", .before = 1)
-)
-table3b <- bind_rows(
-  table_OneFactor(x = tech, n = 3, header = "SN Used Most Often",
+  #SNS used most often
+  table_OneFactor(x = tech, n = 3, header = "SNS Used Most Often",
                         varString = "S56_11"),
-  table_OneFactor(tech, n = 3, header = "SN Use Frequency",
-                       varString = "S56_13"),
-  table_OneFactor(tech, n = 3, header = "PM Use Frequency",
-                       varString = "S56_16",
-                       keep = "Never") %>%
-    add_row(Variable = "Private Messaging (PM) Apps", .before = 1),
-  table_OneFactor(tech, n = 3, header = "Frequency of Other Uses of Internet",
+  #Used several times a day or more
+  bind_rows(
+    table_OneFactor(tech, n = 1, varString = "S56_4",
+                    header = "Text messaging",
+                    keep = "Several times a day"),
+    table_OneFactor(tech, n = 3, varString = "S56_7",
+                    header = "E-mail",
+                    keep = "Several times a day"),
+    table_OneFactor(tech, n = 3, header = "SNS",
+                    varString = "S56_13"),
+    table_OneFactor(tech, n = 3, header = "Private messaging",
+                    varString = "S56_16",
+                    keep = "Several times a day")
+  ) %>%
+    filter(Variable == "   Several times a day") %>%
+    rename(Header2 = Variable,
+           Variable = Header) %>%
+    rename(Header = Header2) %>%
+    select(Header, Variable, everything()) %>%
+    mutate(Header = str_replace(Header, "(   )(.*)", "\\2, N (%)"),
+           Variable = str_replace(Variable, "(.*)(, N \\(%\\))", "   \\1")) %>%
+    add_row(Header = "Several times a day, N (%)", 
+            Variable = "Several times a day, N (%)",
+            .before = 1) %>%
+    mutate_at(vars(Header, Variable), 
+              list(~str_replace(., "Several times a day", 
+                                "Used several times a day or more"))),
+  table_OneFactor(tech, n = 1, header = "Used more than 1 hour a day",
                        varString = "S56_23",
-                       keep = "Never") %>%
-    add_row(Variable = "Use Internet Other Than Messaging, Email, Social Networking, Dating",
-            .before = 1)
+                       keep = "Every day, more than 1 hour") %>%
+    filter(Variable == "   Every day, more than 1 hour" | is.na(Overall)) %>%
+    mutate(Variable = replace(Variable, 
+                              which(Variable == "   Every day, more than 1 hour"), 
+                              "   Internet usage (not messaging/email/dating websites)"))
 )
 ```
 
 ### Table 3a
 ```{r table3a, include = TRUE}
-kable(table3a %>%
+table3Index <- table3 %>%
+  filter(!is.na(Overall)) %>%
+  select(Header) %>%
+  mutate(Row = row_number()) %>%
+  group_by(Header) %>%
+  summarize(
+    Start = min(Row),
+    End   = max(Row)
+  ) %>%
+  arrange(Start)
+
+kable(table3 %>%
         filter(!is.na(Overall))) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows("Device Use, N (%)", 1, 5) %>%
   group_rows("Text Messaging:\nFrequency of Sending/Receiving Texts, N (%)", 
              6, 10) %>%
   group_rows("Email:\nFrequency of Checking Email, N (%)", 11, 15)
-```
-
-### Table 3b
-```{r table3b, include = TRUE}
-kable(table3b %>%
-        filter(!is.na(Overall))) %>%
-  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
-  group_rows("SN Used Most Often, N (%)", 1, 4) %>%
-  group_rows("SN Use Frequency, N (%)", 5, 8) %>%
-  group_rows("PM Use Frequency, N (%)", 9, 13) %>%
-  group_rows("Frequency of Other Uses of Internet", 14, 18)
 ```
 
 ```{r saveWorkbook, eval = FALSE}
