@@ -101,11 +101,14 @@ table_ManyBinary <- function (x, header, variables, n = NULL, keep = NULL) {
     mutate(Variable = variables[
       map_int(Variable, ~which(names(variables) %in% .))
       ]) %>%
-    select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
-           Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
-           `Winston-Salem`, `St. Louis`) %>%
+    select(Variable, Overall, levels(x$SITE_RC)[levels(x$SITE_RC) %in% colnames(.)]) %>%
+           # `Corpus Christi`, `Los Angeles`, `New York`, 
+           # Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
+           # `Winston-Salem`, `St. Louis`) %>%
     mutate(Variable = str_replace(Variable, "(.*)", "   \\1")) %>%
-    add_row(Variable = paste0(header, ", N (%)"), .before = 1)
+    add_row(Variable = paste0(header, ", N (%)"), .before = 1) %>%
+    mutate(Header = Variable[1]) %>%
+    select(Header, everything())
 }
 
 table_OneFactor <- function (x, varString, header = varString, 
@@ -143,26 +146,25 @@ table_OneFactor <- function (x, varString, header = varString,
   
   x %>%
     mutate_at(vars(one_of(varString)), 
-              list(~fct_recode(factor(., levels = c(freqLevels, keep)),
-                              !!!levRecode))) %>%
-                              { #Create two data frames and bind them together: summary of overall, summary by site
-                                bind_rows(
-                                  select(., varString) %>% #Overall summary
-                                    table() %>%
-                                    as.data.frame(., stringsAsFactors = FALSE) %>%
-                                    setNames(c("Variable", "N")) %>%
-                                    mutate(Site = "Overall",
-                                           Percent = scales::percent(N / sum(N), accuracy = 0.1),
-                                           N = paste0(N, "/", sum(N))),
-                                  select(., SITE_RC, varString) %>% #Summary by site
-                                    table() %>%
-                                    as.data.frame(., stringsAsFactors = FALSE) %>%
-                                    setNames(c("Site", "Variable", "N")) %>%
-                                    group_by(Site) %>%
-                                    mutate(Percent = scales::percent(N / sum(N), accuracy = 0.1)) %>%
-                                    mutate(N = as.character(N))
-                                )
-                              } %>%
+              list(~fct_recode(factor(., levels = c(freqLevels, keep)), !!!levRecode))) %>%
+    { #Create two data frames and bind them together: summary of overall, summary by site
+      bind_rows(
+        select(., varString) %>% #Overall summary
+          table() %>%
+          as.data.frame(., stringsAsFactors = FALSE) %>%
+          setNames(c("Variable", "N")) %>%
+          mutate(Site = "Overall",
+                 Percent = scales::percent(N / sum(N), accuracy = 0.1),
+                 N = paste0(N, "/", sum(N))),
+        select(., SITE_RC, varString) %>% #Summary by site
+          table() %>%
+          as.data.frame(., stringsAsFactors = FALSE) %>%
+          setNames(c("Site", "Variable", "N")) %>%
+          group_by(Site) %>%
+          mutate(Percent = scales::percent(N / sum(N), accuracy = 0.1)) %>%
+          mutate(N = as.character(N))
+      )
+    } %>%
     unite("Frequency", N, Percent, sep = " (") %>%
     mutate(Frequency = str_replace(Frequency, "(.*)", "\\1)")) %>%
     spread(Site, Frequency) %>%
@@ -175,16 +177,21 @@ table_OneFactor <- function (x, varString, header = varString,
                                          varRelevel))
       }
     } %>%
+    # mutate(Variable = fct_relevel(factor(Variable, levels = c(freqLevels, keep)),
+    #                               varRelevel)) %>%
     arrange(Variable) %>%
     mutate(Variable = str_replace(as.character(Variable), "(.*)", "   \\1")) %>%
-    select(Variable, Overall, `Corpus Christi`, `Los Angeles`, `New York`, 
-           Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
-           `Winston-Salem`, `St. Louis`) %>%
-    add_case(Variable = paste0(header, ", N (%)"), .before = 1)
+    select(Variable, Overall, levels(x$SITE_RC)[levels(x$SITE_RC) %in% colnames(.)]) %>%
+    # `Corpus Christi`, `Los Angeles`, `New York`, 
+    # Chicago, Cleveland, Hershey, Philadelphia, `San Francisco`, 
+    # `Winston-Salem`, `St. Louis`) %>%
+    add_case(Variable = paste0(header, ", N (%)"), .before = 1) %>%
+    mutate(Header = Variable[1]) %>%
+    select(Header, everything())
 }
 
 table_Continuous <- function(x, variable, stat = "mean",
-                             name = variable, header = NULL) {
+                             name = variable, header = variable) {
   varQuo <- quo(!!sym(variable))
   siteSum <- function(x) {
     x %>%
@@ -193,20 +200,20 @@ table_Continuous <- function(x, variable, stat = "mean",
         summarize(.,
                   Metric = paste0(round(mean(!!varQuo, na.rm = TRUE), 1), 
                                   " (", round(sd(!!varQuo, na.rm = TRUE), 1), ")"),
+                  Min = min(!!varQuo, na.rm = TRUE),
                   Max = max(!!varQuo, na.rm = TRUE)
         )
-      } else if (stat == "median") {
+      } else {
         summarize(.,
                   Metric = paste0(median(!!varQuo, na.rm = TRUE), 
                                   " [",
                                   paste(quantile(!!varQuo, c(0.25, 0.75), na.rm = TRUE), collapse = ", "),
                                   "]"
                   ),
+                  Min = min(!!varQuo, na.rm = TRUE),
                   Max = max(!!varQuo, na.rm = TRUE)
         )
-      } else {
-        stop ("'stat' must be set to 'mean' or 'median' only.")
-      }
+      } 
     }
   }
   bind_rows(
@@ -215,16 +222,29 @@ table_Continuous <- function(x, variable, stat = "mean",
     x %>%
       group_by(SITE_RC) %>%
       siteSum(.) %>%
-      mutate(SITE_RC = as.character(SITE_RC))) %>%
-    mutate(Max = max(Max)) %>%
+      mutate(SITE_RC = as.character(SITE_RC))
+    ) %>%
+    mutate(Min = min(Min),
+           Max = max(Max),
+           Range = paste0("[", Min, " - ", Max, "]")) %>%
     spread(SITE_RC, Metric) %>%
-    mutate(Variable = paste0("   ", name, " [", Max, "]")) %>%
-    select(Variable, Overall, levels(x$SITE_RC)) %>%
+    mutate(Variable = paste0("   ", name, " ", Range)) %>%
+    select(Variable, Overall, levels(x$SITE_RC)[levels(x$SITE_RC) %in% colnames(.)]) %>%
     {
-      if (!is.null(header)) add_row(., 
-                                    Variable = str_replace(header, "(.*)(, Mean \\(SD\\))", "\\1 [Max Value]\\2"), 
-                                    .before = 1) else .
-    }
+      if (stat == "mean") {
+        add_row(.,
+                Variable = paste(header, "[Range],", "Mean (SD)"), 
+                .before = 1)
+      } else if (stat == "median") {
+        add_row(.,
+                Variable = paste(header, "[Range],", "Median [IQR]"), 
+                .before = 1)
+      } else {
+        stop ("'stat' must be set to 'mean' or 'median' only.")
+      }
+    } %>%
+    mutate(Header = Variable[1]) %>%
+    select(Header, everything())
 }
 
 #Chi-square test for levels of variable in tables
