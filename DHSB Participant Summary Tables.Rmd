@@ -65,7 +65,7 @@ demo <- acasi %>%
 newNames <- bind_rows(
   demo %>%
     summarize(Frequency = n()) %>%
-    mutate(SITE_RC = "Overall"),
+    mutate(SITE_RC = "Overall_1"),
   demo %>%
     group_by(SITE_RC) %>%
     summarize(Frequency = n()) %>%
@@ -74,6 +74,7 @@ newNames <- bind_rows(
   unite("NewNames", SITE_RC, Frequency, sep = " (N=", remove = FALSE) %>%
   mutate(NewNames = str_c(NewNames, ")")) %>%
   select(-Frequency) %>%
+  mutate(NewNames = factor(NewNames, levels = unique(NewNames))) %>%
   spread(NewNames, SITE_RC) %>%
   unlist()
 #####Table 1: participant characteristics summary
@@ -101,17 +102,41 @@ table1 <- bind_rows(
   table_OneFactor(demo, varString = "GRADE_RC", header = "Education",
                   varRelevel = c("High school, equivalent or less",
                                  "Some post-K12")),
-  #Income
-  table_Continuous(demo, variable = "MONEY_RC", stat = "median", 
-                   name = "Income, Last Month"),
   #Residence
   table_OneFactor(demo, varString = "STAY7D_RC", 
-                  header = "Residence, Last 7 Days",
-                  varRelevel = c("Stable housing")) %>%
-    add_row(Variable = "STAY7D_RC: Six participants in 'Institution' (hospital or prison) were incorporated into 'Unstable housing'.")
+                  header = "Current Residence",
+                  varRelevel = c("Stable housing")),
+  #Income
+  table_Continuous(demo, variable = "MONEY_RC", stat = "median", 
+                   name = "Income, Last Month")
 ) %>%
   mutate(Variable = str_replace(Variable, "(Income, Last Month)(.*)", "\\1")) %>%
-  rename(!!newNames)
+  mutate(Overall = str_replace(Overall, "(\\d+)(/\\d+)(.*)", "\\1\\3")) %>%
+  mutate_at(vars(-Header, -Variable, -Overall),
+            list(~str_replace(., "(.*)(\\d \\()(.*)(%\\)$)", "\\3"))) %>%
+  mutate_at(vars(-Header, -Variable, -Overall),
+            list(~str_replace(., "(\\d+)( \\[.*\\]$)", "\\1"))) %>%
+  separate(Overall, c("Overall_1", "Overall_2"), sep = " ") %>%
+  mutate(Overall_2 = str_replace(Overall_2, "(\\()(.*)(%\\))", "\\2")) %>%
+  add_row(Header = "Characteristic (Categorical)", 
+          Variable = "Characteristic (Categorical)", 
+          .before = 1) %>%
+  mutate(Overall_1 = replace(Overall_1, 
+                             which(Variable == "Characteristic (Categorical)"),
+                             "n")) %>%
+  mutate_at(vars(-Header, -Variable, -Overall_1), list(~replace(., 1, "%"))) %>%
+  mutate_at(vars(Header, Variable), list(~str_remove(., ", N \\(%\\)"))) %>%
+  add_row(.before = nrow(.) - 1, 
+          Header = "Characteristic (Continuous)",
+          Variable = "Characteristic (Continuous)") %>%
+  mutate(Overall_2 = replace(Overall_2, 
+                             which(Variable == "Characteristic (Continuous)"),
+                             "IQR")) %>%
+  mutate_at(vars(-Header, -Variable, -Overall_2), 
+            list(~replace(., which(Variable == "Characteristic (Continuous)"), "med"))) %>%
+  rename(!!newNames) %>%
+  add_row(Variable = "STAY7D_RC: Six participants in 'Institution' (hospital or prison) were incorporated into 'Unstable housing'.") %>%
+  add_row(Variable = paste0("MONEY_RC Overall sample size N=", length(which(!is.na(demo$MONEY_RC)))))
 
 #####Table 2: participant health care summary
 table2 <- bind_rows(
