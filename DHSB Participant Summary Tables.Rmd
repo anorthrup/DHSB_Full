@@ -47,7 +47,7 @@ demo <- acasi %>%
          ViralSupp_MCD = fct_recode(as.factor(ViralSupp_MCD),
                                     "Not suppressed" = "0",
                                     "Suppressed"     = "1"),
-         DISC_RCD_None = if_else(DISCA == 1, 1, 0),
+         DISC_RC = if_else(DISCA == 0, "Disclosed", "Did not disclose"),
          DRUG_RCD_None = if_else(DRUG1LM == 1 & DRUG2LK == 1, 1, 0)) %>%
   # mutate_at(vars(matches("(CARE)([[:alpha:]]+)(\\d+)")),
   #           list(~as.factor(case_when(. == 0  ~ "No",
@@ -140,78 +140,102 @@ table1 <- bind_rows(
 
 #####Table 2: participant health care summary
 table2 <- bind_rows(
-  #HIV Diagnosis
-  table_OneFactor(demo, varString = "SCREEN5", header = "HIV Diagnosis",
-                  varRelevel = c("Within past 12 months",
-                                 "More than 12 months ago")),
-  #Viral Suppression
-  table_OneFactor(demo, varString = "ViralSupp_MCD",
-                  header = "Viral Suppression") %>%
-    filter(Variable != "   Not suppressed"),
-  #Insurance
-  table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
-  #Health care history, 6 months
   bind_rows(
-    table_OneFactor(demo, varString = "CARED6_RC", 
-                    header = "Recent Health Care") %>%
-      filter(Variable != "   No") %>%
-      mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
-                                "   Doctor's visit, non-HIV, 6 months")),
-    table_OneFactor(demo, varString = "CAREHV06_MCD_RC", 
-                    header = "Recent Health Care") %>%
-      filter(str_detect(Variable, "Yes")) %>%
-      arrange(desc(Variable)) %>%
-      mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
-                                "   Doctor's visit, HIV, 6 months"))
+    #HIV Diagnosis
+    table_OneFactor(demo, varString = "SCREEN5", header = "HIV Diagnosis",
+                    varRelevel = c("Within past 12 months",
+                                   "More than 12 months ago")),
+    #Viral Suppression
+    table_OneFactor(demo, varString = "ViralSupp_MCD",
+                    header = "Viral Suppression") %>%
+      filter(Variable != "   Not suppressed"),
+    #Insurance
+    table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
+    #Health care history, 6 months
+    bind_rows(
+      table_OneFactor(demo, varString = "CARED6_RC", 
+                      header = "Recent Health Care") %>%
+        filter(Variable != "   No") %>%
+        mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
+                                  "   Doctor's visit, non-HIV, 6 months")),
+      table_OneFactor(demo, varString = "CAREHV06_MCD_RC", 
+                      header = "Recent Health Care") %>%
+        filter(str_detect(Variable, "Yes")) %>%
+        arrange(desc(Variable)) %>%
+        mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
+                                  "   Doctor's visit, HIV, 6 months"))
     ),
-  #Youth Health Engagement
-  #> Health Access Literacy
-  table_Continuous(demo, variable = "HE_RC_HAL",
-                   name = "Health Access Literacy, 4 Items", 
-                   header = "Youth Health Enagement, Mean (SD)"),
-  #> Health Self-Efficacy
-  table_Continuous(demo, variable = "HE_RC_HSE", 
-                   name = "Health Self-Efficacy, 5 Items"),
-  #Provider Empathy
-  table_Continuous(demo, variable = "CARE_RC",
-                   name = "Provider Empathy, 10 items", 
-                   header = "Provider Empathy, Mean (SD)"),
-  #Social Support
-  table_Continuous(demo, variable = "SOCIALS_RC",
-                   name = "Social Support, 3 items", 
-                   header = "Social Support, Mean (SD)"),
-  #HIV-Related Stigma
-  table_Continuous(demo, variable = "STIGMA_RC",
-                   name = "HIV-Related Stigma, 10 items", 
-                   header = "HIV-Related Stigma, Mean (SD)"),
-  #HIV Disclosure
-  table_ManyBinary(demo, header = "Disclosure of HIV Status",
-                   variables = c(
-                     "DISC_RCD_None"    = "No one",
-                     "DISC_RCD_Partner" = "Partner/Sex Partner",
-                     "DISC_RCD_Family"  = "Friends/Family",
-                     "DISC_RCD_Other"   = "Other person(s)"
-                   )),
-  #Physical and Mental Health
-  table_Continuous(demo, variable = "MENTALH_RC",
-                   name = "Mental Health, 3 items",
-                   header = "Physical and Mental Health, Mean (SD)"),
-  table_Continuous(demo, variable = "MENTALH4",
-                   name = "Mental and Physical Health, 1 item"),
-  #Substance Use
+    #HIV Disclosure
+    table_OneFactor(demo, varString = "DISC_RC", 
+                    header = "HIV disclosure status") %>%
+      filter(Variable != "   Did not disclose"),
+    #Substance Use
+    bind_rows(
+      table_ManyBinary(demo, header = "Substance Use",
+                       variables = c(
+                         "DRUG_RCD_None"      = "None",
+                         "DRUG_RCD_Alcohol"   = "Alcohol",
+                         "DRUG_RCD_Tobacco"   = "Tobacco",
+                         "DRUG_RCD_Marijuana" = "Marijuana",
+                         "DRUG_RCD_Other"     = "Other non-injected drug(s)"
+                       )),
+      table_OneFactor(demo, varString = "INJECTL_RC", header = "Substance Use") %>%
+        filter(Variable == "   Injected drugs")
+    )
+  ) %>%
+    mutate_at(vars(-Header, -Variable, -Overall),
+              list(~str_replace(., "(.*)(\\d \\()(.*)(%\\)$)", "\\3"))) %>%
+    separate(Overall, c("Overall_1", "Overall_2"), sep = " ") %>%
+    mutate(Overall_2 = str_replace(Overall_2, "(\\()(.*)(%\\))", "\\2")) %>%
+    add_row(Header = "Characteristic (Categorical)", 
+            Variable = "Characteristic (Categorical)", 
+            .before = 1) %>%
+    mutate(Overall_1 = replace(Overall_1, 
+                               which(Variable == "Characteristic (Categorical)"),
+                               "n")) %>%
+    mutate_at(vars(-Header, -Variable, -Overall_1), list(~replace(., 1, "%"))),
   bind_rows(
-    table_ManyBinary(demo, header = "Substance Use",
-                     variables = c(
-                       "DRUG_RCD_None"      = "None",
-                       "DRUG_RCD_Alcohol"   = "Alcohol",
-                       "DRUG_RCD_Tobacco"   = "Tobacco",
-                       "DRUG_RCD_Marijuana" = "Marijuana",
-                       "DRUG_RCD_Other"     = "Other non-injected drug(s)"
-                     )),
-    table_OneFactor(demo, varString = "INJECTL_RC", header = "Substance Use") %>%
-      filter(Variable == "   Injected drugs")
-  )
+    #Youth Health Engagement
+    #> Health Access Literacy
+    table_Continuous(demo, variable = "HE_RC_HAL",
+                     name = "Health Access Literacy", 
+                     header = "Youth Health Enagement"),
+    #> Health Self-Efficacy
+    table_Continuous(demo, variable = "HE_RC_HSE", 
+                     name = "Health Self-Efficacy"),
+    #Provider Empathy
+    table_Continuous(demo, variable = "CARE_RC",
+                     name = "Provider Empathy", 
+                     header = "Provider Empathy"),
+    #Social Support
+    table_Continuous(demo, variable = "SOCIALS_RC",
+                     name = "Social Support", 
+                     header = "Social Support"),
+    #HIV-Related Stigma
+    table_Continuous(demo, variable = "STIGMA_RC",
+                     name = "HIV-Related Stigma", 
+                     header = "HIV-Related Stigma"),
+    #Physical and Mental Health
+    table_Continuous(demo, variable = "MENTALH_RC",
+                     name = "Mental Health",
+                     header = "Physical and Mental Health")
+    # table_Continuous(demo, variable = "MENTALH4",
+    #                  name = "Mental and Physical Health, 1 item")
+  ) %>%
+    mutate_at(vars(-Header, -Variable, -Overall),
+              list(~str_replace(., "(.*)(\\d+)( \\(.*\\)$)", "\\1\\2"))) %>%
+    separate(Overall, c("Overall_1", "Overall_2"), sep = " ") %>%
+    add_row(Header = "Characteristic (Categorical)", 
+            Variable = "Characteristic (Categorical)", 
+            .before = 1) %>%
+    mutate(Overall_2 = replace(Overall_2, 
+                               which(Variable == "Characteristic (Categorical)"),
+                               "(SD)")) %>%
+    mutate_at(vars(-Header, -Variable, -Overall_2), list(~replace(., 1, "m")))
 ) %>%
+  mutate(Overall_1 = str_replace(Overall_1, "(\\d+)(/\\d+)", "\\1")) %>%
+  mutate_at(vars(Header, Variable), list(~str_remove(., ", N \\(%\\)"))) %>%
+  mutate_at(vars(Header, Variable), list(~str_remove(., ", Mean \\(SD\\)"))) %>%
   rename(!!newNames)
 save(table1, table2, file = "Tables Participants.RData")
 ```
