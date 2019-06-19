@@ -111,42 +111,42 @@ table3 <- bind_rows(
   bind_rows(
     #> Email Usage
   table_Continuous(tech, variable = "MTUEX_RC",
-                   name = "Email usage, 4 items",
+                   name = "Email usage",
                    header = "MTUAS"),
   #> Text Messaging
   table_Continuous(tech, variable = "MTUSPX_RC_Text",
-                   name = "Text messaging, 3 items",
+                   name = "Text messaging",
                    header = "MTUAS"),
   #> Smartphone Usage
   table_Continuous(tech, variable = "MTUSPX_RC_Smartphone",
-                   name = "Smartphone usage, 9 items",
+                   name = "Smartphone usage",
                    header = "MTUAS"),
   #> Internet Searching
   table_Continuous(tech, variable = "MTUIX_RC",
-                   name = "Internet searching, 4 items",
+                   name = "Internet searching",
                    header = "MTUAS"),
   #> General Social Media Usage
   table_Continuous(tech, variable = "MTUSNX_RC",
-                   name = "General social media usage, 9 items",
+                   name = "General social media usage",
                    header = "MTUAS"),
   # table_Continuous(tech, variable = "MTUSNX10_RC",
   #                  name = "General social media usage: Seek sexual partners/relationships",
   #                  header = "MTUAS"),
   #> Positive Attitudes
   table_Continuous(tech, variable = "MTUAX_RC_Pos",
-                   name = "Positive attitudes toward technology, 6 items",
+                   name = "Positive attitudes toward technology",
                    header = "MTUAS"),
   # table_Continuous(tech, variable = "MTUAX02_RC",
   #                  name = "Positive attitudes toward technology: Personal health info"),
   #> Anxieties
   table_Continuous(tech, variable = "MTUAX_RC_Anx",
-                   name = "Anxiety and dependence on technology, 3 items",
+                   name = "Anxiety and dependence on technology",
                    header = "MTUAS"),
   # table_Continuous(tech, variable = "MTUAX07_RC",
   #                  name = "Anxiety and dependence on technology: Personal health info"),
   #> Negative Attitudes
   table_Continuous(tech, variable = "MTUAX_RC_Neg",
-                   name = "Negative attitudes toward technology, 3 items",
+                   name = "Negative attitudes toward technology",
                    header = "MTUAS")
   ) %>%
     filter(!(Variable == "MTUAS [Range], Mean (SD)" & is.na(Overall) & row_number() != 1)) %>%
@@ -220,12 +220,23 @@ table3 <- bind_rows(
     mutate_at(vars(Header, Variable), list(~str_remove(., ", N \\(%\\)")))
 ) %>%
   add_row(Variable = "Among participants reporting SNS utilization (N = 651)")
+table3Names <- colnames(table3[, 3:ncol(table3)])
+names(table3Names) <- paste0(
+  colnames(table3[, 3:ncol(table3)]), " (N=", 
+  table3[2, 3:ncol(table3)] %>% unlist(), ")"
+)
+
+table3 <- table3 %>%
+  rename(!!table3Names) %>%
+  filter(Header != "Number of Participants") %>%
+  rename(Characteristic = Variable)
+  
 ```
 
 ### Table 3a
 ```{r table3a, include = TRUE}
 table3Index <- table3 %>%
-  filter(!is.na(Overall_1)) %>%
+  filter(complete.cases(.)) %>%
   select(Header) %>%
   mutate(Row = row_number()) %>%
   group_by(Header) %>%
@@ -237,29 +248,24 @@ table3Index <- table3 %>%
 
 kable(table3 %>%
         select(-Header) %>%
-        filter(!is.na(Overall_1))) %>%
+        filter(complete.cases(.))) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
   group_rows(table3Index$Header[1], table3Index$Start[1], table3Index$End[1]) %>%
   group_rows(table3Index$Header[2], table3Index$Start[2], table3Index$End[2]) %>%
   group_rows(table3Index$Header[3], table3Index$Start[3], table3Index$End[3]) %>%
   group_rows(table3Index$Header[4], table3Index$Start[4], table3Index$End[4]) %>%
   group_rows(table3Index$Header[5], table3Index$Start[5], table3Index$End[5]) %>%
-  group_rows(table3Index$Header[6], table3Index$Start[6], table3Index$End[6]) %>%
-  group_rows(table3Index$Header[7], table3Index$Start[7], table3Index$End[7])
+  group_rows(table3Index$Header[6], table3Index$Start[6], table3Index$End[6])
 ```
 
 ```{r saveWorkbook, eval = FALSE}
 wb <- loadWorkbook("DHSB Tables.xlsx")
-#Table3a
-removeWorksheet(wb, "Table 3a")
-addWorksheet(wb, "Table 3a")
-writeData(wb, sheet = "Table 3a", table3a)
-setColWidths(wb, sheet = "Table 3a", cols = 1:ncol(table3a), widths = "auto")
-#Table3b
-removeWorksheet(wb, "Table 3b")
-addWorksheet(wb, "Table 3b")
-writeData(wb, sheet = "Table 3b", table3b)
-setColWidths(wb, sheet = "Table 3b", cols = 1:ncol(table3b), widths = "auto")
+
+removeWorksheet(wb, "Table 3")
+addWorksheet(wb, "Table 3")
+writeData(wb, sheet = "Table 3", table3 %>% select(-Header))
+setColWidths(wb, sheet = "Table 3", cols = 1:(ncol(table3) - 1), widths = "auto")
+
 saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 ```
 
