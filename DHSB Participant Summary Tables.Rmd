@@ -1,7 +1,7 @@
 ---
 title: "Digital Health-Seeking Behaviors Tables"
 author: "Adam Northrup, Data Manager, ETAC"
-date: "June 6, 2019"
+date: "June 19, 2019"
 output: html_document
 ---
 ```{r include = FALSE}
@@ -61,22 +61,23 @@ demo <- acasi %>%
 ```
 
 ```{r}
+#####Number of participants
+newNames <- bind_rows(
+  demo %>%
+    summarize(Frequency = n()) %>%
+    mutate(SITE_RC = "Overall"),
+  demo %>%
+    group_by(SITE_RC) %>%
+    summarize(Frequency = n()) %>%
+    mutate(SITE_RC = as.character(SITE_RC))
+) %>%
+  unite("NewNames", SITE_RC, Frequency, sep = " (N=", remove = FALSE) %>%
+  mutate(NewNames = str_c(NewNames, ")")) %>%
+  select(-Frequency) %>%
+  spread(NewNames, SITE_RC) %>%
+  unlist()
 #####Table 1: participant characteristics summary
 table1 <- bind_rows(
-  #Number of participants
-  bind_rows(
-    demo %>%
-      summarize(Frequency = n()) %>%
-      mutate(SITE_RC = "Overall"),
-    demo %>%
-      group_by(SITE_RC) %>%
-      summarize(Frequency = n()) %>%
-      mutate(SITE_RC = as.character(SITE_RC))
-  ) %>%
-    mutate(Frequency = as.character(Frequency)) %>%
-    spread(SITE_RC, Frequency) %>%
-    mutate(Variable = "Number of Participants") %>%
-    select(Variable, Overall, levels(demo$SITE_RC)),
   #Age groups
   table_OneFactor(demo, varString = "Age Groups",
                   varRelevel = c("18-24 Years")),
@@ -109,7 +110,8 @@ table1 <- bind_rows(
                   varRelevel = c("Stable housing")) %>%
     add_row(Variable = "STAY7D_RC: Six participants in 'Institution' (hospital or prison) were incorporated into 'Unstable housing'.")
 ) %>%
-  mutate(Variable = str_replace(Variable, "(Income, Last Month)(.*)", "\\1"))
+  mutate(Variable = str_replace(Variable, "(Income, Last Month)(.*)", "\\1")) %>%
+  rename(!!newNames)
 
 #####Table 2: participant health care summary
 table2 <- bind_rows(
@@ -184,7 +186,8 @@ table2 <- bind_rows(
     table_OneFactor(demo, varString = "INJECTL_RC", header = "Substance Use") %>%
       filter(Variable == "   Injected drugs")
   )
-)
+) %>%
+  rename(!!newNames)
 save(table1, table2, file = "Tables Participants.RData")
 ```
 

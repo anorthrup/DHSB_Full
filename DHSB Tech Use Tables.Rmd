@@ -88,25 +88,23 @@ tech <- acasi %>%
 ```
 
 ```{r techSummary}
+#####Number of participants
+newNames <- bind_rows(
+  tech %>%
+    summarize(Frequency = n()) %>%
+    mutate(SITE_RC = "Overall_1"),
+  tech %>%
+    group_by(SITE_RC) %>%
+    summarize(Frequency = n()) %>%
+    mutate(SITE_RC = as.character(SITE_RC))
+) %>%
+  unite("NewNames", SITE_RC, Frequency, sep = " (N=", remove = FALSE) %>%
+  mutate(NewNames = str_c(NewNames, ")")) %>%
+  select(-Frequency) %>%
+  spread(NewNames, SITE_RC) %>%
+  unlist()
+#####Table 3
 table3 <- bind_rows(
-  #Number of participants
-  bind_rows(
-    tech %>%
-      summarize(n()) %>%
-      mutate(SITE_RC = "Overall_1"),
-    tech %>%
-      group_by(SITE_RC) %>%
-      summarize(n()) %>%
-      mutate(SITE_RC = as.character(SITE_RC))
-  ) %>%
-    mutate(`n()` = as.character(`n()`)) %>%
-    spread(SITE_RC, `n()`) %>%
-    mutate(Header = "Number of Participants",
-           Variable = "Participants",
-           Overall_2 = "") %>%
-    select(Header, Variable, contains("Overall"), levels(tech$SITE_RC)) %>%
-    add_row(Header = "Number of Participants",
-            Variable = "Number of Participants", .before = 1),
   #MTUAS
   bind_rows(
     #> Email Usage
@@ -219,21 +217,11 @@ table3 <- bind_rows(
     mutate_at(vars(-Header, -Variable, -Overall_1), list(~replace(., 1, "%"))) %>%
     mutate_at(vars(Header, Variable), list(~str_remove(., ", N \\(%\\)")))
 ) %>%
-  add_row(Variable = "Among participants reporting SNS utilization (N = 651)")
-table3Names <- colnames(table3[, 3:ncol(table3)])
-names(table3Names) <- paste0(
-  colnames(table3[, 3:ncol(table3)]), " (N=", 
-  table3[2, 3:ncol(table3)] %>% unlist(), ")"
-)
-
-table3 <- table3 %>%
-  rename(!!table3Names) %>%
-  filter(Header != "Number of Participants") %>%
-  rename(Characteristic = Variable)
-  
+  add_row(Variable = "Among participants reporting SNS utilization (N = 651)") %>%
+  rename(!!newNames)
 ```
 
-### Table 3a
+### Table 3
 ```{r table3a, include = TRUE}
 table3Index <- table3 %>%
   filter(complete.cases(.)) %>%
