@@ -108,9 +108,10 @@ table1 <- bind_rows(
                   varRelevel = c("Stable housing")),
   #Income
   table_Continuous(demo, variable = "MONEY_RC", stat = "median", 
-                   name = "Income, Last Month")
+                   name = "Monthly Income",
+                   header = "Monthly Income")
 ) %>%
-  mutate(Variable = str_replace(Variable, "(Income, Last Month)(.*)", "\\1")) %>%
+  mutate(Variable = str_replace(Variable, "(Monthly Income)(.*)", "\\1")) %>%
   mutate(Overall = str_replace(Overall, "(\\d+)(/\\d+)(.*)", "\\1\\3")) %>%
   mutate_at(vars(-Header, -Variable, -Overall),
             list(~str_replace(., "(.*)(\\d \\()(.*)(%\\)$)", "\\3"))) %>%
@@ -126,6 +127,7 @@ table1 <- bind_rows(
                              "n")) %>%
   mutate_at(vars(-Header, -Variable, -Overall_1), list(~replace(., 1, "%"))) %>%
   mutate_at(vars(Header, Variable), list(~str_remove(., ", N \\(%\\)"))) %>%
+  mutate_at(vars(Header, Variable), list(~str_remove(., ", Median \\[IQR\\]"))) %>%
   add_row(.before = nrow(.) - 1, 
           Header = "Characteristic (Continuous)",
           Variable = "Characteristic (Continuous)") %>%
@@ -136,7 +138,7 @@ table1 <- bind_rows(
             list(~replace(., which(Variable == "Characteristic (Continuous)"), "med"))) %>%
   rename(!!newNames) %>%
   add_row(Variable = "STAY7D_RC: Six participants in 'Institution' (hospital or prison) were incorporated into 'Unstable housing'.") %>%
-  add_row(Variable = paste0("MONEY_RC Overall sample size N=", length(which(!is.na(demo$MONEY_RC)))))
+  add_row(Variable = paste0("Monthly income overall sample size N=", length(which(!is.na(demo$MONEY_RC))), " due to response of Don't Know/Not Sure"))
 
 #####Table 2: participant health care summary
 table2 <- bind_rows(
@@ -225,36 +227,56 @@ table2 <- bind_rows(
     mutate_at(vars(-Header, -Variable, -Overall),
               list(~str_replace(., "(.*)(\\d+)( \\(.*\\)$)", "\\1\\2"))) %>%
     separate(Overall, c("Overall_1", "Overall_2"), sep = " ") %>%
-    add_row(Header = "Characteristic (Categorical)", 
-            Variable = "Characteristic (Categorical)", 
+    add_row(Header = "Characteristic (Scale)", 
+            Variable = "Characteristic (Scale)", 
             .before = 1) %>%
     mutate(Overall_2 = replace(Overall_2, 
-                               which(Variable == "Characteristic (Categorical)"),
+                               which(Variable == "Characteristic (Scale)"),
                                "(SD)")) %>%
     mutate_at(vars(-Header, -Variable, -Overall_2), list(~replace(., 1, "m")))
 ) %>%
   mutate(Overall_1 = str_replace(Overall_1, "(\\d+)(/\\d+)", "\\1")) %>%
   mutate_at(vars(Header, Variable), list(~str_remove(., ", N \\(%\\)"))) %>%
   mutate_at(vars(Header, Variable), list(~str_remove(., ", Mean \\(SD\\)"))) %>%
-  rename(!!newNames)
+  rename(!!newNames) %>%
+  add_row(Variable = paste0("Viral suppression information obtained from medical chart data (N=",
+          length(which(demo$ViralSupp_MCD_RC != "Missing")), ")")) %>%
+  add_row(Variable = paste0("HIV doctor visit information obtained from medical chart data (N=",
+          length(which(demo$CAREHV06_MCD_RC != "Missing")), ")")) %>%
+  add_row(Variable = paste0("Injected drug information N=",
+          length(which(demo$INJECTL_RC != "Missing")), " due to refusals to answer."))
 save(table1, table2, file = "Tables Participants.RData")
 ```
 
 ### Table 1
 ```{r include = TRUE}
+table1Index <- table1 %>%
+  filter(complete.cases(.)) %>%
+  select(Header) %>%
+  mutate(Row = row_number()) %>%
+  group_by(Header) %>%
+  summarize(
+    Start = min(Row),
+    End   = max(Row)
+  ) %>%
+  arrange(Start)
+
 kable(table1 %>%
-        filter(!is.na(Overall)),
+        filter(complete.cases(.)) %>%
+        select(-Header),
       caption = 
-        "Table 1. Sociodemographic characteristics of young adults living with HIV"
+        paste0("Table 1. Sociodemographic characteristics of young adults living with HIV across 10 demonstration sites in the United States (N = ", nrow(demo), ")")
       ) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
-  group_rows("Age Group, N (%)", 2, 3) %>%
-  group_rows("Ethnicity and Race, N (%)", 4, 8) %>%
-  group_rows("Gender Identity, N (%)", 9, 12) %>%
-  group_rows("Sexual Orientation, N (%)", 13, 16) %>%
-  group_rows("Education, N (%)", 17, 19) %>%
-  group_rows("Income, Median [IQR]", 20, 20) %>%
-  group_rows("Residence, Last 7 Days, N (%)", 21, 22)
+  group_rows(table1Index$Header[1], table1Index$Start[1], table1Index$End[1]) %>%
+  group_rows(table1Index$Header[2], table1Index$Start[2], table1Index$End[2]) %>%
+  group_rows(table1Index$Header[3], table1Index$Start[3], table1Index$End[3]) %>%
+  group_rows(table1Index$Header[4], table1Index$Start[4], table1Index$End[4]) %>%
+  group_rows(table1Index$Header[5], table1Index$Start[5], table1Index$End[5]) %>%
+  group_rows(table1Index$Header[6], table1Index$Start[6], table1Index$End[6]) %>%
+  group_rows(table1Index$Header[7], table1Index$Start[7], table1Index$End[7]) %>%
+  group_rows(table1Index$Header[8], table1Index$Start[8], table1Index$End[8]) %>%
+  group_rows(table1Index$Header[9], table1Index$Start[9], table1Index$End[9])
 ```
 Footnotes:  
 
@@ -262,23 +284,36 @@ Footnotes:
 
 ### Table 2
 ```{r include = TRUE}
+table2Index <- table2 %>%
+  filter(complete.cases(.)) %>%
+  select(Header) %>%
+  mutate(Row = row_number()) %>%
+  group_by(Header) %>%
+  summarize(
+    Start = min(Row),
+    End   = max(Row)
+  ) %>%
+  arrange(Start)
+
 kable(table2 %>%
-        filter(!is.na(Overall)),
-      caption = "Table 2. HIV-related health, healthcare utilization, and other characteristics that may relate to digital health seeking"
-      ) %>%
+        filter(complete.cases(.)) %>%
+        select(-Header),
+      caption = "Table 2. Candidate predictors of digital health seeking, including HIV-related health, healthcare utilization, substance use, and mental health reported at baseline") %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
-  group_rows("HIV Diagnosis [Max Value], N (%)", 1, 3) %>%
-  group_rows("Viral Suppression [Max Value], N (%)", 4, 4) %>%
-  group_rows("Insurance [Max Value], N (%)", 5, 7) %>%
-  group_rows("Recent Health Care [Max Value], N (%)", 8, 9) %>%
-  group_rows("Youth Health Enagement [Max Value], Mean (SD)", 10, 11) %>%
-  group_rows("Provider Empathy [Max Value], Mean (SD)", 12, 12) %>%
-  group_rows("Social Support [Max Value], Mean (SD)", 13, 13) %>%
-  group_rows("HIV-Related Stigma [Max Value], Mean (SD)", 14, 14) %>%
-  group_rows("Disclosure of HIV Status, N (%)", 15, 18) %>%
-  group_rows("Physical and Mental Health [Max Value], Mean (SD)", 19, 20) %>%
-  group_rows("Substance Use, N (%)", 21, 26) %>%
-  group_rows("Media and Technology Use and Attitudes Subscales [Max Value], Mean (SD)", 27, 37)
+  group_rows(table2Index$Header[1], table2Index$Start[1], table2Index$End[1]) %>%
+  group_rows(table2Index$Header[2], table2Index$Start[2], table2Index$End[2]) %>%
+  group_rows(table2Index$Header[3], table2Index$Start[3], table2Index$End[3]) %>%
+  group_rows(table2Index$Header[4], table2Index$Start[4], table2Index$End[4]) %>%
+  group_rows(table2Index$Header[5], table2Index$Start[5], table2Index$End[5]) %>%
+  group_rows(table2Index$Header[6], table2Index$Start[6], table2Index$End[6]) %>%
+  group_rows(table2Index$Header[7], table2Index$Start[7], table2Index$End[7]) %>%
+  group_rows(table2Index$Header[8], table2Index$Start[8], table2Index$End[8]) %>%
+  group_rows(table2Index$Header[9], table2Index$Start[9], table2Index$End[9]) %>%
+  group_rows(table2Index$Header[10], table2Index$Start[10], table2Index$End[10]) %>%
+  group_rows(table2Index$Header[11], table2Index$Start[11], table2Index$End[11]) %>%
+  group_rows(table2Index$Header[12], table2Index$Start[12], table2Index$End[12]) %>%
+  group_rows(table2Index$Header[13], table2Index$Start[13], table2Index$End[13]) %>%
+  group_rows(table2Index$Header[14], table2Index$Start[14], table2Index$End[14])
 ```
 
 ```{r eval = FALSE}
