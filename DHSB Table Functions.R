@@ -207,7 +207,7 @@ table_Continuous <- function(x, variable, stat = "mean",
         summarize(.,
                   Metric = paste0(median(!!varQuo, na.rm = TRUE), 
                                   " [",
-                                  paste(quantile(!!varQuo, c(0.25, 0.75), na.rm = TRUE), collapse = ", "),
+                                  paste(quantile(!!varQuo, c(0.25, 0.75), na.rm = TRUE), collapse = "-"),
                                   "]"
                   ),
                   Min = min(!!varQuo, na.rm = TRUE),
@@ -226,7 +226,7 @@ table_Continuous <- function(x, variable, stat = "mean",
     ) %>%
     mutate(Min = min(Min),
            Max = max(Max),
-           Range = paste0("[", Min, " - ", Max, "]")) %>%
+           Range = paste0("[", Min, "-", Max, "]")) %>%
     spread(SITE_RC, Metric) %>%
     mutate(Variable = paste0("   ", name, " ", Range)) %>%
     select(Variable, Overall, levels(x$SITE_RC)[levels(x$SITE_RC) %in% colnames(.)]) %>%
