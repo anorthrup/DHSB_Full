@@ -151,10 +151,12 @@ table3 <- bind_rows(
     mutate_at(vars(-Header, -Variable, -Overall),
               list(~str_replace(., "(.*)(\\d )(\\(.*$)", "\\1\\2"))) %>%
     separate(Overall, c("Overall_1", "Overall_2"), sep = " ") %>%
-    mutate(Overall_2 = str_replace(Overall_2, "(\\()(.*)(\\))", "\\2")) %>%
+    # mutate(Overall_2 = str_replace(Overall_2, "(\\()(.*)(\\))", "\\2")) %>%
+    add_row(.before = 1, Header = "Characteristic (Scale)",
+            Variable = "Characteristic (Scale)") %>%
     mutate(Overall_2 = replace(Overall_2, 
-                               which(Variable == "MTUAS [Range], Mean (SD)"),
-                               "SD")) %>%
+                               which(Variable == "Characteristic (Scale)"),
+                               "(SD)")) %>%
     mutate_at(vars(-Header, -Variable, -Overall_2), list(~replace(., 1, "m"))) %>%
     mutate_at(vars(Header, Variable), list(~str_remove(., ", Mean \\(SD\\)"))),
   bind_rows(
@@ -210,9 +212,10 @@ table3 <- bind_rows(
               list(~str_replace(., "(.*)(\\d \\()(.*)(%\\)$)", "\\3"))) %>%
     separate(Overall, c("Overall_1", "Overall_2"), sep = " ") %>%
     mutate(Overall_2 = str_replace(Overall_2, "(\\()(.*)(%\\))", "\\2")) %>%
-    add_row(Header = "Technology Usage", Variable = "Technology Usage", .before = 1) %>%
+    add_row(Header = "Characteristic (Categorical)", 
+            Variable = "Characteristic (Categorical)", .before = 1) %>%
     mutate(Overall_1 = replace(Overall_1, 
-                               which(Variable == "Technology Usage"),
+                               which(Variable == "Characteristic (Categorical)"),
                                "n")) %>%
     mutate_at(vars(-Header, -Variable, -Overall_1), list(~replace(., 1, "%"))) %>%
     mutate_at(vars(Header, Variable), list(~str_remove(., ", N \\(%\\)")))
