@@ -907,8 +907,106 @@ acasi_analysis <- acasi %>%
          outcome_Search_SexHealth, outcome_Search_GenHealth, outcome_Comms_SexHealth
   ) %>%
   select_if(~length(which(. == 0)) < length(.)) %>%
-  filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE)))
+  filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE))) #> Remove participants with missing values for either YEHS variable
 
-save(acasi, acasi_analysis, file = "acasi.RData")
+##### Create list of variables with more easily interpretable labels
+acasi_labels <- tribble(
+  ~Variable,                    ~Label,
+  "SITE_RCR_CBW",               "Site: Corpus Christi",
+  "SITE_RCD_FRI",               "Site: Los Angeles",
+  "SITE_RCD_NYSDA",             "Site: New York",
+  "SITE_RCD_HBHC",              "Site: Chicago",
+  "SITE_RCD_MHS",               "Site: Cleveland",
+  "SITE_RCD_PFC",               "Site: Hershey",
+  "SITE_RCD_PSU",               "Site: Philadelphia",
+  "SITE_RCD_SFDPH",             "Site: San Francisco",
+  "SITE_RCD_WFU",               "Site: Winston-Salem",
+  "SITE_RCD_WUSL",              "Site: St. Louis",
+  "surveylanguage_RCR_Span",    "Survey Language: Spanish",
+  "surveylanguage_RCD_Eng",     "Survey Language: English",
+  "AGE_RC",                     "Age (Years)",
+  "RACE_RCR_White",             "Ethnicity and Race: White, Not Latino",
+  "RACE_RCD_Latino",            "Ethnicity and Race: Latino",
+  "RACE_RCD_Black",             "Ethnicity and Race: Black, Not Latino",
+  "RACE_RCD_WhiteMix",          "Ethnicity and Race: White Mixed-Race, Not Latino or Black",
+  "RACE_RCD_Other",             "Ethnicity and Race: Other",
+  "GENDER_RCR_Male",            "Gender: Male (cis man)",
+  "GENDER_RCD_Female",          "Gender: Female (cis woman)",
+  "GENDER_RCD_Trans",           "Gender: Trans-identified",
+  "GENDER_RCD_Other",           "Gender: Other",
+  "ORIENT_RCR_Straight",        "Sexual Orientation: Straight",
+  "ORIENT_RCD_Gay",             "Sexual Orientation: Gay or Lesbian",
+  "ORIENT_RCD_Bi",              "Sexual Orientation: Bisexual",
+  "ORIENT_RCD_Other",           "Sexual Orientation: Other",
+  "GRADE_RCR_HS",               "Education: High School, Equivalent or Less",
+  "GRADE_RCD_PostK",            "Education: Some Post-K12",
+  "GRADE_RCD_Grad",             "Education: College Graduate or Trade-Certified",
+  # "MONEY_RC_Log",               "Income Last Month, Log",
+  "MONEY_RCR_Zero",             "Income Last Month: Zero",
+  "MONEY_RCD_Low",              "Income Last Month: Low (Under Median)",
+  "MONEY_RCD_High",             "Income Last Month: High (At or Above Median)",
+  "MONEY_RCD_DontKnow",         "Income Last Month: Don't Know",
+  # "STAY7D_RCR_Unstable",        "Housing Last 7 Days: Unstable Housing",
+  "STAY7D_RCD_Stable",          "Housing Last 7 Days: Stable Housing",
+  "BORNHIV",                    "Born with HIV",
+  "TIMESINCEHIV",               "Years Since HIV Diagnosis",
+  # "ViralSupp_RCR_Unsuppressed", "Viral Suppression (Self-reported)",
+  "ViralSupp_RCD_Suppressed",   "Viral Suppression (Self-reported)",
+  "INSURE_RCR_Uninsured",       "Insurance: Not Insured",
+  "INSURE_RCD_Insured",         "Insurance: Insured",
+  "INSURE_RCD_Unknown",         "Insurance: Don't Know",
+  # "CARED6_RCR_No",              "Non-HIV Care Visits, Past 6 Months: No",
+  "CARED6_RCD_Yes",             "Non-HIV Care Visits, Past 6 Months: Yes",
+  "CAREHV06_MCD_RCR_No",        "HIV Care Visits, Past 6 Months: No",
+  "CAREHV06_MCD_RCD_Yes",       "HIV Care Visits, Past 6 Months: Yes",
+  "CAREHV06_MCD_RCD_Missing",   "HIV Care Visits, Past 6 Months: Missing",
+  "ARTNOW_RCR_No",              "Taking ART/HIV Medication Now: No",
+  "ARTNOW_RCD_Yes",             "Taking ART/HIV Medication Now: Yes",
+  "ARTNOW_RCD_Missing",         "Taking ART/HIV Medication Now: Missing",
+  "ARTADHR_RCR_Negative",       "ART Adherence: Negative",
+  "ARTADHR_RCD_Neutral",        "ART Adherence: Neutral",
+  "ARTADHR_RCD_Positive",       "ART Adherence: Positive",
+  # "ARTADHR_RCD_Missing",        "ART Adherence: Missing",
+  "HE_RC_HAL",                  "YEHS: Health Access Literacy Subscale",
+  "HE_RC_HSE",                  "YEHS: Health Self-Efficacy Subscale",
+  "CARE_RC",                    "Provider Empathy Scale",
+  "STIGMA_RC",                  "HIV-related Stigma Scale",
+  "DISC_RCR_None",              "HIV Disclosure: No one",
+  "DISC_RCD_Partner",           "HIV Disclosure: Partner or Sex Partners",
+  "DISC_RCD_Family",            "HIV Disclosure: Family or Friends",
+  "DISC_RCD_Other",             "HIV Disclosure: Other",
+  "DISC_RCD_Anyone",            "HIV Status Disclosed",
+  "MENTALH_RC",                 "Physical and Mental Health Scale",
+  "MENTALH4_RC",                "Physical Health (1 item)",
+  "DRUG_RCR_None",              "Substance Use: None",
+  "DRUG_RCD_Alcohol",           "Substance Use: Alcohol",
+  "DRUG_RCD_Tobacco",           "Substance Use: Tobacco",
+  "DRUG_RCD_Marijuana",         "Substance Use: Marijuana",
+  "DRUG_RCD_Other",             "Substance Use: Other Non-Injected",
+  # "DRUG_RCD_Missing",           "Substance Use: Non-Injected Missing",
+  "DRUG_RCD_NotAlc",            "Substance Use Other Than Alcohol",
+  "INJECTL_RCR_No",             "Injected Substance Use: No",
+  "INJECTL_RCD_Yes",            "Injected Substance Use: Yes",
+  "INJECTL_RCD_Missing",        "Injected Substance Use: Missing",
+  "SOCIALS_RC",                 "Social Support Scale",
+  "MTUEX_RC",                   "MTUAS: Email Usage Subscale",
+  "MTUSPX_RC_Text",             "MTUAS: Text Usage Subscale",
+  "MTUSPX_RC_Smartphone",       "MTUAS: Smartphone Usage Subscale",
+  "MTUIX_RC",                   "MTUAS: Internet Search Usage Subscale",
+  "MTUSNX_RC",                  "MTUAS: General Social Media Usage Subscale",
+  "MTUAX_RC_Pos",               "MTUAS: Positive Attitudes",
+  "MTUAX_RC_Anx",               "MTUAS: Anxiety/Dependence on Technology",
+  "MTUAX_RC_Neg",               "MTUAS: Negative Attitudes"
+) %>%
+  left_join(
+    .,
+    acasi_analysis %>%
+      summarize_all(is.factor) %>% #> Indicate whether variable is factor (binary)
+      gather("Variable", "Binary"), 
+    by = "Variable"
+  )
+
+
+save(acasi, acasi_analysis, acasi_labels, file = "acasi.RData")
 
 
