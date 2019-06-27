@@ -870,26 +870,31 @@ acasi_analysis <- acasi %>%
          GENDER_RCD_Other, GENDER_RCD_Missing, #Gender
          ORIENT_RCR_Straight, ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
          GRADE_RCR_HS, GRADE_RCD_PostK, GRADE_RCD_Grad, #Education
-         MONEY_RC_Log, #Income
+         # MONEY_RC_Log, #Income
          MONEY_RCR_Zero, MONEY_RCD_Low, MONEY_RCD_High, MONEY_RCD_DontKnow,
-         STAY7D_RCR_Unstable, STAY7D_RCD_Stable, STAY7D_RCD_Missing, #Housing
+         # STAY7D_RCR_Unstable, 
+         STAY7D_RCD_Stable, STAY7D_RCD_Missing, #Housing
          BORNHIV, TIMESINCEHIV,
-         ViralSupp_RCR_Unsuppressed, ViralSupp_RCD_Suppressed,
+         # ViralSupp_RCR_Unsuppressed, 
+         ViralSupp_RCD_Suppressed, #Viral Suppression
          INSURE_RCR_Uninsured, INSURE_RCD_Insured, INSURE_RCD_Unknown, 
          INSURE_RCD_Missing, #Healthcare utilization: Insurance
-         CARED6_RCR_No, CARED6_RCD_Yes, CARED6_RCD_Missing, #Healthcare utilization: Recent care
+         # CARED6_RCR_No, 
+         CARED6_RCD_Yes, CARED6_RCD_Missing, #Healthcare utilization: Recent care
          CAREHV06_MCD_RCR_No, CAREHV06_MCD_RCD_Yes, CAREHV06_MCD_RCD_Missing,
          ARTNOW_RCR_No, ARTNOW_RCD_Yes, ARTNOW_RCD_Missing, #Healthcare utilization: Treatment
-         ARTADHR_RCR_Negative, ARTADHR_RCD_Neutral, ARTADHR_RCD_Positive, 
-         ARTADHR_RCD_Missing, #Healthcare utilization: Adherence
+         ARTADHR_RCR_Negative, ARTADHR_RCD_Neutral, ARTADHR_RCD_Positive, #Healthcare utilization: Adherence
+         # ARTADHR_RCD_Missing,
          HE_RC_HAL, HE_RC_HSE, #Youth Health Engagement scale
          CARE_RC, #Provider Empathy (CARE) scale, along with indicator of whether it is skipped (CARELHIV)
          STIGMA_RC, #HIV-related stigma
-         DISC_RCR_None, DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, 
-         DISC_RCD_Missing, DISC_RCD_Anyone, #Disclosure
+         DISC_RCR_None, DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, #Disclosure
+         DISC_RCD_Missing, 
+         DISC_RCD_Anyone, #> Shouldn't be included in model with Partner/Family/Other disclosures
          MENTALH_RC, MENTALH4_RC,#Mental health
          DRUG_RCR_None, DRUG_RCD_Alcohol, DRUG_RCD_Tobacco, DRUG_RCD_Marijuana, 
-         DRUG_RCD_Other, DRUG_RCD_NotAlc, #DRUG_RCD_Missing, #Substance use: non-injected
+         DRUG_RCD_Other, #DRUG_RCD_Missing, #Substance use: non-injected
+         DRUG_RCD_NotAlc, #> Shouldn't be included in model with Tobacco/Marijuana/Other substances
          INJECTL_RCR_No, INJECTL_RCD_Yes, INJECTL_RCD_Missing, #Substance use: injected
          SOCIALS_RC, #Social support
          #Media Technology Usage and Attitudes Scale
@@ -902,8 +907,6 @@ acasi_analysis <- acasi %>%
          outcome_Search_SexHealth, outcome_Search_GenHealth, outcome_Comms_SexHealth
   ) %>%
   select_if(~length(which(. == 0)) < length(.)) %>%
-  select(-STAY7D_RCR_Unstable, -ViralSupp_RCR_Unsuppressed, -CARED6_RCR_No,
-         -ARTADHR_RCD_Missing) %>%
   filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE)))
 
 save(acasi, acasi_analysis, file = "acasi.RData")
