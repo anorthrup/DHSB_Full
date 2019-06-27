@@ -652,7 +652,6 @@ acasi <- bind_rows(
                                     DRUG_RCD_Marijuana == 0 &
                                     DRUG_RCD_Other == 0 &
                                     DRUG_RCD_Missing == 0, 1, 0),
-    DRUG_RCD_Uses       = if_else(DRUG_RCR_None == 1, 0, 1),
     INJECTL_RC = case_when(
       INJECTL == 1 ~ "Yes",
       INJECTL == 0 ~ "No",
@@ -896,14 +895,13 @@ acasi_analysis <- acasi %>%
          CARE_RC, #Provider Empathy (CARE) scale, along with indicator of whether it is skipped (CARELHIV)
          STIGMA_RC, #HIV-related stigma
          # DISC_RCR_None, 
-         DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, #Disclosure
+         # DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, #Disclosure
          DISC_RCD_Missing, 
          DISC_RCD_Anyone, #> Shouldn't be included in model with Partner/Family/Other disclosures
          MENTALH_RC, MENTALH4_RC,#Mental health
          # DRUG_RCR_None, 
          DRUG_RCD_Alcohol, DRUG_RCD_Tobacco, DRUG_RCD_Marijuana, 
          DRUG_RCD_Other, #DRUG_RCD_Missing, #Substance use: non-injected
-         DRUG_RCD_Uses, #> Shouldn't be included in model with Tobacco/Marijuana/Other substances
          # INJECTL_RCR_No, 
          INJECTL_RCD_Yes, INJECTL_RCD_Missing, #Substance use: injected
          SOCIALS_RC, #Social support
@@ -982,9 +980,9 @@ acasi_labels <- tribble(
   "CARE_RC",                    "Provider Empathy Scale",
   "STIGMA_RC",                  "HIV-related Stigma Scale",
   # "DISC_RCR_None",              "HIV Disclosure: No one",
-  "DISC_RCD_Partner",           "HIV Disclosure: Partner or Sex Partners",
-  "DISC_RCD_Family",            "HIV Disclosure: Family or Friends",
-  "DISC_RCD_Other",             "HIV Disclosure: Other",
+  # "DISC_RCD_Partner",           "HIV Disclosure: Partner or Sex Partners",
+  # "DISC_RCD_Family",            "HIV Disclosure: Family or Friends",
+  # "DISC_RCD_Other",             "HIV Disclosure: Other",
   "DISC_RCD_Anyone",            "HIV Status Disclosed",
   "MENTALH_RC",                 "Physical and Mental Health Scale",
   "MENTALH4_RC",                "Physical Health (1 item)",
@@ -994,7 +992,6 @@ acasi_labels <- tribble(
   "DRUG_RCD_Marijuana",         "Substance Use: Marijuana",
   "DRUG_RCD_Other",             "Substance Use: Other Non-Injected",
   # "DRUG_RCD_Missing",           "Substance Use: Non-Injected Missing",
-  "DRUG_RCD_Uses",              "Substance Use Other Than Alcohol",
   # "INJECTL_RCR_No",             "Injected Substance Use: No",
   "INJECTL_RCD_Yes",            "Injected Substance Use: Yes",
   "INJECTL_RCD_Missing",        "Injected Substance Use: Missing",
