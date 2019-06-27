@@ -860,42 +860,55 @@ acasi <- bind_rows(
 acasi_analysis <- acasi %>%
   filter(Set == 1) %>% #Remove participants without 06m assessment
   select(-Set) %>%
-  select(SITE_RCR_CBW, SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
+  select(SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
          SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
-         surveylanguage_RCR_Span, surveylanguage_RCD_Eng,
+         # SITE_RCR_CBW, 
+         # surveylanguage_RCR_Span, 
+         surveylanguage_RCD_Eng,
          AGE_RC, #Age
-         RACE_RCR_White, RACE_RCD_Latino, RACE_RCD_Black, RACE_RCD_WhiteMix, 
+         # RACE_RCR_White, 
+         RACE_RCD_Latino, RACE_RCD_Black, RACE_RCD_WhiteMix, 
          RACE_RCD_Other, RACE_RCD_Missing, #Ethnicity & Race
-         GENDER_RCR_Male, GENDER_RCD_Female, GENDER_RCD_Trans, 
+         # GENDER_RCR_Male, 
+         GENDER_RCD_Female, GENDER_RCD_Trans, 
          GENDER_RCD_Other, GENDER_RCD_Missing, #Gender
-         ORIENT_RCR_Straight, ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
-         GRADE_RCR_HS, GRADE_RCD_PostK, GRADE_RCD_Grad, #Education
+         # ORIENT_RCR_Straight, 
+         ORIENT_RCD_Gay, ORIENT_RCD_Bi, ORIENT_RCD_Other, #Orientation
+         # GRADE_RCR_HS, 
+         GRADE_RCD_PostK, GRADE_RCD_Grad, #Education
          # MONEY_RC_Log, #Income
-         MONEY_RCR_Zero, MONEY_RCD_Low, MONEY_RCD_High, MONEY_RCD_DontKnow,
+         # MONEY_RCR_Zero, 
+         MONEY_RCD_Low, MONEY_RCD_High, MONEY_RCD_DontKnow, 
          # STAY7D_RCR_Unstable, 
          STAY7D_RCD_Stable, STAY7D_RCD_Missing, #Housing
          BORNHIV, TIMESINCEHIV,
          # ViralSupp_RCR_Unsuppressed, 
          ViralSupp_RCD_Suppressed, #Viral Suppression
-         INSURE_RCR_Uninsured, INSURE_RCD_Insured, INSURE_RCD_Unknown, 
-         INSURE_RCD_Missing, #Healthcare utilization: Insurance
+         # INSURE_RCR_Uninsured, 
+         INSURE_RCD_Insured, INSURE_RCD_Unknown, INSURE_RCD_Missing, #Healthcare utilization: Insurance
          # CARED6_RCR_No, 
          CARED6_RCD_Yes, CARED6_RCD_Missing, #Healthcare utilization: Recent care
-         CAREHV06_MCD_RCR_No, CAREHV06_MCD_RCD_Yes, CAREHV06_MCD_RCD_Missing,
-         ARTNOW_RCR_No, ARTNOW_RCD_Yes, ARTNOW_RCD_Missing, #Healthcare utilization: Treatment
-         ARTADHR_RCR_Negative, ARTADHR_RCD_Neutral, ARTADHR_RCD_Positive, #Healthcare utilization: Adherence
+         # CAREHV06_MCD_RCR_No, 
+         CAREHV06_MCD_RCD_Yes, CAREHV06_MCD_RCD_Missing,
+         # ARTNOW_RCR_No, 
+         ARTNOW_RCD_Yes, ARTNOW_RCD_Missing, #Healthcare utilization: Treatment
+         # ARTADHR_RCR_Negative, 
+         ARTADHR_RCD_Neutral, ARTADHR_RCD_Positive, #Healthcare utilization: Adherence
          # ARTADHR_RCD_Missing,
          HE_RC_HAL, HE_RC_HSE, #Youth Health Engagement scale
          CARE_RC, #Provider Empathy (CARE) scale, along with indicator of whether it is skipped (CARELHIV)
          STIGMA_RC, #HIV-related stigma
-         DISC_RCR_None, DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, #Disclosure
+         # DISC_RCR_None, 
+         DISC_RCD_Partner, DISC_RCD_Family, DISC_RCD_Other, #Disclosure
          DISC_RCD_Missing, 
          DISC_RCD_Anyone, #> Shouldn't be included in model with Partner/Family/Other disclosures
          MENTALH_RC, MENTALH4_RC,#Mental health
-         DRUG_RCR_None, DRUG_RCD_Alcohol, DRUG_RCD_Tobacco, DRUG_RCD_Marijuana, 
+         # DRUG_RCR_None, 
+         DRUG_RCD_Alcohol, DRUG_RCD_Tobacco, DRUG_RCD_Marijuana, 
          DRUG_RCD_Other, #DRUG_RCD_Missing, #Substance use: non-injected
          DRUG_RCD_NotAlc, #> Shouldn't be included in model with Tobacco/Marijuana/Other substances
-         INJECTL_RCR_No, INJECTL_RCD_Yes, INJECTL_RCD_Missing, #Substance use: injected
+         # INJECTL_RCR_No, 
+         INJECTL_RCD_Yes, INJECTL_RCD_Missing, #Substance use: injected
          SOCIALS_RC, #Social support
          #Media Technology Usage and Attitudes Scale
          MTUEX_RC, 
@@ -912,7 +925,7 @@ acasi_analysis <- acasi %>%
 ##### Create list of variables with more easily interpretable labels
 acasi_labels <- tribble(
   ~Variable,                    ~Label,
-  "SITE_RCR_CBW",               "Site: Corpus Christi",
+  # "SITE_RCR_CBW",               "Site: Corpus Christi",
   "SITE_RCD_FRI",               "Site: Los Angeles",
   "SITE_RCD_NYSDA",             "Site: New York",
   "SITE_RCD_HBHC",              "Site: Chicago",
@@ -922,27 +935,27 @@ acasi_labels <- tribble(
   "SITE_RCD_SFDPH",             "Site: San Francisco",
   "SITE_RCD_WFU",               "Site: Winston-Salem",
   "SITE_RCD_WUSL",              "Site: St. Louis",
-  "surveylanguage_RCR_Span",    "Survey Language: Spanish",
+  # "surveylanguage_RCR_Span",    "Survey Language: Spanish",
   "surveylanguage_RCD_Eng",     "Survey Language: English",
   "AGE_RC",                     "Age (Years)",
-  "RACE_RCR_White",             "Ethnicity and Race: White, Not Latino",
+  # "RACE_RCR_White",             "Ethnicity and Race: White, Not Latino",
   "RACE_RCD_Latino",            "Ethnicity and Race: Latino",
   "RACE_RCD_Black",             "Ethnicity and Race: Black, Not Latino",
   "RACE_RCD_WhiteMix",          "Ethnicity and Race: White Mixed-Race, Not Latino or Black",
   "RACE_RCD_Other",             "Ethnicity and Race: Other",
-  "GENDER_RCR_Male",            "Gender: Male (cis man)",
+  # "GENDER_RCR_Male",            "Gender: Male (cis man)",
   "GENDER_RCD_Female",          "Gender: Female (cis woman)",
   "GENDER_RCD_Trans",           "Gender: Trans-identified",
   "GENDER_RCD_Other",           "Gender: Other",
-  "ORIENT_RCR_Straight",        "Sexual Orientation: Straight",
+  # "ORIENT_RCR_Straight",        "Sexual Orientation: Straight",
   "ORIENT_RCD_Gay",             "Sexual Orientation: Gay or Lesbian",
   "ORIENT_RCD_Bi",              "Sexual Orientation: Bisexual",
   "ORIENT_RCD_Other",           "Sexual Orientation: Other",
-  "GRADE_RCR_HS",               "Education: High School, Equivalent or Less",
+  # "GRADE_RCR_HS",               "Education: High School, Equivalent or Less",
   "GRADE_RCD_PostK",            "Education: Some Post-K12",
   "GRADE_RCD_Grad",             "Education: College Graduate or Trade-Certified",
   # "MONEY_RC_Log",               "Income Last Month, Log",
-  "MONEY_RCR_Zero",             "Income Last Month: Zero",
+  # "MONEY_RCR_Zero",             "Income Last Month: Zero",
   "MONEY_RCD_Low",              "Income Last Month: Low (Under Median)",
   "MONEY_RCD_High",             "Income Last Month: High (At or Above Median)",
   "MONEY_RCD_DontKnow",         "Income Last Month: Don't Know",
@@ -952,18 +965,18 @@ acasi_labels <- tribble(
   "TIMESINCEHIV",               "Years Since HIV Diagnosis",
   # "ViralSupp_RCR_Unsuppressed", "Viral Suppression (Self-reported)",
   "ViralSupp_RCD_Suppressed",   "Viral Suppression (Self-reported)",
-  "INSURE_RCR_Uninsured",       "Insurance: Not Insured",
+  # "INSURE_RCR_Uninsured",       "Insurance: Not Insured",
   "INSURE_RCD_Insured",         "Insurance: Insured",
   "INSURE_RCD_Unknown",         "Insurance: Don't Know",
   # "CARED6_RCR_No",              "Non-HIV Care Visits, Past 6 Months: No",
   "CARED6_RCD_Yes",             "Non-HIV Care Visits, Past 6 Months: Yes",
-  "CAREHV06_MCD_RCR_No",        "HIV Care Visits, Past 6 Months: No",
+  # "CAREHV06_MCD_RCR_No",        "HIV Care Visits, Past 6 Months: No",
   "CAREHV06_MCD_RCD_Yes",       "HIV Care Visits, Past 6 Months: Yes",
   "CAREHV06_MCD_RCD_Missing",   "HIV Care Visits, Past 6 Months: Missing",
-  "ARTNOW_RCR_No",              "Taking ART/HIV Medication Now: No",
+  # "ARTNOW_RCR_No",              "Taking ART/HIV Medication Now: No",
   "ARTNOW_RCD_Yes",             "Taking ART/HIV Medication Now: Yes",
   "ARTNOW_RCD_Missing",         "Taking ART/HIV Medication Now: Missing",
-  "ARTADHR_RCR_Negative",       "ART Adherence: Negative",
+  # "ARTADHR_RCR_Negative",       "ART Adherence: Negative",
   "ARTADHR_RCD_Neutral",        "ART Adherence: Neutral",
   "ARTADHR_RCD_Positive",       "ART Adherence: Positive",
   # "ARTADHR_RCD_Missing",        "ART Adherence: Missing",
@@ -971,21 +984,21 @@ acasi_labels <- tribble(
   "HE_RC_HSE",                  "YEHS: Health Self-Efficacy Subscale",
   "CARE_RC",                    "Provider Empathy Scale",
   "STIGMA_RC",                  "HIV-related Stigma Scale",
-  "DISC_RCR_None",              "HIV Disclosure: No one",
+  # "DISC_RCR_None",              "HIV Disclosure: No one",
   "DISC_RCD_Partner",           "HIV Disclosure: Partner or Sex Partners",
   "DISC_RCD_Family",            "HIV Disclosure: Family or Friends",
   "DISC_RCD_Other",             "HIV Disclosure: Other",
   "DISC_RCD_Anyone",            "HIV Status Disclosed",
   "MENTALH_RC",                 "Physical and Mental Health Scale",
   "MENTALH4_RC",                "Physical Health (1 item)",
-  "DRUG_RCR_None",              "Substance Use: None",
+  # "DRUG_RCR_None",              "Substance Use: None",
   "DRUG_RCD_Alcohol",           "Substance Use: Alcohol",
   "DRUG_RCD_Tobacco",           "Substance Use: Tobacco",
   "DRUG_RCD_Marijuana",         "Substance Use: Marijuana",
   "DRUG_RCD_Other",             "Substance Use: Other Non-Injected",
   # "DRUG_RCD_Missing",           "Substance Use: Non-Injected Missing",
   "DRUG_RCD_NotAlc",            "Substance Use Other Than Alcohol",
-  "INJECTL_RCR_No",             "Injected Substance Use: No",
+  # "INJECTL_RCR_No",             "Injected Substance Use: No",
   "INJECTL_RCD_Yes",            "Injected Substance Use: Yes",
   "INJECTL_RCD_Missing",        "Injected Substance Use: Missing",
   "SOCIALS_RC",                 "Social Support Scale",
@@ -998,14 +1011,13 @@ acasi_labels <- tribble(
   "MTUAX_RC_Anx",               "MTUAS: Anxiety/Dependence on Technology",
   "MTUAX_RC_Neg",               "MTUAS: Negative Attitudes"
 ) %>%
-  left_join(
+  right_join(
     .,
     acasi_analysis %>%
       summarize_all(is.factor) %>% #> Indicate whether variable is factor (binary)
       gather("Variable", "Binary"), 
     by = "Variable"
   )
-
 
 save(acasi, acasi_analysis, acasi_labels, file = "acasi.RData")
 
