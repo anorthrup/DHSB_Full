@@ -854,8 +854,8 @@ acasi <- bind_rows(
 ##### Create a data set for analysis excluding original variables
 acasi_analysis <- acasi %>%
   filter(Set == 1) %>% #Remove participants without 06m assessment
-  select(-Set,
-         SITE_RCR_CBW, SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
+  select(-Set) %>%
+  select(SITE_RCR_CBW, SITE_RCD_FRI, SITE_RCD_NYSDA, SITE_RCD_HBHC, SITE_RCD_MHS,
          SITE_RCD_PFC, SITE_RCD_PSU, SITE_RCD_SFDPH, SITE_RCD_WFU, SITE_RCD_WUSL, #Site
          surveylanguage_RCR_Span, surveylanguage_RCD_Eng,
          AGE_RC, #Age
@@ -901,6 +901,6 @@ acasi_analysis <- acasi %>%
          -ARTADHR_RCD_Missing) %>%
   filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE)))
 
-# save(acasi, acasi_analysis, file = "acasi.RData")
+save(acasi, acasi_analysis, file = "acasi.RData")
 
 
