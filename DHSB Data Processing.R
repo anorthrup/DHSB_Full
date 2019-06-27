@@ -652,10 +652,7 @@ acasi <- bind_rows(
                                     DRUG_RCD_Marijuana == 0 &
                                     DRUG_RCD_Other == 0 &
                                     DRUG_RCD_Missing == 0, 1, 0),
-    DRUG_RCD            = if_else(DRUG_RCR_None == 1, 0, 1),
-    DRUG_RCD_NotAlc     = if_else(DRUG_RCD_Tobacco == 1 & 
-                                    DRUG_RCD_Marijuana == 1 &
-                                    DRUG_RCD_Other == 1, 1, 0),
+    DRUG_RCD_Uses       = if_else(DRUG_RCR_None == 1, 0, 1),
     INJECTL_RC = case_when(
       INJECTL == 1 ~ "Yes",
       INJECTL == 0 ~ "No",
@@ -906,7 +903,7 @@ acasi_analysis <- acasi %>%
          # DRUG_RCR_None, 
          DRUG_RCD_Alcohol, DRUG_RCD_Tobacco, DRUG_RCD_Marijuana, 
          DRUG_RCD_Other, #DRUG_RCD_Missing, #Substance use: non-injected
-         DRUG_RCD_NotAlc, #> Shouldn't be included in model with Tobacco/Marijuana/Other substances
+         DRUG_RCD_Uses, #> Shouldn't be included in model with Tobacco/Marijuana/Other substances
          # INJECTL_RCR_No, 
          INJECTL_RCD_Yes, INJECTL_RCD_Missing, #Substance use: injected
          SOCIALS_RC, #Social support
@@ -997,7 +994,7 @@ acasi_labels <- tribble(
   "DRUG_RCD_Marijuana",         "Substance Use: Marijuana",
   "DRUG_RCD_Other",             "Substance Use: Other Non-Injected",
   # "DRUG_RCD_Missing",           "Substance Use: Non-Injected Missing",
-  "DRUG_RCD_NotAlc",            "Substance Use Other Than Alcohol",
+  "DRUG_RCD_Uses",              "Substance Use Other Than Alcohol",
   # "INJECTL_RCR_No",             "Injected Substance Use: No",
   "INJECTL_RCD_Yes",            "Injected Substance Use: Yes",
   "INJECTL_RCD_Missing",        "Injected Substance Use: Missing",
