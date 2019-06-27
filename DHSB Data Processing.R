@@ -7,13 +7,16 @@ library(lubridate)
 library(sjlabelled)
 library(rio)
 
+mcd_path <- "C:/Users/anorthrup/Box Sync/ETAC/Data merged across sites/MCD/Aggregated MCD/"
+acasi_path <- "C:/Users/anorthrup/Box Sync/ETAC/Data merged across sites/"
+
 #####Read data
 #import() doesn't read all missing values the same, must write to and read from CSV and specify NA strings
 #Need to save labels for codebook
 
 #00m
 
-data00mSAS <- import("C:/Users/anorthrup/Box Sync/ETAC/Data merged across sites/acasibase.sas7bdat")
+data00mSAS <- import(paste0(acasi_path, "acasibase.sas7bdat"))
 ##Save labels
 labels00m <- get_label(data00mSAS) %>% 
   as.data.frame(., stringsAsFactors = FALSE) %>%
@@ -28,7 +31,7 @@ data00mRaw <- read.csv("acasi00mSAS.csv", na.strings = c("", "NA"),
 unlink("acasi00mSAS.csv")
 
 #06m
-data06mSAS <- import("C:/Users/anorthrup/Box Sync/ETAC/Data merged across sites/acasi06m.sas7bdat")
+data06mSAS <- import(paste0(acasi_path, "acasi06m.sas7bdat"))
 ##Save labels
 labels06m <- get_label(data06mSAS) %>% 
   as.data.frame(., stringsAsFactors = FALSE) %>%
@@ -69,15 +72,18 @@ fri_rekey <- function (x) {
   } %>%
     rename(SITE1 = SiteID)
 }
+
+mcd_files <- list.files(mcd_path,
+                        pattern = ".csv")
 #> Participant History
-mcd_history <- read_csv("C:/Users/anorthrup/Box Sync/ETAC/Data merged across sites/MCD/MCD_Participant_Summary_History_W0-W4_SASdates.csv") %>%
+mcd_history <- read_csv(paste0(mcd_path, str_subset(mcd_files, "MCD_Participant_History"))) %>%
   SasNumToDate() %>%
   mutate(SiteSpecificID = replace(SiteSpecificID, 
                                   which(SiteID == "WUSL"), 
                                   str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
   fri_rekey() #Change FRI SiteSpecificIDs to match PIDs in ACASI surveys
   #> Lab Test Results
-mcd_labTests <- read_csv("C:/Users/anorthrup/Box Sync/ETAC/Data merged across sites/MCD/MCD_Lab_Test_Results_W0-W4_SASdates.csv") %>%
+mcd_labTests <- read_csv(paste0(mcd_path, str_subset(mcd_files, "MCD_Lab"))) %>%
   SasNumToDate() %>%
   select(SiteID, SiteSpecificID, ServiceDate, ViralSupp) %>%
   filter(!is.na(ViralSupp)) %>%
@@ -88,7 +94,7 @@ mcd_labTests <- read_csv("C:/Users/anorthrup/Box Sync/ETAC/Data merged across si
                                   str_pad(SiteSpecificID[which(SiteID == "WUSL")], 4, "left", "0"))) %>%
   fri_rekey() #Change FRI SiteSpecificIDs to match PIDs in ACASI surveys
   #> Ambulatory Visits
-mcd_ambVisits <- read_csv("C:/Users/anorthrup/Box Sync/ETAC/Data merged across sites/MCD/MCD_Ambulatory_Visits_W0-W4_SASdates.csv",
+mcd_ambVisits <- read_csv(paste0(mcd_path, str_subset(mcd_files, "MCD_Amb")),
                           col_types = cols(
                             SiteSpecificID = col_character()
                           )) %>%
@@ -895,6 +901,6 @@ acasi_analysis <- acasi %>%
          -ARTADHR_RCD_Missing) %>%
   filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE)))
 
-save(acasi, acasi_analysis, file = "acasi.RData")
+# save(acasi, acasi_analysis, file = "acasi.RData")
 
 
