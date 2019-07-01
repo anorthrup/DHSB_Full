@@ -850,8 +850,7 @@ acasi <- bind_rows(
     )
   ) %>%
   mutate_at(vars(contains("_RCR"), contains("_RCD"), BORNHIV, CARELHIV, contains("outcome")),
-            list(as.factor)) %>%
-  filter(AGE_RC >= 18)
+            list(as.factor))
 
 ##### Create a data set for analysis excluding original variables
 acasi_analysis <- acasi %>%
@@ -917,6 +916,7 @@ acasi_analysis <- acasi %>%
          outcome_Search_SexHealth, outcome_Search_GenHealth, outcome_Comms_SexHealth
   ) %>%
   select_if(~length(which(. == 0)) < length(.)) %>%
+  filter(AGE_RC >= 18) %>%
   filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE))) #> Remove participants with missing values for either YEHS variable
 
 ##### Create list of variables with more easily interpretable labels
