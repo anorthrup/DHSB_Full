@@ -1016,6 +1016,8 @@ acasi_labels <- tribble(
     by = "Variable"
   )
 
-save(acasi, acasi_analysis, acasi_labels, file = "acasi.RData")
+save(acasi, acasi_analysis, acasi_labels,
+     acasiJoinInner, acasiJoin00m, acasiJoin06m,
+     file = "acasi.RData")
 
 
