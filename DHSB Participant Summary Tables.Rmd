@@ -268,15 +268,15 @@ kable(table1 %>%
         paste0("Table 1. Sociodemographic characteristics of young adults living with HIV across 10 demonstration sites in the United States (N = ", nrow(demo), ")")
       ) %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
-  group_rows(table1Index$Header[1], table1Index$Start[1], table1Index$End[1]) %>%
-  group_rows(table1Index$Header[2], table1Index$Start[2], table1Index$End[2]) %>%
-  group_rows(table1Index$Header[3], table1Index$Start[3], table1Index$End[3]) %>%
-  group_rows(table1Index$Header[4], table1Index$Start[4], table1Index$End[4]) %>%
-  group_rows(table1Index$Header[5], table1Index$Start[5], table1Index$End[5]) %>%
-  group_rows(table1Index$Header[6], table1Index$Start[6], table1Index$End[6]) %>%
-  group_rows(table1Index$Header[7], table1Index$Start[7], table1Index$End[7]) %>%
-  group_rows(table1Index$Header[8], table1Index$Start[8], table1Index$End[8]) %>%
-  group_rows(table1Index$Header[9], table1Index$Start[9], table1Index$End[9])
+  kableExtra::group_rows(table1Index$Header[1], table1Index$Start[1], table1Index$End[1]) %>%
+  kableExtra::group_rows(table1Index$Header[2], table1Index$Start[2], table1Index$End[2]) %>%
+  kableExtra::group_rows(table1Index$Header[3], table1Index$Start[3], table1Index$End[3]) %>%
+  kableExtra::group_rows(table1Index$Header[4], table1Index$Start[4], table1Index$End[4]) %>%
+  kableExtra::group_rows(table1Index$Header[5], table1Index$Start[5], table1Index$End[5]) %>%
+  kableExtra::group_rows(table1Index$Header[6], table1Index$Start[6], table1Index$End[6]) %>%
+  kableExtra::group_rows(table1Index$Header[7], table1Index$Start[7], table1Index$End[7]) %>%
+  kableExtra::group_rows(table1Index$Header[8], table1Index$Start[8], table1Index$End[8]) %>%
+  kableExtra::group_rows(table1Index$Header[9], table1Index$Start[9], table1Index$End[9])
 ```
 Footnotes:  
 
@@ -300,20 +300,20 @@ kable(table2 %>%
         select(-Header),
       caption = "Table 2. Candidate predictors of digital health seeking, including HIV-related health, healthcare utilization, substance use, and mental health reported at baseline") %>%
   kable_styling(bootstrap_options = c("striped", "condensed")) %>%
-  group_rows(table2Index$Header[1], table2Index$Start[1], table2Index$End[1]) %>%
-  group_rows(table2Index$Header[2], table2Index$Start[2], table2Index$End[2]) %>%
-  group_rows(table2Index$Header[3], table2Index$Start[3], table2Index$End[3]) %>%
-  group_rows(table2Index$Header[4], table2Index$Start[4], table2Index$End[4]) %>%
-  group_rows(table2Index$Header[5], table2Index$Start[5], table2Index$End[5]) %>%
-  group_rows(table2Index$Header[6], table2Index$Start[6], table2Index$End[6]) %>%
-  group_rows(table2Index$Header[7], table2Index$Start[7], table2Index$End[7]) %>%
-  group_rows(table2Index$Header[8], table2Index$Start[8], table2Index$End[8]) %>%
-  group_rows(table2Index$Header[9], table2Index$Start[9], table2Index$End[9]) %>%
-  group_rows(table2Index$Header[10], table2Index$Start[10], table2Index$End[10]) %>%
-  group_rows(table2Index$Header[11], table2Index$Start[11], table2Index$End[11]) %>%
-  group_rows(table2Index$Header[12], table2Index$Start[12], table2Index$End[12]) %>%
-  group_rows(table2Index$Header[13], table2Index$Start[13], table2Index$End[13]) %>%
-  group_rows(table2Index$Header[14], table2Index$Start[14], table2Index$End[14])
+  kableExtra::group_rows(table2Index$Header[1], table2Index$Start[1], table2Index$End[1]) %>%
+  kableExtra::group_rows(table2Index$Header[2], table2Index$Start[2], table2Index$End[2]) %>%
+  kableExtra::group_rows(table2Index$Header[3], table2Index$Start[3], table2Index$End[3]) %>%
+  kableExtra::group_rows(table2Index$Header[4], table2Index$Start[4], table2Index$End[4]) %>%
+  kableExtra::group_rows(table2Index$Header[5], table2Index$Start[5], table2Index$End[5]) %>%
+  kableExtra::group_rows(table2Index$Header[6], table2Index$Start[6], table2Index$End[6]) %>%
+  kableExtra::group_rows(table2Index$Header[7], table2Index$Start[7], table2Index$End[7]) %>%
+  kableExtra::group_rows(table2Index$Header[8], table2Index$Start[8], table2Index$End[8]) %>%
+  kableExtra::group_rows(table2Index$Header[9], table2Index$Start[9], table2Index$End[9]) %>%
+  kableExtra::group_rows(table2Index$Header[10], table2Index$Start[10], table2Index$End[10]) %>%
+  kableExtra::group_rows(table2Index$Header[11], table2Index$Start[11], table2Index$End[11]) %>%
+  kableExtra::group_rows(table2Index$Header[12], table2Index$Start[12], table2Index$End[12]) %>%
+  kableExtra::group_rows(table2Index$Header[13], table2Index$Start[13], table2Index$End[13]) %>%
+  kableExtra::group_rows(table2Index$Header[14], table2Index$Start[14], table2Index$End[14])
 ```
 
 ```{r eval = FALSE}
@@ -333,7 +333,56 @@ saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 ```
 
 ### Testing Across Sites
-```{r eval = FALSE}
+
+```{r}
+#####Table 1: participant characteristics summary
+table1Testing <- bind_rows(
+  #Age groups
+  table_OneFactor(demo, varString = "Age Groups",
+                  varRelevel = c("18-24 Years")),
+  #Ethnicity/Race
+  table_OneFactor(demo, varString = "RACE_RC", header = "Ethnicity and Race", 
+                  varRelevel = c("Latino",
+                                 "Black, Not Latino",
+                                 "White, Not Latino",
+                                 "White Mixed-Race, Not Latino or Black")),
+  #Gender
+  table_OneFactor(demo, varString = "GENDER_RC", header = "Gender Identity",
+                  varRelevel = c("Male (cis man)",
+                                 "Female (cis woman)",
+                                 "Trans-identified")),
+  #Orientation
+  table_OneFactor(demo, varString = "ORIENT_RC", header = "Sexual Orientation",
+                  varRelevel = c("Straight",
+                                 "Gay or lesbian",
+                                 "Bisexual")),
+  #Education
+  table_OneFactor(demo, varString = "GRADE_RC", header = "Education",
+                  varRelevel = c("High school, equivalent or less",
+                                 "Some post-K12")),
+  #Residence
+  table_OneFactor(demo, varString = "STAY7D_RC", 
+                  header = "Current Residence",
+                  varRelevel = c("Stable housing")),
+  #Income
+  table_Continuous(demo, variable = "MONEY_RC", stat = "median", 
+                   name = "Monthly Income",
+                   header = "Monthly Income")
+) %>%
+  mutate(Overall = str_replace(Overall, "(\\d+)(/\\d+)", "\\1")) %>%
+  filter(!is.na(Overall)) %>%
+  select(-Overall) %>%
+  mutate_at(vars(-Header, -Variable), list(~str_remove(., " \\(.*\\)$"))) %>%
+  mutate_at(vars(-Header, -Variable), list(~str_remove(., " \\[.*\\]$"))) %>%
+  mutate(Header = str_remove(Header, ", N \\(%\\)")) %>%
+  mutate(Header = str_remove(Header, " \\[Range\\], Median \\[IQR\\]"))
+
+table1Chisq <- table1Testing %>%
+  filter(Header != "Monthly Income")
+
+```
+
+```{r include = TRUE}
 table1Chisq <- table1 %>%
   mutate_at(vars(-Variable), list(~as.integer(str_extract(., "(\\d+)"))))
 table2Chisq <- table2 %>%
