@@ -37,6 +37,7 @@ source("DHSB Table Functions.R")
 demo <- acasi %>%
   filter(Set == 1) %>% #Remove participants without 06m assessment
   filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE))) %>%
+  filter(AGE >= 18) %>%
   select(-RACE, -starts_with("S56")) %>%
   filter(!(is.na(HE_RC_HSE) | is.na(HE_RC_HAL))) %>%
   mutate(`Age Groups` = as.factor(case_when(AGE < 25 ~ "18-24 Years",
@@ -313,8 +314,7 @@ kable(table2 %>%
   kableExtra::group_rows(table2Index$Header[10], table2Index$Start[10], table2Index$End[10]) %>%
   kableExtra::group_rows(table2Index$Header[11], table2Index$Start[11], table2Index$End[11]) %>%
   kableExtra::group_rows(table2Index$Header[12], table2Index$Start[12], table2Index$End[12]) %>%
-  kableExtra::group_rows(table2Index$Header[13], table2Index$Start[13], table2Index$End[13]) %>%
-  kableExtra::group_rows(table2Index$Header[14], table2Index$Start[14], table2Index$End[14])
+  kableExtra::group_rows(table2Index$Header[13], table2Index$Start[13], table2Index$End[13])
 ```
 
 ```{r eval = FALSE}
