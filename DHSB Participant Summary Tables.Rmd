@@ -401,33 +401,23 @@ bind_rows(
 ```
 
 ```{r anovaSites, include = TRUE}
-tableAnova <- bind_rows(
-  table1Testing %>%
-    filter(Header == "Monthly Income"),
-  table2 %>%
-    filter(str_detect(Header, "\\[Range\\]")) %>%
-    select(-Overall_2) %>%
-    set_names(str_remove(colnames(.), " \\(.*\\)")) %>%
-    rename(Overall = Overall_1)
-) %>%
-  filter(!is.na(Overall))
+tableAnova <- acasi %>%
+  filter(Set == 1) %>%
+  filter(AGE > 17) %>%
+  filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE))) %>%
+  select(SITE1, MONEY_RC_Log, HE_RC_HAL, HE_RC_HSE, CARE_RC, MENTALH_RC,
+         MTUEX_RC, MTUSPX_RC_Text, MTUSPX_RC_Smartphone, MTUIX_RC,
+         MTUSNX_RC, MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg)
 
-bind_rows(
-  anova.dhsb(demo, "MONEY_RC_Log", "Income, Last Month"),
-  anova.dhsb(demo, "HE_RC_HAL", "Health Access Literacy"),
-  anova.dhsb(demo, "HE_RC_HSE", "Health Self-Efficacy"),
-  anova.dhsb(demo, "CARE_RC", "Provider Empathy"),
-  anova.dhsb(demo, "MENTALH_RC", "Mental Health"),
-  anova.dhsb(demo, "MENTALH4_RC", "Physical and Mental Health"),
-  anova.dhsb(demo, "MTUEX_RC", "Email Usage"),
-  anova.dhsb(demo, "MTUSPX_RC_Text", "Text Messaging"),
-  anova.dhsb(demo, "MTUSPX_RC_Smartphone", "Smartphone Usage"),
-  anova.dhsb(demo, "MTUIX_RC", "Internet Searching"),
-  anova.dhsb(demo, "MTUSNX_RC", "General Social Media Usage"),
-  anova.dhsb(demo, "MTUAX_RC_Pos", "Positive Attitudes Toward Technology"),
-  anova.dhsb(demo, "MTUAX_RC_Anx", "Anxiety About Being Without Technology or Dependence on Technology"),
-  anova.dhsb(demo, "MTUAX_RC_Neg", "Negative Attitudes Toward Technology")
-) %>%
+anova.dhsb(tableAnova) %>%
+  left_join(
+    .,
+    acasi_labels,
+    by = "Variable"
+  ) %>%
+  mutate(Label = replace(Label, which(Variable == "MONEY_RC_Log"), "Log Monthly Income")) %>%
+  select(Label, everything(), -Variable, -Binary) %>%
+  rename(Variable = Label) %>%
   kable(., digits = 3,
         caption = "ANOVA Testing for Continuous Variables Across Site") %>%
   kable_styling(bootstrap_options = c("striped", "condensed"))
