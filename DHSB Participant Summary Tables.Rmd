@@ -336,6 +336,7 @@ saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 
 ```{r chisqSites, include = TRUE}
 #####Table 1 Chi-Squared testing across sites
+#> Create data frame with counts across sites for each variable
 table1Testing <- bind_rows(
   #Age groups
   table_OneFactor(demo, varString = "Age Groups",
@@ -399,6 +400,16 @@ bind_rows(
 ```
 
 ```{r anovaSites, include = TRUE}
+tableAnova <- bind_rows(
+  table1Testing %>%
+    filter(Header == "Monthly Income"),
+  table2 %>%
+    filter(str_detect(Header, "\\[Range\\]")) %>%
+    select(-Overall_2) %>%
+    set_names(str_remove(colnames(.), " \\(.*\\)")) %>%
+    rename(Overall = Overall_1)
+) %>%
+  filter(!is.na(Overall))
 
 bind_rows(
   anova.dhsb(demo, "MONEY_RC_Log", "Income, Last Month"),
