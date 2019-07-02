@@ -222,6 +222,7 @@ table3 <- bind_rows(
 ) %>%
   add_row(Variable = "Among participants reporting SNS utilization (N = 651)") %>%
   rename(!!newNames)
+save(table3, file = "Tables Tech Use.RData")
 ```
 
 ### Table 3
