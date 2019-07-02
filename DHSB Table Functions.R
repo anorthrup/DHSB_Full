@@ -251,8 +251,8 @@ table_Continuous <- function(x, variable, stat = "mean",
 chisq.dhsb <- function(x, varName, varLevels) {
   testResult <- chisq.test(
     x = as.matrix(x %>%
-                    filter(Variable %in% varLevels) %>%
-                    select(-Variable, -Overall))
+                    filter(Header %in% varName) %>%
+                    select(-Header, -Variable, -Overall))
   )
   tribble(
     ~Variable, ~`Chi-Squared Statistic`, ~Df,                  ~`p Value`,

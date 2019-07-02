@@ -334,8 +334,8 @@ saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 
 ### Testing Across Sites
 
-```{r table1Chisq}
-#####Table 1: participant characteristics summary
+```{r chisqSites, include = TRUE}
+#####Table 1 Chi-Squared testing across sites
 table1Testing <- bind_rows(
   #Age groups
   table_OneFactor(demo, varString = "Age Groups",
@@ -371,7 +371,6 @@ table1Testing <- bind_rows(
 ) %>%
   mutate(Overall = str_replace(Overall, "(\\d+)(/\\d+)", "\\1")) %>%
   filter(!is.na(Overall)) %>%
-  select(-Overall) %>%
   mutate_at(vars(-Header, -Variable), list(~str_remove(., " \\(.*\\)$"))) %>%
   mutate_at(vars(-Header, -Variable), list(~str_remove(., " \\[.*\\]$"))) %>%
   mutate(Header = str_remove(Header, ", N \\(%\\)")) %>%
@@ -381,41 +380,26 @@ table1Chisq <- table1Testing %>%
   filter(Header != "Monthly Income") %>%
   mutate_at(vars(-Header, -Variable), list(as.integer))
 
-```
+table1Chisq_vars <- unique(table1Chisq$Header)
 
-```{r include = TRUE}
-table2Chisq <- table2 %>%
-  mutate_at(vars(-Variable), list(~as.integer(str_extract(., "(\\d+)"))))
+#> Chi-squared tests
 bind_rows(
-  chisq.dhsb(table1Chisq, "Age Group", 
-             c("   18-24 Years", "   25-34 Years")),
-  chisq.dhsb(table1Chisq, "Ethnicity and Race", 
-             c("   Latino", 
-               "   Black, Not Latino",
-               "   White, Not Latino")),
-  chisq.dhsb(table1Chisq, "Gender Identity", 
-             c("   Male (cis man)", 
-               "   Female (cis woman)",
-               "   Trans-identified",
-               "   Other gender")),
-  chisq.dhsb(table1Chisq, "Sexual Orientation", 
-             c("   Straight",
-               "   Gay or lesbian",
-               "   Bisexual",
-               "   Other orientation")),
-  chisq.dhsb(table1Chisq, "Education", 
-             c("   High school, equivalent or less",
-               "   Some post-K12",
-               "   College graduate or trade certification")),
-  chisq.dhsb(table1Chisq, "Residence, Last 7 Days",
-             c("   Stable housing",
-               "   Unstable housing",
-               "   Institution"))
+  chisq.dhsb(table1Chisq, table1Chisq_vars[1]),
+  chisq.dhsb(table1Chisq, table1Chisq_vars[2]),
+  chisq.dhsb(table1Chisq, table1Chisq_vars[3]),
+  chisq.dhsb(table1Chisq, table1Chisq_vars[4]),
+  chisq.dhsb(table1Chisq, table1Chisq_vars[5]),
+  chisq.dhsb(table1Chisq, table1Chisq_vars[6])
 ) %>%
-  mutate(Warning = c("No", "Yes", "Yes", "Yes", "Yes", "Yes")) %>%
+  mutate(Warning = c("No", "Yes", "Yes", "Yes", "No", "No")) %>%
   kable(., digits = 3,
         caption = "Chi-Square Testing for Categorical Variables Across Site") %>%
   kable_styling(bootstrap_options = c("striped", "condensed"))
+
+```
+
+```{r anovaSites, include = TRUE}
+
 bind_rows(
   anova.dhsb(demo, "MONEY_RC_Log", "Income, Last Month"),
   anova.dhsb(demo, "HE_RC_HAL", "Health Access Literacy"),
