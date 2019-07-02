@@ -283,6 +283,7 @@ kable(table1 %>%
 Footnotes:  
 
 * STAY7D_RC: Six participants in 'Institution' (hospital or prison) were incorporated into 'Unstable housing'.
+* Monthly income overall sample size N= `r length(which(!is.na(demo$MONEY_RC)))` due to response of Don't Know/Not Sure.
 
 ### Table 2
 ```{r include = TRUE}
@@ -316,7 +317,11 @@ kable(table2 %>%
   kableExtra::group_rows(table2Index$Header[12], table2Index$Start[12], table2Index$End[12]) %>%
   kableExtra::group_rows(table2Index$Header[13], table2Index$Start[13], table2Index$End[13])
 ```
+Footnotes:
 
+* Viral suppression information obtained from medical chart data (N = `r length(which(demo$ViralSupp_MCD_RC != "Missing"))`).
+* HIV doctor visit information obtained from medical chart data (N = `r length(which(demo$CAREHV06_MCD_RC != "Missing"))`).
+* Injected drug information N = `r length(which(demo$INJECTL_RC != "Missing"))` due to refusals to answer.
 ```{r eval = FALSE}
 wb <- loadWorkbook("DHSB Tables.xlsx")
 #Table 1
