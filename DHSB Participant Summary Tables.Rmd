@@ -204,7 +204,8 @@ table2 <- bind_rows(
                      header = "Youth Health Enagement"),
     #> Health Self-Efficacy
     table_Continuous(demo, variable = "HE_RC_HSE", 
-                     name = "Health Self-Efficacy"),
+                     name = "Health Self-Efficacy",
+                     header = "Youth Health Enagement"),
     #Provider Empathy
     table_Continuous(demo, variable = "CARE_RC",
                      name = "Provider Empathy", 
