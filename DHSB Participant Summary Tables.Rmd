@@ -421,7 +421,13 @@ anova.dhsb(tableAnova) %>%
     by = "Variable"
   ) %>%
   mutate(Label = replace(Label, which(Variable == "MONEY_RC_Log"), "Log Monthly Income")) %>%
-  select(Label, everything(), -Variable, -Binary) %>%
+  mutate(
+    Table = NA,
+    Table = replace(Table, str_which(Label, "MTUAS"), "Table 3"),
+    Table = replace(Table, which(Label == "Log Monthly Income"), "Table 1"),
+    Table = replace(Table, which(is.na(Table)), "Table 2")
+  ) %>%
+  select(Table, Label, everything(), -Variable, -Binary) %>%
   rename(Variable = Label) %>%
   kable(., digits = 3,
         caption = "ANOVA Testing for Continuous Variables Across Site") %>%
