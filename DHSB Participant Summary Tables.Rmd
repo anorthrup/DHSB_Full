@@ -170,7 +170,7 @@ table2 <- bind_rows(
     ),
     #HIV Disclosure
     table_OneFactor(demo, varString = "DISC_RC", 
-                    header = "HIV disclosure status") %>%
+                    header = "HIV Disclosure Status") %>%
       filter(Variable != "   Did not disclose"),
     #Substance Use
     bind_rows(
@@ -343,7 +343,7 @@ saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 ```{r chisqSites, include = TRUE}
 #####Table 1 Chi-Squared testing across sites
 #> Create data frame with counts across sites for each variable
-table1Testing <- bind_rows(
+tableChisq <- bind_rows(
   #Age groups
   table_OneFactor(demo, varString = "Age Groups",
                   varRelevel = c("18-24 Years")),
@@ -371,23 +371,39 @@ table1Testing <- bind_rows(
   table_OneFactor(demo, varString = "STAY7D_RC", 
                   header = "Current Residence",
                   varRelevel = c("Stable housing")),
-  #Income
-  table_Continuous(demo, variable = "MONEY_RC", stat = "median", 
-                   name = "Monthly Income",
-                   header = "Monthly Income")
+  #HIV Diagnosis
+  table_OneFactor(demo, varString = "SCREEN5", header = "HIV Diagnosis",
+                  varRelevel = c("Within past 12 months",
+                                 "More than 12 months ago")),
+  #Viral Suppression
+  table_OneFactor(demo, varString = "ViralSupp_MCD",
+                  header = "Viral Suppression"),
+  #Insurance
+  table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
+  #Health care history, 6 months
+  table_OneFactor(demo, varString = "CARED6_RC", 
+                  header = "Non-HIV Care Visit, 6 Months"),
+  table_OneFactor(demo, varString = "CAREHV06_MCD_RC", 
+                  header = "HIV Care Visit, 6 Months"),
+  #HIV Disclosure
+  table_OneFactor(demo, varString = "DISC_RC", 
+                  header = "HIV Disclosure Status"),
+  #Substance Use
+  table_OneFactor(demo, varString = "DRUG_RCD_Alcohol",
+                  header = "Substance Use: Alcohol"),
+  table_OneFactor(demo, varString = "DRUG_RCD_Tobacco",
+                  header = "Substance Use: Tobacco"),
+  table_OneFactor(demo, varString = "DRUG_RCD_Marijuana",
+                  header = "Substance Use: Marijuana"),
+  table_OneFactor(demo, varString = "DRUG_RCD_Other",
+                  header = "Substance Use: Other Non-Injected")
 ) %>%
   mutate(Overall = str_replace(Overall, "(\\d+)(/\\d+)", "\\1")) %>%
   filter(!is.na(Overall)) %>%
   mutate_at(vars(-Header, -Variable), list(~str_remove(., " \\(.*\\)$"))) %>%
   mutate_at(vars(-Header, -Variable), list(~str_remove(., " \\[.*\\]$"))) %>%
   mutate(Header = str_remove(Header, ", N \\(%\\)")) %>%
-  mutate(Header = str_remove(Header, " \\[Range\\], Median \\[IQR\\]"))
-
-table1Chisq <- table1Testing %>%
-  filter(Header != "Monthly Income") %>%
   mutate_at(vars(-Header, -Variable), list(as.integer))
-
-table1Chisq_vars <- unique(table1Chisq$Header)
 
 #> Chi-squared tests
 bind_rows(

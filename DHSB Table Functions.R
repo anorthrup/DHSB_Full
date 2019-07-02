@@ -248,16 +248,23 @@ table_Continuous <- function(x, variable, stat = "mean",
 }
 
 #Chi-square test for levels of variable in tables
-chisq.dhsb <- function(x, varName, varLevels) {
-  testResult <- chisq.test(
-    x = as.matrix(x %>%
-                    filter(Header %in% varName) %>%
-                    select(-Header, -Variable, -Overall))
+chisq.dhsb <- function(x) {
+  output <- tibble(
+    Variable                = unique(x$Header), 
+    `Chi-Squared Statistic` = rep(NA, length(unique(x$Header))),
+    `DF`                    = rep(NA, length(unique(x$Header))),
+    `p Value`               = rep(NA, length(unique(x$Header)))
   )
-  tribble(
-    ~Variable, ~`Chi-Squared Statistic`, ~Df,                  ~`p Value`,
-    varName,   testResult$statistic,     testResult$parameter, testResult$p.value
-  )
+  for (i in 1:nrow(output)) {
+    testResult <- chisq.test(
+      x = as.matrix(x %>%
+                      filter(Header %in% output$Variable[i]) %>%
+                      select(-Header, -Variable, -Overall))
+    )
+    output$`Chi-Squared Statistic`[i] <- testResult$statistic
+    output$DF[i] <- testResult$parameter
+    output$`p Value`[i] <- testResult$p.value
+  }
 }
 
 #ANOVA test for continuous variables
