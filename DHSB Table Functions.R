@@ -261,10 +261,20 @@ chisq.dhsb <- function(x, varName, varLevels) {
 }
 
 #ANOVA test for continuous variables
-anova.dhsb <- function(x, variable, name) {
-  testResult <- oneway.test(as.formula(paste(variable, "~ SITE1")), data = demo)
-  tribble(
-    ~Variable, ~`F Statistic`,       ~`DF Numerator`,         ~`DF Denominator`,        ~`p Value`,
-    name,      testResult$statistic, testResult$parameter[1], testResult$parameter[2], testResult$p.value
+anova.dhsb <- function(x) {
+  output <- tibble(
+    Variable = colnames(x)[2:ncol(x)], 
+    `F Statistic` = rep(NA, ncol(x) - 1),
+    `DF Numerator` = rep(NA, ncol(x) - 1),
+    `DF Denominator` = rep(NA, ncol(x) - 1),
+    `p Value` = rep(NA, ncol(x) - 1)
   )
+  for (i in 2:ncol(x)) {
+    testResult <- oneway.test(as.formula(paste(colnames(x)[i], "~ SITE1")), data = x)
+    output$`F Statistic`[i - 1] <- testResult$statistic
+    output$`DF Numerator`[i - 1] <- testResult$parameter[1]
+    output$`DF Denominator`[i - 1] <- testResult$parameter[2]
+    output$`p Value`[i - 1] <- testResult$p.value
+  }
+  return(output)
 }
