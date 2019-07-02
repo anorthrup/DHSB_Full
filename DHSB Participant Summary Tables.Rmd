@@ -334,7 +334,7 @@ saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 
 ### Testing Across Sites
 
-```{r}
+```{r table1Chisq}
 #####Table 1: participant characteristics summary
 table1Testing <- bind_rows(
   #Age groups
@@ -378,13 +378,12 @@ table1Testing <- bind_rows(
   mutate(Header = str_remove(Header, " \\[Range\\], Median \\[IQR\\]"))
 
 table1Chisq <- table1Testing %>%
-  filter(Header != "Monthly Income")
+  filter(Header != "Monthly Income") %>%
+  mutate_at(vars(-Header, -Variable), list(as.integer))
 
 ```
 
 ```{r include = TRUE}
-table1Chisq <- table1 %>%
-  mutate_at(vars(-Variable), list(~as.integer(str_extract(., "(\\d+)"))))
 table2Chisq <- table2 %>%
   mutate_at(vars(-Variable), list(~as.integer(str_extract(., "(\\d+)"))))
 bind_rows(
