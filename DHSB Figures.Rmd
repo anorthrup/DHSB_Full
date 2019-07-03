@@ -30,6 +30,7 @@ source("DHSB Figure Functions.R")
 figData <- acasi %>%
   filter(Set == 1) %>% #Remove participants without 06m assessment
   filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE))) %>%
+  filter(AGE >= 18) %>%
   mutate(AgeGroup = as.factor(case_when(AGE < 25 ~ "18-24 Years",
                                         AGE >= 25 ~ "25-34 Years"))) %>%
   unite("SitePID", SITE1, PID, sep = "_")
