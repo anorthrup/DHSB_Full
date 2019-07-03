@@ -99,7 +99,7 @@ hlthSeekCat <- function(x, ...){
       `Health Category` = case_when(str_detect(Variable, "_Gen") ~ "General Health",
                                     str_detect(Variable, "_Sex") ~ "Sexual Health",
                                     str_detect(Variable, "_Trans") ~ "Trans Health"),
-      Topic = "Any Topic",
+      Topic = "Any of these",
       Timeframe = case_when(str_detect(Variable, "S56_24|S56_25") ~ "Lifetime",
                             str_detect(Variable, "S56_26") ~ "Last 6 Months")
     ) %>%
