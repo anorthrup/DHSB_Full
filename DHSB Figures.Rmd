@@ -33,7 +33,12 @@ figData <- acasi %>%
   filter(AGE >= 18) %>%
   mutate(AgeGroup = as.factor(case_when(AGE < 25 ~ "18-24 Years",
                                         AGE >= 25 ~ "25-34 Years"))) %>%
-  unite("SitePID", SITE1, PID, sep = "_")
+  unite("SitePID", SITE1, PID, sep = "_") %>%
+  mutate(
+    S56_25L = replace(S56_25L, str_which(S56_25S, "NONE"), 0),
+    S56_26N = replace(S56_26N, str_which(S56_26S, "NONE|NOTHING|HIV"), 0),
+    S56_26E = replace(S56_26E, str_which(S56_26S, "HIV"), 1)
+  )
 ```
 
 ### Health-Seeking Behaviors
