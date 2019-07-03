@@ -18,7 +18,7 @@ load("acasi.RData")
 
 #####Create new Excel workbook
 # wb <- createWorkbook()
-# wb <- loadWorkbook("DHSB Characteristic Data.xlsx")
+# wb <- loadWorkbook("DHSB Tables.xlsx")
 
 #####Source functions for summaries
 source("DHSB Figure Functions.R")
@@ -71,9 +71,11 @@ plotSum(hsSum, fillVar = "Timeframe", colors = c(6, 8),
 #              colors = c(6, 8))
 # grid.arrange(p1, p2, nrow = 1)
 #Write table to workbook
-# removeWorksheet(wb, "Health Information")
-# addWorksheet(wb, "Health Information")
-# writeData(wb, "Health Information", hsSum)
+removeWorksheet(wb, "Figure 1")
+addWorksheet(wb, "Figure 1")
+writeData(wb, "Figure 1", hsCat %>%
+          filter(Timeframe == "Last 6 Mo"))
+setColWidths(wb, sheet = "Figure 1", cols = 1:ncol(hsCat), widths = "auto")
 ```
 
 ### Different Communication Methods
@@ -99,13 +101,13 @@ plotCat(snCat, fillVar = "Platform", facetCVar = "Category", colors = c(4, 6, 8,
 #         caption = "* Question was only asked with regards to Social Networking Apps")
 #Plot proportions for Social Networking Summary
 fig2 <- plotSum(snSum %>%
-               mutate(Platform = fct_relevel(as.factor(Platform),
-                                             "Private\nMessaging",
-                                             "Social\nMedia",
-                                             "Text\nMessaging")),
-        fillVar = "Platform", colors = c(4, 6, 8, 9),
-        title = "Communications and Social Network Activity",
-        subtitle = "Variables: S56_6, S56_9, S56_15, S56_18 (6 Months)")
+                  mutate(Platform = fct_relevel(as.factor(Platform),
+                                                "Private\nMessaging",
+                                                "Social\nMedia",
+                                                "Text\nMessaging")),
+                fillVar = "Platform", colors = c(4, 6, 8, 9),
+                title = "Communications and Social Network Activity",
+                subtitle = "Variables: S56_6, S56_9, S56_15, S56_18 (6 Months)")
 fig2
 # ##By age
 # plotSumGroup(snSumAge %>%
@@ -121,9 +123,10 @@ fig2
 #              colors = c(6, 8))
 # grid.arrange(p1, p2, nrow = 1)
 #Write table to workbook
-# removeWorksheet(wb, "Social Network Topics")
-# addWorksheet(wb, "Social Network Topics")
-# writeData(wb, "Social Network Topics", snSum)
+removeWorksheet(wb, "Figure 2")
+addWorksheet(wb, "Figure 2")
+writeData(wb, "Figure 2", snSum)
+setColWidths(wb, sheet = "Figure 2", cols = 1:ncol(snSum), widths = "auto")
 ```
 
 ```{r eval = FALSE}
