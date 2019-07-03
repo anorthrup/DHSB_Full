@@ -80,7 +80,7 @@ plotSum(hsSum, fillVar = "Timeframe", colors = c(6, 8),
 removeWorksheet(wb, "Figure 1")
 addWorksheet(wb, "Figure 1")
 writeData(wb, "Figure 1", hsCat %>%
-          filter(Timeframe == "Last 6 Mo"))
+          filter(Timeframe == "Last 6 Months"))
 setColWidths(wb, sheet = "Figure 1", cols = 1:ncol(hsCat), widths = "auto")
 ```
 
