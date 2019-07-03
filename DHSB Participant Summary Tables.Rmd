@@ -407,10 +407,13 @@ tableChisq <- bind_rows(
 
 #> Chi-squared tests
 chisq.dhsb(tableChisq) %>%
+  mutate(Table = NA,
+         Table = replace(Table, str_which(Variable, "Age|Race|Gender|Orient|Educ|Residence"), "Table 1"),
+         Table = replace(Table, which(is.na(Table)), "Table 2")) %>%
+  select(Table, everything()) %>%
   kable(., digits = 3,
         caption = "Chi-Square Testing for Categorical Variables Across Site") %>%
   kable_styling(bootstrap_options = c("striped", "condensed"))
-
 ```
 
 ```{r anovaSites, include = TRUE}
