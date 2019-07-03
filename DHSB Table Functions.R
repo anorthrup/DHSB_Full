@@ -262,7 +262,7 @@ chisq.dhsb <- function(x) {
     output$DF[i] <- testResult$result$parameter
     output$`p-Value`[i] <- testResult$result$p.value
     if (length(testResult$warnings)) {
-      output$Warning[i] <- "Count values too low, Chi-squared approximation may be incorrect"
+      output$Warning[i] <- testResult$warnings
     } else {
       output$Warning[i] <- ""
     }
@@ -280,7 +280,7 @@ anova.dhsb <- function(x) {
     output$`F Statistic`[i - 1] <- testResult$statistic
     output$`DF Numerator`[i - 1] <- testResult$parameter[1]
     output$`DF Denominator`[i - 1] <- testResult$parameter[2]
-    output$`p Value`[i - 1] <- testResult$p.value
+    output$`p-Value`[i - 1] <- testResult$p.value
   }
   return(output)
 }
