@@ -322,28 +322,13 @@ Footnotes:
 * Viral suppression information obtained from medical chart data (N = `r length(which(demo$ViralSupp_MCD_RC != "Missing"))`).
 * HIV doctor visit information obtained from medical chart data (N = `r length(which(demo$CAREHV06_MCD_RC != "Missing"))`).
 * Injected drug information N = `r length(which(demo$INJECTL_RC != "Missing"))` due to refusals to answer.
-```{r eval = FALSE}
-wb <- loadWorkbook("DHSB Tables.xlsx")
-#Table 1
-removeWorksheet(wb, "Table 1")
-addWorksheet(wb, "Table 1")
-writeData(wb, sheet = "Table 1", table1 %>% select(-Header))
-setColWidths(wb, sheet = "Table 1", cols = 1:ncol(table1), widths = "auto")
-#Table 2
-removeWorksheet(wb, "Table 2")
-addWorksheet(wb, "Table 2")
-writeData(wb, sheet = "Table 2", table2 %>% select(-Header))
-setColWidths(wb, sheet = "Table 2", cols = 1:ncol(table2), widths = "auto")
-
-saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
-```
 
 ### Testing Across Sites
 
 ```{r chisqSites, include = TRUE}
 #####Table 1 Chi-Squared testing across sites
 #> Create data frame with counts across sites for each variable
-tableChisq <- bind_rows(
+tableCounts <- bind_rows(
   #Age groups
   table_OneFactor(demo, varString = "Age Groups",
                   varRelevel = c("18-24 Years")),
@@ -406,18 +391,19 @@ tableChisq <- bind_rows(
   mutate_at(vars(-Header, -Variable), list(as.integer))
 
 #> Chi-squared tests
-chisq.dhsb(tableChisq) %>%
+tableChisq <- chisq.dhsb(tableCounts) %>%
   mutate(Table = NA,
          Table = replace(Table, str_which(Variable, "Age|Race|Gender|Orient|Educ|Residence"), "Table 1"),
          Table = replace(Table, which(is.na(Table)), "Table 2")) %>%
-  select(Table, everything()) %>%
-  kable(., digits = 3,
+  select(Table, everything())
+
+kable(tableChisq, digits = 3,
         caption = "Chi-Square Testing for Categorical Variables Across Site") %>%
   kable_styling(bootstrap_options = c("striped", "condensed"))
 ```
 
 ```{r anovaSites, include = TRUE}
-tableAnova <- acasi %>%
+tableContinuous <- acasi %>%
   filter(Set == 1) %>%
   filter(AGE > 17) %>%
   filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE))) %>%
@@ -425,7 +411,7 @@ tableAnova <- acasi %>%
          MTUEX_RC, MTUSPX_RC_Text, MTUSPX_RC_Smartphone, MTUIX_RC,
          MTUSNX_RC, MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg)
 
-anova.dhsb(tableAnova) %>%
+tableAnova <- anova.dhsb(tableContinuous) %>%
   left_join(
     .,
     acasi_labels,
@@ -439,9 +425,39 @@ anova.dhsb(tableAnova) %>%
     Table = replace(Table, which(is.na(Table)), "Table 2")
   ) %>%
   select(Table, Label, everything(), -Variable, -Binary) %>%
-  rename(Variable = Label) %>%
-  kable(., digits = 3,
+  rename(Variable = Label)
+  
+kable(tableAnova, digits = 3,
         caption = "ANOVA Testing for Continuous Variables Across Site") %>%
   kable_styling(bootstrap_options = c("striped", "condensed"))
 
+```
+
+```{r eval = FALSE}
+wb <- loadWorkbook("DHSB Tables.xlsx")
+#Table 1
+removeWorksheet(wb, "Table 1")
+addWorksheet(wb, "Table 1")
+writeData(wb, sheet = "Table 1", table1 %>% select(-Header))
+setColWidths(wb, sheet = "Table 1", cols = 1:ncol(table1), widths = "auto")
+
+#Table 2
+removeWorksheet(wb, "Table 2")
+addWorksheet(wb, "Table 2")
+writeData(wb, sheet = "Table 2", table2 %>% select(-Header))
+setColWidths(wb, sheet = "Table 2", cols = 1:ncol(table2), widths = "auto")
+
+#Chi-Squared testing
+removeWorksheet(wb, "Chi-Squared")
+addWorksheet(wb, "Chi-Squared")
+writeData(wb, sheet = "Chi-Squared", tableChisq)
+setColWidths(wb, sheet = "Chi-Squared", cols = 1:ncol(tableChisq), widths = "auto")
+
+#ANOVA testing
+removeWorksheet(wb, "ANOVA")
+addWorksheet(wb, "ANOVA")
+writeData(wb, sheet = "ANOVA", tableAnova)
+setColWidths(wb, sheet = "ANOVA", cols = 1:ncol(tableAnova), widths = "auto")
+
+saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
 ```
