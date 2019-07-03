@@ -40,7 +40,7 @@ hlthSeekCat <- function(x, ...){
                                          Variable %in% c("S56_24XL", "S56_25B", "S56_25C", "S56_25D", 
                                                          "S56_25E", "S56_25F", "S56_25G", "S56_26D", "S56_26E", 
                                                          "S56_26F", "S56_26G", "S56_26H", "S56_26I") ~ "Sexual Health",
-                                         Variable %in% c("S56_25A", "S56_25", "S56_25H", "S56_25I", "S56_25J",
+                                         Variable %in% c("S56_25A", "S56_25H", "S56_25I", "S56_25J",
                                                          "S56_25K", "S56_25L", "S56_26C", "S56_26J", "S56_26K",
                                                          "S56_26L", "S56_26M", "S56_26N") ~ "General Health")) %>% 
     #Create new specific topic and timeframe variable to characterize each question
@@ -60,20 +60,34 @@ hlthSeekCat <- function(x, ...){
                              Variable %in% c("S56_25K", "S56_26M") ~ "Medication",
                              Variable %in% c("S56_25L", "S56_26N") ~ "Other"),
            Timeframe = case_when(grepl("S56_24|S56_25", Variable) ~ "Lifetime",
-                                 grepl("S56_26", Variable) ~ "Last 6 Mo"))
+                                 grepl("S56_26", Variable) ~ "Last 6 Months"))
   #Find number of positive answers for S56_25 and S56_26, assign appropriate categories/topics to questions
   hsSum <- x %>%
-    select(SitePID, AgeGroup, S56_25A:S56_25L, S56_26A:S56_26N) %>%
+    select(SitePID, AgeGroup, S56_24XM, S56_24XN, S56_25A:S56_25L, S56_26A:S56_26N) %>%
     #Change answers to either 1 or 0 for the purpose of summarizing (by summing all answers)
     mutate_at(vars(contains("S56")), list(~S56transform)) %>%
     #Sum all patients who chose at least one positive answer in each question
     group_by(!!! groupVars) %>%
-    summarise(S56_25.Count = sum(S56_25B == 1 | S56_25C == 1 | S56_25D == 1 | S56_25E == 1 |
-                                   S56_25F == 1 | S56_25G, na.rm = TRUE),
-              S56_26.Count = sum(S56_26D == 1 | S56_26E == 1 | S56_26F == 1 | S56_26G == 1 | 
-                                   S56_26H == 1 | S56_26I, na.rm = TRUE),
-              S56_25.Total = n(), #Calculate total number of subjects who took T06m survey
-              S56_26.Total = n()) %>%
+    summarise(
+      S56_25_Gen.Count = sum(S56_25A == 1 | S56_25H == 1 | S56_25I == 1 | S56_25J == 1 | 
+                               S56_25K == 1 | S56_25L == 1, na.rm = TRUE),
+      S56_26_Gen.Count = sum(S56_26C == 1 | S56_26J == 1 | S56_26K == 1 | S56_26L == 1 | 
+                               S56_26M == 1 | S56_26N == 1, na.rm = TRUE),
+      S56_25_Gen.Total = n(), #Calculate total number of subjects who took T06m survey
+      S56_26_Gen.Total = n(),
+      S56_25_Sex.Count = sum(S56_25B == 1 | S56_25C == 1 | S56_25D == 1 | S56_25E == 1 |
+                           S56_25F == 1 | S56_25G, na.rm = TRUE),
+      S56_26_Sex.Count = sum(S56_26D == 1 | S56_26E == 1 | S56_26F == 1 | S56_26G == 1 | 
+                           S56_26H == 1 | S56_26I, na.rm = TRUE),
+      S56_25_Sex.Total = n(), #Calculate total number of subjects who took T06m survey
+      S56_26_Sex.Total = n(),
+      # "S56_24XM", "S56_24XN", "S56_26A",
+      # "S56_26B"
+      S56_24X_Trans.Count = sum(S56_24XM == 1 | S56_24XN == 1, na.rm = TRUE),
+      S56_26_Trans.Count = sum(S56_26A == 1 | S56_26B == 1, na.rm = TRUE),
+      S56_24X_Trans.Total = n(), #Calculate total number of subjects who took T06m survey
+      S56_26_Trans.Total = n()
+    ) %>%
     #Manipulate data to appropriate form to match rest of questions
     gather(Variable, Count, contains(".")) %>%
     separate(Variable, c("Variable", "CountType"), sep = "\\.") %>%
@@ -81,9 +95,14 @@ hlthSeekCat <- function(x, ...){
     #Calculate proportion of positive answers
     mutate(Proportion = round(Count / Total, 3)) %>%
     #Assign appropriate categories/topics
-    mutate(`Health Category` = "Sexual Health",
-           Topic = "All Topics",
-           Timeframe = rep(c("Lifetime", "Last 6 Mo"), n()/2)) %>%
+    mutate(
+      `Health Category` = case_when(str_detect(Variable, "_Gen") ~ "General Health",
+                                    str_detect(Variable, "_Sex") ~ "Sexual Health",
+                                    str_detect(Variable, "_Trans") ~ "Trans Health"),
+      Topic = "Any Topic",
+      Timeframe = case_when(str_detect(Variable, "S56_24|S56_25") ~ "Lifetime",
+                            str_detect(Variable, "S56_26") ~ "Last 6 Months")
+    ) %>%
     #Add to results of individual answers
     bind_rows(hsSum, .) %>%
     mutate(Proportion = replace(Proportion, which(Proportion == "NaN"), NA)) %>%

@@ -50,7 +50,7 @@ hsSum <- hlthSeekSum(figData)
 hsSumAge <- hlthSeekSum(figData, AgeGroup)
 #Plot proportions for Health Seeking Categories
 fig1 <- plotCat(hsCat %>%
-          filter(Timeframe == "Last 6 Mo"),
+          filter(Timeframe == "Last 6 Months"),
         fillVar = "Timeframe", facetCVar = "`Health Category`",
         title = "Proportion of Respondents Seeking Health Information Online",
         subtitle = "Last 6 Months",
