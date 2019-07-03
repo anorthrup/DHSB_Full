@@ -247,7 +247,8 @@ kable(table3 %>%
   group_rows(table3Index$Header[3], table3Index$Start[3], table3Index$End[3]) %>%
   group_rows(table3Index$Header[4], table3Index$Start[4], table3Index$End[4]) %>%
   group_rows(table3Index$Header[5], table3Index$Start[5], table3Index$End[5]) %>%
-  group_rows(table3Index$Header[6], table3Index$Start[6], table3Index$End[6])
+  group_rows(table3Index$Header[6], table3Index$Start[6], table3Index$End[6]) %>%
+  group_rows(table3Index$Header[7], table3Index$Start[7], table3Index$End[7])
 ```
 
 ```{r saveWorkbook, eval = FALSE}
