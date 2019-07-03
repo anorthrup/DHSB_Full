@@ -249,33 +249,32 @@ table_Continuous <- function(x, variable, stat = "mean",
 
 #Chi-square test for levels of variable in tables
 chisq.dhsb <- function(x) {
-  output <- tibble(
-    Variable                = unique(x$Header), 
-    `Chi-Squared Statistic` = rep(NA, length(unique(x$Header))),
-    `DF`                    = rep(NA, length(unique(x$Header))),
-    `p Value`               = rep(NA, length(unique(x$Header)))
-  )
+  output <- data.frame(matrix(NA, nrow = length(unique(x$Header)), ncol = 5)) %>%
+    set_names(c("Variable", "Chi-Squared Statistic", "DF", "p-Value", "Warning")) %>%
+    mutate(Variable = unique(x$Header))
+  chisq.quiet <- quietly(chisq.test)
   for (i in 1:nrow(output)) {
-    testResult <- chisq.test(
-      x = as.matrix(x %>%
-                      filter(Header %in% output$Variable[i]) %>%
-                      select(-Header, -Variable, -Overall))
-    )
-    output$`Chi-Squared Statistic`[i] <- testResult$statistic
-    output$DF[i] <- testResult$parameter
-    output$`p Value`[i] <- testResult$p.value
+    testResult <- x %>%
+      filter(Header %in% output$Variable[i]) %>%
+      select(-Header, -Variable, -Overall) %>%
+      chisq.quiet()
+    output$`Chi-Squared Statistic`[i] <- testResult$result$statistic
+    output$DF[i] <- testResult$result$parameter
+    output$`p-Value`[i] <- testResult$result$p.value
+    if (length(testResult$warnings)) {
+      output$Warning[i] <- "Count values too low, Chi-squared approximation may be incorrect"
+    } else {
+      output$Warning[i] <- ""
+    }
   }
+  return(output)
 }
 
 #ANOVA test for continuous variables
 anova.dhsb <- function(x) {
-  output <- tibble(
-    Variable = colnames(x)[2:ncol(x)], 
-    `F Statistic` = rep(NA, ncol(x) - 1),
-    `DF Numerator` = rep(NA, ncol(x) - 1),
-    `DF Denominator` = rep(NA, ncol(x) - 1),
-    `p Value` = rep(NA, ncol(x) - 1)
-  )
+  output <- data.frame(matrix(NA, nrow = ncol(x) - 1, ncol = 5)) %>%
+    set_names(c("Variable", "F Statistic", "DF Numerator", "DF Denominator", "p-Value")) %>%
+    mutate(Variable = colnames(x)[2:ncol(x)])
   for (i in 2:ncol(x)) {
     testResult <- oneway.test(as.formula(paste(colnames(x)[i], "~ SITE1")), data = x)
     output$`F Statistic`[i - 1] <- testResult$statistic

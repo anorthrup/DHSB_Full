@@ -406,15 +406,7 @@ tableChisq <- bind_rows(
   mutate_at(vars(-Header, -Variable), list(as.integer))
 
 #> Chi-squared tests
-bind_rows(
-  chisq.dhsb(table1Chisq, table1Chisq_vars[1]),
-  chisq.dhsb(table1Chisq, table1Chisq_vars[2]),
-  chisq.dhsb(table1Chisq, table1Chisq_vars[3]),
-  chisq.dhsb(table1Chisq, table1Chisq_vars[4]),
-  chisq.dhsb(table1Chisq, table1Chisq_vars[5]),
-  chisq.dhsb(table1Chisq, table1Chisq_vars[6])
-) %>%
-  mutate(Warning = c("No", "Yes", "Yes", "Yes", "No", "No")) %>%
+chisq.dhsb(tableChisq) %>%
   kable(., digits = 3,
         caption = "Chi-Square Testing for Categorical Variables Across Site") %>%
   kable_styling(bootstrap_options = c("striped", "condensed"))
