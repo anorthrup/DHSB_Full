@@ -138,6 +138,6 @@ setColWidths(wb, sheet = "Figure 2", cols = 1:ncol(snSum), widths = "auto")
 ```{r eval = FALSE}
 #####Export to XLSX
 save(fig1, fig2, file = "Figures 1 and 2.RData")
-saveWorkbook(wb, "DHSB Characteristic Data.xlsx", overwrite = TRUE)
+saveWorkbook(wb, "DHSB Figure Data.xlsx", overwrite = TRUE)
 ```
 
