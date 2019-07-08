@@ -18,7 +18,7 @@ load("acasi.RData")
 
 #####Create new Excel workbook
 # wb <- createWorkbook()
-# wb <- loadWorkbook("DHSB Tables.xlsx")
+# wb <- loadWorkbook("DHSB Figure Data.xlsx")
 
 #####Source functions for summaries
 source("DHSB Figure Functions.R")
