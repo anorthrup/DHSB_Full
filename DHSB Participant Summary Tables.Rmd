@@ -1,0 +1,463 @@
+---
+title: "Digital Health-Seeking Behaviors Tables"
+author: "Adam Northrup, Data Manager, ETAC"
+date: "June 19, 2019"
+output: html_document
+---
+```{r include = FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = FALSE, 
+                      warning = FALSE, message = FALSE)
+#####Read libraries
+library(tidyverse)
+library(sjlabelled)
+library(rio)
+library(openxlsx)
+library(scales)
+library(kableExtra)
+
+#####Load data
+# setwd("C:/Users/anorthrup/Box Sync/ETAC")
+load("acasi.RData")
+source("DHSB Table Functions.R")
+```
+
+```{r}
+#####Print "Other" text for each demographic variable
+# wb <- createWorkbook()
+# for (i in c("GENDERS", "RACEFS", "ORIENTS", "LIVED6LS", "STAY7DS", 
+#            "INSUREHS", "SSNDOS", "CNEED3ES", "DISCJS")) {
+#   addWorksheet(wb, i)
+#   writeData(wb, i, acasi %>%
+#               select(SITE1, PID, i) %>%
+#               filter(!!sym(i) != "[Skipped]"))
+# }
+# saveWorkbook(wb, "ACASI Other Text.xlsx", overwrite = TRUE)
+
+#####Format variables and rename
+demo <- acasi %>%
+  filter(Set == 1) %>% #Remove participants without 06m assessment
+  filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE))) %>%
+  filter(AGE >= 18) %>%
+  select(-RACE, -starts_with("S56")) %>%
+  filter(!(is.na(HE_RC_HSE) | is.na(HE_RC_HAL))) %>%
+  mutate(`Age Groups` = as.factor(case_when(AGE < 25 ~ "18-24 Years",
+                                            AGE >= 25 ~ "25-34 Years")),
+         SCREEN5 = fct_recode(as.factor(SCREEN5),
+                              "Within past 12 months" = "1", "More than 12 months ago" = "2",
+                              "Don't know"   = "7", "Refuse to answer"        = "8"),
+         ViralSupp_MCD = fct_recode(as.factor(ViralSupp_MCD),
+                                    "Not suppressed" = "0",
+                                    "Suppressed"     = "1"),
+         DISC_RC = if_else(DISCA == 0, "Disclosed", "Did not disclose"),
+         DRUG_RCD_None = if_else(DRUG1LM == 1 & DRUG2LK == 1, 1, 0)) %>%
+  # mutate_at(vars(matches("(CARE)([[:alpha:]]+)(\\d+)")),
+  #           list(~as.factor(case_when(. == 0  ~ "No",
+  #                                     . <= 98 ~ "Yes",
+  #                                     . >= 98 ~ "Missing")))) %>%
+  mutate(INJECTL_RC = case_when(INJECTL == 1 ~ "Injected drugs",
+                                INJECTL == 0 ~ "Did not inject drugs")) %>%
+  unite("SitePID", SITE_RC, PID, remove = FALSE) %>%
+  arrange(SITE_RC, PID) %>%
+  mutate_at(vars(matches("DISC_RCD|DRUG_RCD")), list(~as.numeric(as.character(.))))
+```
+
+```{r}
+#####Number of participants
+newNames <- bind_rows(
+  demo %>%
+    summarize(Frequency = n()) %>%
+    mutate(SITE_RC = "Overall_1"),
+  demo %>%
+    group_by(SITE_RC) %>%
+    summarize(Frequency = n()) %>%
+    mutate(SITE_RC = as.character(SITE_RC))
+) %>%
+  unite("NewNames", SITE_RC, Frequency, sep = " (N=", remove = FALSE) %>%
+  mutate(NewNames = str_c(NewNames, ")")) %>%
+  select(-Frequency) %>%
+  mutate(NewNames = factor(NewNames, levels = unique(NewNames))) %>%
+  spread(NewNames, SITE_RC) %>%
+  unlist()
+#####Table 1: participant characteristics summary
+table1 <- bind_rows(
+  #Age groups
+  table_OneFactor(demo, varString = "Age Groups",
+                  varRelevel = c("18-24 Years")),
+  #Ethnicity/Race
+  table_OneFactor(demo, varString = "RACE_RC", header = "Ethnicity and Race", 
+                  varRelevel = c("Latino",
+                                 "Black, Not Latino",
+                                 "White, Not Latino",
+                                 "White Mixed-Race, Not Latino or Black")),
+  #Gender
+  table_OneFactor(demo, varString = "GENDER_RC", header = "Gender Identity",
+                  varRelevel = c("Male (cis man)",
+                                 "Female (cis woman)",
+                                 "Trans-identified")),
+  #Orientation
+  table_OneFactor(demo, varString = "ORIENT_RC", header = "Sexual Orientation",
+                  varRelevel = c("Straight",
+                                 "Gay or lesbian",
+                                 "Bisexual")),
+  #Education
+  table_OneFactor(demo, varString = "GRADE_RC", header = "Education",
+                  varRelevel = c("High school, equivalent or less",
+                                 "Some post-K12")),
+  #Residence
+  table_OneFactor(demo, varString = "STAY7D_RC", 
+                  header = "Current Residence",
+                  varRelevel = c("Stable housing")),
+  #Income
+  table_Continuous(demo, variable = "MONEY_RC", stat = "median", 
+                   name = "Monthly Income",
+                   header = "Monthly Income")
+) %>%
+  mutate(Variable = str_replace(Variable, "(Monthly Income)(.*)", "\\1")) %>%
+  mutate(Overall = str_replace(Overall, "(\\d+)(/\\d+)(.*)", "\\1\\3")) %>%
+  mutate_at(vars(-Header, -Variable, -Overall),
+            list(~str_replace(., "(.*)(\\d \\()(.*)(%\\)$)", "\\3"))) %>%
+  mutate_at(vars(-Header, -Variable, -Overall),
+            list(~str_replace(., "(\\d+)( \\[.*\\]$)", "\\1"))) %>%
+  separate(Overall, c("Overall_1", "Overall_2"), sep = " ") %>%
+  mutate(Overall_2 = str_replace(Overall_2, "(\\()(.*)(%\\))", "\\2")) %>%
+  add_row(Header = "Characteristic (Categorical)", 
+          Variable = "Characteristic (Categorical)", 
+          .before = 1) %>%
+  mutate(Overall_1 = replace(Overall_1, 
+                             which(Variable == "Characteristic (Categorical)"),
+                             "n")) %>%
+  mutate_at(vars(-Header, -Variable, -Overall_1), list(~replace(., 1, "%"))) %>%
+  mutate_at(vars(Header, Variable), list(~str_remove(., ", N \\(%\\)"))) %>%
+  mutate_at(vars(Header, Variable), list(~str_remove(., ", Median \\[IQR\\]"))) %>%
+  add_row(.before = nrow(.) - 1, 
+          Header = "Characteristic (Continuous)",
+          Variable = "Characteristic (Continuous)") %>%
+  mutate(Overall_2 = replace(Overall_2, 
+                             which(Variable == "Characteristic (Continuous)"),
+                             "IQR")) %>%
+  mutate_at(vars(-Header, -Variable, -Overall_2), 
+            list(~replace(., which(Variable == "Characteristic (Continuous)"), "med"))) %>%
+  rename(!!newNames) %>%
+  add_row(Variable = "STAY7D_RC: Six participants in 'Institution' (hospital or prison) were incorporated into 'Unstable housing'.") %>%
+  add_row(Variable = paste0("Monthly income overall sample size N=", length(which(!is.na(demo$MONEY_RC))), " due to response of Don't Know/Not Sure"))
+
+#####Table 2: participant health care summary
+table2 <- bind_rows(
+  bind_rows(
+    #HIV Diagnosis
+    table_OneFactor(demo, varString = "SCREEN5", header = "HIV Diagnosis",
+                    varRelevel = c("Within past 12 months",
+                                   "More than 12 months ago")),
+    #Viral Suppression
+    table_OneFactor(demo, varString = "ViralSupp_MCD",
+                    header = "Viral Suppression") %>%
+      filter(Variable != "   Not suppressed"),
+    #Insurance
+    table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
+    #Health care history, 6 months
+    bind_rows(
+      table_OneFactor(demo, varString = "CARED6_RC", 
+                      header = "Recent Health Care") %>%
+        filter(Variable != "   No") %>%
+        mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
+                                  "   Doctor's visit, non-HIV, 6 months")),
+      table_OneFactor(demo, varString = "CAREHV06_MCD_RC", 
+                      header = "Recent Health Care") %>%
+        filter(str_detect(Variable, "Yes")) %>%
+        arrange(desc(Variable)) %>%
+        mutate(Variable = replace(Variable, str_which(Variable, "Yes"), 
+                                  "   Doctor's visit, HIV, 6 months"))
+    ),
+    #HIV Disclosure
+    table_OneFactor(demo, varString = "DISC_RC", 
+                    header = "HIV Disclosure Status") %>%
+      filter(Variable != "   Did not disclose"),
+    #Substance Use
+    bind_rows(
+      table_ManyBinary(demo, header = "Substance Use",
+                       variables = c(
+                         "DRUG_RCD_None"      = "None",
+                         "DRUG_RCD_Alcohol"   = "Alcohol",
+                         "DRUG_RCD_Tobacco"   = "Tobacco",
+                         "DRUG_RCD_Marijuana" = "Marijuana",
+                         "DRUG_RCD_Other"     = "Other non-injected drug(s)"
+                       )),
+      table_OneFactor(demo, varString = "INJECTL_RC", header = "Substance Use") %>%
+        filter(Variable == "   Injected drugs")
+    )
+  ) %>%
+    mutate_at(vars(-Header, -Variable, -Overall),
+              list(~str_replace(., "(.*)(\\d \\()(.*)(%\\)$)", "\\3"))) %>%
+    separate(Overall, c("Overall_1", "Overall_2"), sep = " ") %>%
+    mutate(Overall_2 = str_replace(Overall_2, "(\\()(.*)(%\\))", "\\2")) %>%
+    add_row(Header = "Characteristic (Categorical)", 
+            Variable = "Characteristic (Categorical)", 
+            .before = 1) %>%
+    mutate(Overall_1 = replace(Overall_1, 
+                               which(Variable == "Characteristic (Categorical)"),
+                               "n")) %>%
+    mutate_at(vars(-Header, -Variable, -Overall_1), list(~replace(., 1, "%"))),
+  bind_rows(
+    #Youth Health Engagement
+    #> Health Access Literacy
+    table_Continuous(demo, variable = "HE_RC_HAL",
+                     name = "Health Access Literacy", 
+                     header = "Youth Health Enagement"),
+    #> Health Self-Efficacy
+    table_Continuous(demo, variable = "HE_RC_HSE", 
+                     name = "Health Self-Efficacy",
+                     header = "Youth Health Enagement"),
+    #Provider Empathy
+    table_Continuous(demo, variable = "CARE_RC",
+                     name = "Provider Empathy", 
+                     header = "Provider Empathy"),
+    #Social Support
+    table_Continuous(demo, variable = "SOCIALS_RC",
+                     name = "Social Support", 
+                     header = "Social Support"),
+    #HIV-Related Stigma
+    table_Continuous(demo, variable = "STIGMA_RC",
+                     name = "HIV-Related Stigma", 
+                     header = "HIV-Related Stigma"),
+    #Physical and Mental Health
+    table_Continuous(demo, variable = "MENTALH_RC",
+                     name = "Mental Health",
+                     header = "Physical and Mental Health")
+    # table_Continuous(demo, variable = "MENTALH4",
+    #                  name = "Mental and Physical Health, 1 item")
+  ) %>%
+    mutate_at(vars(-Header, -Variable, -Overall),
+              list(~str_replace(., "(.*)(\\d+)( \\(.*\\)$)", "\\1\\2"))) %>%
+    separate(Overall, c("Overall_1", "Overall_2"), sep = " ") %>%
+    add_row(Header = "Characteristic (Scale)", 
+            Variable = "Characteristic (Scale)", 
+            .before = 1) %>%
+    mutate(Overall_2 = replace(Overall_2, 
+                               which(Variable == "Characteristic (Scale)"),
+                               "(SD)")) %>%
+    mutate_at(vars(-Header, -Variable, -Overall_2), list(~replace(., 1, "m")))
+) %>%
+  mutate(Overall_1 = str_replace(Overall_1, "(\\d+)(/\\d+)", "\\1")) %>%
+  mutate_at(vars(Header, Variable), list(~str_remove(., ", N \\(%\\)"))) %>%
+  mutate_at(vars(Header, Variable), list(~str_remove(., ", Mean \\(SD\\)"))) %>%
+  rename(!!newNames) %>%
+  add_row(Variable = paste0("Viral suppression information obtained from medical chart data (N=",
+          length(which(demo$ViralSupp_MCD_RC != "Missing")), ")")) %>%
+  add_row(Variable = paste0("HIV doctor visit information obtained from medical chart data (N=",
+          length(which(demo$CAREHV06_MCD_RC != "Missing")), ")")) %>%
+  add_row(Variable = paste0("Injected drug information N=",
+          length(which(demo$INJECTL_RC != "Missing")), " due to refusals to answer."))
+save(table1, table2, file = "Tables Participants.RData")
+```
+
+### Table 1
+```{r include = TRUE}
+table1Index <- table1 %>%
+  filter(complete.cases(.)) %>%
+  select(Header) %>%
+  mutate(Row = row_number()) %>%
+  group_by(Header) %>%
+  summarize(
+    Start = min(Row),
+    End   = max(Row)
+  ) %>%
+  arrange(Start)
+
+kable(table1 %>%
+        filter(complete.cases(.)) %>%
+        select(-Header),
+      caption = 
+        paste0("Table 1. Sociodemographic characteristics of young adults living with HIV across 10 demonstration sites in the United States (N = ", nrow(demo), ")")
+      ) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+  kableExtra::group_rows(table1Index$Header[1], table1Index$Start[1], table1Index$End[1]) %>%
+  kableExtra::group_rows(table1Index$Header[2], table1Index$Start[2], table1Index$End[2]) %>%
+  kableExtra::group_rows(table1Index$Header[3], table1Index$Start[3], table1Index$End[3]) %>%
+  kableExtra::group_rows(table1Index$Header[4], table1Index$Start[4], table1Index$End[4]) %>%
+  kableExtra::group_rows(table1Index$Header[5], table1Index$Start[5], table1Index$End[5]) %>%
+  kableExtra::group_rows(table1Index$Header[6], table1Index$Start[6], table1Index$End[6]) %>%
+  kableExtra::group_rows(table1Index$Header[7], table1Index$Start[7], table1Index$End[7]) %>%
+  kableExtra::group_rows(table1Index$Header[8], table1Index$Start[8], table1Index$End[8]) %>%
+  kableExtra::group_rows(table1Index$Header[9], table1Index$Start[9], table1Index$End[9])
+```
+Footnotes:  
+
+* STAY7D_RC: Six participants in 'Institution' (hospital or prison) were incorporated into 'Unstable housing'.
+* Monthly income overall sample size N= `r length(which(!is.na(demo$MONEY_RC)))` due to response of Don't Know/Not Sure.
+
+### Table 2
+```{r include = TRUE}
+table2Index <- table2 %>%
+  filter(complete.cases(.)) %>%
+  select(Header) %>%
+  mutate(Row = row_number()) %>%
+  group_by(Header) %>%
+  summarize(
+    Start = min(Row),
+    End   = max(Row)
+  ) %>%
+  arrange(Start)
+
+kable(table2 %>%
+        filter(complete.cases(.)) %>%
+        select(-Header),
+      caption = "Table 2. Candidate predictors of digital health seeking, including HIV-related health, healthcare utilization, substance use, and mental health reported at baseline") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+  kableExtra::group_rows(table2Index$Header[1], table2Index$Start[1], table2Index$End[1]) %>%
+  kableExtra::group_rows(table2Index$Header[2], table2Index$Start[2], table2Index$End[2]) %>%
+  kableExtra::group_rows(table2Index$Header[3], table2Index$Start[3], table2Index$End[3]) %>%
+  kableExtra::group_rows(table2Index$Header[4], table2Index$Start[4], table2Index$End[4]) %>%
+  kableExtra::group_rows(table2Index$Header[5], table2Index$Start[5], table2Index$End[5]) %>%
+  kableExtra::group_rows(table2Index$Header[6], table2Index$Start[6], table2Index$End[6]) %>%
+  kableExtra::group_rows(table2Index$Header[7], table2Index$Start[7], table2Index$End[7]) %>%
+  kableExtra::group_rows(table2Index$Header[8], table2Index$Start[8], table2Index$End[8]) %>%
+  kableExtra::group_rows(table2Index$Header[9], table2Index$Start[9], table2Index$End[9]) %>%
+  kableExtra::group_rows(table2Index$Header[10], table2Index$Start[10], table2Index$End[10]) %>%
+  kableExtra::group_rows(table2Index$Header[11], table2Index$Start[11], table2Index$End[11]) %>%
+  kableExtra::group_rows(table2Index$Header[12], table2Index$Start[12], table2Index$End[12]) %>%
+  kableExtra::group_rows(table2Index$Header[13], table2Index$Start[13], table2Index$End[13])
+```
+Footnotes:
+
+* Viral suppression information obtained from medical chart data (N = `r length(which(demo$ViralSupp_MCD_RC != "Missing"))`).
+* HIV doctor visit information obtained from medical chart data (N = `r length(which(demo$CAREHV06_MCD_RC != "Missing"))`).
+* Injected drug information N = `r length(which(demo$INJECTL_RC != "Missing"))` due to refusals to answer.
+
+### Testing Across Sites
+
+```{r chisqSites, include = TRUE}
+#####Table 1 Chi-Squared testing across sites
+#> Create data frame with counts across sites for each variable
+tableCounts <- bind_rows(
+  #Age groups
+  table_OneFactor(demo, varString = "Age Groups",
+                  varRelevel = c("18-24 Years")),
+  #Ethnicity/Race
+  table_OneFactor(demo, varString = "RACE_RC", header = "Ethnicity and Race", 
+                  varRelevel = c("Latino",
+                                 "Black, Not Latino",
+                                 "White, Not Latino",
+                                 "White Mixed-Race, Not Latino or Black")),
+  #Gender
+  table_OneFactor(demo, varString = "GENDER_RC", header = "Gender Identity",
+                  varRelevel = c("Male (cis man)",
+                                 "Female (cis woman)",
+                                 "Trans-identified")),
+  #Orientation
+  table_OneFactor(demo, varString = "ORIENT_RC", header = "Sexual Orientation",
+                  varRelevel = c("Straight",
+                                 "Gay or lesbian",
+                                 "Bisexual")),
+  #Education
+  table_OneFactor(demo, varString = "GRADE_RC", header = "Education",
+                  varRelevel = c("High school, equivalent or less",
+                                 "Some post-K12")),
+  #Residence
+  table_OneFactor(demo, varString = "STAY7D_RC", 
+                  header = "Current Residence",
+                  varRelevel = c("Stable housing")),
+  #HIV Diagnosis
+  table_OneFactor(demo, varString = "SCREEN5", header = "HIV Diagnosis",
+                  varRelevel = c("Within past 12 months",
+                                 "More than 12 months ago")),
+  #Viral Suppression
+  table_OneFactor(demo, varString = "ViralSupp_MCD",
+                  header = "Viral Suppression"),
+  #Insurance
+  table_OneFactor(demo, varString = "INSURE_RC", header = "Insurance"),
+  #Health care history, 6 months
+  table_OneFactor(demo, varString = "CARED6_RC", 
+                  header = "Non-HIV Care Visit, 6 Months"),
+  table_OneFactor(demo, varString = "CAREHV06_MCD_RC", 
+                  header = "HIV Care Visit, 6 Months"),
+  #HIV Disclosure
+  table_OneFactor(demo, varString = "DISC_RC", 
+                  header = "HIV Disclosure Status"),
+  #Substance Use
+  table_OneFactor(demo, varString = "DRUG_RCD_Alcohol",
+                  header = "Substance Use: Alcohol"),
+  table_OneFactor(demo, varString = "DRUG_RCD_Tobacco",
+                  header = "Substance Use: Tobacco"),
+  table_OneFactor(demo, varString = "DRUG_RCD_Marijuana",
+                  header = "Substance Use: Marijuana"),
+  table_OneFactor(demo, varString = "DRUG_RCD_Other",
+                  header = "Substance Use: Other Non-Injected")
+) %>%
+  mutate(Overall = str_replace(Overall, "(\\d+)(/\\d+)", "\\1")) %>%
+  filter(!is.na(Overall)) %>%
+  mutate_at(vars(-Header, -Variable), list(~str_remove(., " \\(.*\\)$"))) %>%
+  mutate_at(vars(-Header, -Variable), list(~str_remove(., " \\[.*\\]$"))) %>%
+  mutate(Header = str_remove(Header, ", N \\(%\\)")) %>%
+  mutate_at(vars(-Header, -Variable), list(as.integer))
+
+#> Chi-squared tests
+tableChisq <- chisq.dhsb(tableCounts) %>%
+  mutate(Table = NA,
+         Table = replace(Table, str_which(Variable, "Age|Race|Gender|Orient|Educ|Residence"), "Table 1"),
+         Table = replace(Table, which(is.na(Table)), "Table 2")) %>%
+  select(Table, everything())
+
+kable(tableChisq, digits = 3,
+        caption = "Chi-Square Testing for Categorical Variables Across Site") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"))
+```
+
+```{r anovaSites, include = TRUE}
+tableContinuous <- acasi %>%
+  filter(Set == 1) %>%
+  filter(AGE > 17) %>%
+  filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE))) %>%
+  select(SITE1, MONEY_RC_Log, HE_RC_HAL, HE_RC_HSE, CARE_RC, MENTALH_RC,
+         MTUEX_RC, MTUSPX_RC_Text, MTUSPX_RC_Smartphone, MTUIX_RC,
+         MTUSNX_RC, MTUAX_RC_Pos, MTUAX_RC_Anx, MTUAX_RC_Neg)
+
+tableAnova <- anova.dhsb(tableContinuous) %>%
+  left_join(
+    .,
+    acasi_labels,
+    by = "Variable"
+  ) %>%
+  mutate(Label = replace(Label, which(Variable == "MONEY_RC_Log"), "Log Monthly Income")) %>%
+  mutate(
+    Table = NA,
+    Table = replace(Table, str_which(Label, "MTUAS"), "Table 3"),
+    Table = replace(Table, which(Label == "Log Monthly Income"), "Table 1"),
+    Table = replace(Table, which(is.na(Table)), "Table 2")
+  ) %>%
+  select(Table, Label, everything(), -Variable, -Binary) %>%
+  rename(Variable = Label)
+  
+kable(tableAnova, digits = 3,
+        caption = "ANOVA Testing for Continuous Variables Across Site") %>%
+  kable_styling(bootstrap_options = c("striped", "condensed"))
+
+```
+
+```{r eval = FALSE}
+wb <- loadWorkbook("DHSB Tables.xlsx")
+#Table 1
+removeWorksheet(wb, "Table 1")
+addWorksheet(wb, "Table 1")
+writeData(wb, sheet = "Table 1", table1 %>% select(-Header))
+setColWidths(wb, sheet = "Table 1", cols = 1:ncol(table1), widths = "auto")
+
+#Table 2
+removeWorksheet(wb, "Table 2")
+addWorksheet(wb, "Table 2")
+writeData(wb, sheet = "Table 2", table2 %>% select(-Header))
+setColWidths(wb, sheet = "Table 2", cols = 1:ncol(table2), widths = "auto")
+
+#Chi-Squared testing
+removeWorksheet(wb, "Chi-Squared")
+addWorksheet(wb, "Chi-Squared")
+writeData(wb, sheet = "Chi-Squared", tableChisq)
+setColWidths(wb, sheet = "Chi-Squared", cols = 1:ncol(tableChisq), widths = "auto")
+
+#ANOVA testing
+removeWorksheet(wb, "ANOVA")
+addWorksheet(wb, "ANOVA")
+writeData(wb, sheet = "ANOVA", tableAnova)
+setColWidths(wb, sheet = "ANOVA", cols = 1:ncol(tableAnova), widths = "auto")
+
+saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
+```

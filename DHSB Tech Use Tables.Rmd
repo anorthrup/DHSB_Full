@@ -1,0 +1,265 @@
+---
+title: "DHSB Technology Tables"
+author: "Adam Northrup, Data Manager, ETAC"
+date: "June 19, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = FALSE, 
+                      warning = FALSE, message = FALSE)
+#####Read libraries
+library(tidyverse)
+library(sjlabelled)
+library(rio)
+library(openxlsx)
+library(kableExtra)
+
+#####Load data
+load("acasi.RData")
+source("DHSB Table Functions.R")
+```
+
+```{r processData}
+tech <- acasi %>%
+  filter(Set == 1) %>% #Remove participants without 06m assessment
+  filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE))) %>%
+  filter(AGE >= 18) %>%
+  select(SITE1, SITE_RC, PID, starts_with("MTU"), starts_with("S56")) %>%
+  mutate(S56_3 = fct_recode(as.factor(S56_3),
+                            "Have cell phone, minutes, and data"    = "1",
+                            "Have cell phone, minutes, and no data" = "2",
+                            "Have cell phone, data, and no minutes" = "3",
+                            "I share a phone"                       = "4",
+                            "Don't have own cell, can borrow one"   = "5",
+                            "Don't have own cell, can't borrow one" = "6",
+                            "Refuse to answer"                      = "8")) %>%
+  mutate_at(vars(one_of("S56_4", "S56_7", "S56_13", "S56_16", "S56_21")), 
+            list(~as.factor)) %>%
+  mutate_at(vars(one_of("S56_4", "S56_7", "S56_13", "S56_16", "S56_21")), 
+            list(~fct_recode),
+            "Several times a day"       = "1",
+            "Once a day"                = "2",
+            "Once every couple of days" = "3",
+            "About once a week"         = "4",
+            "Less than once a week"     = "5",
+            "Never"                     = "6",
+            "Refuse to answer"          = "8",
+            "Skipped"                   = "9") %>%
+  mutate(S56_11 = fct_recode(as.factor(S56_11),
+                             "Facebook"           = "0",
+                             "Facebook Messenger" = "1",
+                             "Twitter"            = "2",
+                             "Instagram"          = "3",
+                             "Snapchat"           = "4",
+                             "WhatsApp"           = "5",
+                             "Skype"              = "6",
+                             "Kik"                = "7",
+                             "Vine"               = "8",
+                             "Tumblr"             = "9",
+                             "Pinterest"          = "10",
+                             "Other"              = "11",
+                             "Refuse to answer"   = "98",
+                             "Skipped"            = "99"),
+         S56_20 = fct_recode(as.factor(S56_20),
+                             "Tinder"               = "1",
+                             "Grindr"               = "2",
+                             "Growler"              = "3",
+                             "Jack'd"               = "4",
+                             "Scruff"               = "5",
+                             "Badoo"                = "6",
+                             "Craigslist"           = "7",
+                             "Plenty of Fish (POF)" = "8",
+                             "Adam4Adam (A4a)"      = "9",
+                             "Hinge"                = "10",
+                             "Bumble"               = "11",
+                             "Other"                = "12",
+                             "Refuse to answer"     = "98",
+                             "Skipped" = "99"),
+         S56_23 = fct_recode(as.factor(S56_23),
+                             "Every day, more than 1 hour" = "1",
+                             "Every day, less than 1 hour" = "2",
+                             "Almost every day"            = "3",
+                             "A couple times a week"       = "4",
+                             "Once a week"                 = "5",
+                             "Less than once a week"       = "6",
+                             "Never"                       = "7",
+                             "Refuse to answer"            = "8"),
+         S56_24XV = as.integer(S56_24XV))
+```
+
+```{r techSummary}
+#####Number of participants
+newNames <- bind_rows(
+  tech %>%
+    summarize(Frequency = n()) %>%
+    mutate(SITE_RC = "Overall_1"),
+  tech %>%
+    group_by(SITE_RC) %>%
+    summarize(Frequency = n()) %>%
+    mutate(SITE_RC = as.character(SITE_RC))
+) %>%
+  unite("NewNames", SITE_RC, Frequency, sep = " (N=", remove = FALSE) %>%
+  mutate(NewNames = str_c(NewNames, ")")) %>%
+  select(-Frequency) %>%
+  spread(NewNames, SITE_RC) %>%
+  unlist()
+#####Table 3
+table3 <- bind_rows(
+  #MTUAS
+  bind_rows(
+    #> Email Usage
+  table_Continuous(tech, variable = "MTUEX_RC",
+                   name = "Email usage",
+                   header = "MTUAS"),
+  #> Text Messaging
+  table_Continuous(tech, variable = "MTUSPX_RC_Text",
+                   name = "Text messaging",
+                   header = "MTUAS"),
+  #> Smartphone Usage
+  table_Continuous(tech, variable = "MTUSPX_RC_Smartphone",
+                   name = "Smartphone usage",
+                   header = "MTUAS"),
+  #> Internet Searching
+  table_Continuous(tech, variable = "MTUIX_RC",
+                   name = "Internet searching",
+                   header = "MTUAS"),
+  #> General Social Media Usage
+  table_Continuous(tech, variable = "MTUSNX_RC",
+                   name = "General social media usage",
+                   header = "MTUAS"),
+  # table_Continuous(tech, variable = "MTUSNX10_RC",
+  #                  name = "General social media usage: Seek sexual partners/relationships",
+  #                  header = "MTUAS"),
+  #> Positive Attitudes
+  table_Continuous(tech, variable = "MTUAX_RC_Pos",
+                   name = "Positive attitudes toward technology",
+                   header = "MTUAS"),
+  # table_Continuous(tech, variable = "MTUAX02_RC",
+  #                  name = "Positive attitudes toward technology: Personal health info"),
+  #> Anxieties
+  table_Continuous(tech, variable = "MTUAX_RC_Anx",
+                   name = "Anxiety and dependence on technology",
+                   header = "MTUAS"),
+  # table_Continuous(tech, variable = "MTUAX07_RC",
+  #                  name = "Anxiety and dependence on technology: Personal health info"),
+  #> Negative Attitudes
+  table_Continuous(tech, variable = "MTUAX_RC_Neg",
+                   name = "Negative attitudes toward technology",
+                   header = "MTUAS")
+  ) %>%
+    filter(!(Variable == "MTUAS [Range], Mean (SD)" & is.na(Overall) & row_number() != 1)) %>%
+    mutate_at(vars(-Header, -Variable, -Overall),
+              list(~str_replace(., "(.*)(\\d )(\\(.*$)", "\\1\\2"))) %>%
+    separate(Overall, c("Overall_1", "Overall_2"), sep = " ") %>%
+    # mutate(Overall_2 = str_replace(Overall_2, "(\\()(.*)(\\))", "\\2")) %>%
+    add_row(.before = 1, Header = "Characteristic (Scale)",
+            Variable = "Characteristic (Scale)") %>%
+    mutate(Overall_2 = replace(Overall_2, 
+                               which(Variable == "Characteristic (Scale)"),
+                               "(SD)")) %>%
+    mutate_at(vars(-Header, -Variable, -Overall_2), list(~replace(., 1, "m"))) %>%
+    mutate_at(vars(Header, Variable), list(~str_remove(., ", Mean \\(SD\\)"))),
+  bind_rows(
+    #Device Use
+    table_ManyBinary(tech, n = 3, header = "Device Use", keep = "S56_1G",
+                     variables = c("S56_1A" = "Cell Phone", 
+                                   "S56_1B" = "Tablet", 
+                                   "S56_1C" = "Other mobile device",
+                                   "S56_1D" = "Laptop",
+                                   "S56_1E" = "Desktop computer",
+                                   "S56_1F" = "Other", 
+                                   "S56_1G" = "No devices")),
+    #SNS used most often
+    table_OneFactor(x = tech, n = 3, header = "SNS Used Most Often",
+                    varString = "S56_11"),
+    #Used several times a day or more
+    bind_rows(
+      table_OneFactor(tech, n = 1, varString = "S56_4",
+                      header = "Text messaging",
+                      keep = "Several times a day"),
+      table_OneFactor(tech, n = 3, varString = "S56_7",
+                      header = "E-mail",
+                      keep = "Several times a day"),
+      table_OneFactor(tech, n = 3, header = "SNS",
+                      varString = "S56_13"),
+      table_OneFactor(tech, n = 3, header = "Private messaging",
+                      varString = "S56_16",
+                      keep = "Several times a day")
+    ) %>%
+      filter(Variable == "   Several times a day") %>%
+      rename(Header2 = Variable,
+             Variable = Header) %>%
+      rename(Header = Header2) %>%
+      select(Header, Variable, everything()) %>%
+      mutate(Header = str_replace(Header, "(   )(.*)", "\\2, N (%)"),
+             Variable = str_replace(Variable, "(.*)(, N \\(%\\))", "   \\1")) %>%
+      add_row(Header = "Several times a day, N (%)", 
+              Variable = "Several times a day, N (%)",
+              .before = 1) %>%
+      mutate_at(vars(Header, Variable), 
+                list(~str_replace(., "Several times a day", 
+                                  "Used several times a day or more"))),
+    table_OneFactor(tech, n = 1, header = "Used more than 1 hour a day",
+                    varString = "S56_23",
+                    keep = "Every day, more than 1 hour") %>%
+      filter(Variable == "   Every day, more than 1 hour" | is.na(Overall)) %>%
+      mutate(Variable = replace(Variable, 
+                                which(Variable == "   Every day, more than 1 hour"), 
+                                "   Internet usage (not messaging/email/dating websites)"))
+  ) %>%
+    mutate(Overall = str_replace(Overall, "(\\d+)(/\\d+)(.*)", "\\1\\3")) %>%
+    mutate_at(vars(-Header, -Variable, -Overall),
+              list(~str_replace(., "(.*)(\\d \\()(.*)(%\\)$)", "\\3"))) %>%
+    separate(Overall, c("Overall_1", "Overall_2"), sep = " ") %>%
+    mutate(Overall_2 = str_replace(Overall_2, "(\\()(.*)(%\\))", "\\2")) %>%
+    add_row(Header = "Characteristic (Categorical)", 
+            Variable = "Characteristic (Categorical)", .before = 1) %>%
+    mutate(Overall_1 = replace(Overall_1, 
+                               which(Variable == "Characteristic (Categorical)"),
+                               "n")) %>%
+    mutate_at(vars(-Header, -Variable, -Overall_1), list(~replace(., 1, "%"))) %>%
+    mutate_at(vars(Header, Variable), list(~str_remove(., ", N \\(%\\)")))
+) %>%
+  add_row(Variable = "Among participants reporting SNS utilization (N = 651)") %>%
+  rename(!!newNames)
+save(table3, file = "Tables Tech Use.RData")
+```
+
+### Table 3
+```{r table3a, include = TRUE}
+table3Index <- table3 %>%
+  filter(complete.cases(.)) %>%
+  select(Header) %>%
+  mutate(Row = row_number()) %>%
+  group_by(Header) %>%
+  summarize(
+    Start = min(Row),
+    End   = max(Row)
+  ) %>%
+  arrange(Start)
+
+kable(table3 %>%
+        select(-Header) %>%
+        filter(complete.cases(.))) %>%
+  kable_styling(bootstrap_options = c("striped", "condensed")) %>%
+  group_rows(table3Index$Header[1], table3Index$Start[1], table3Index$End[1]) %>%
+  group_rows(table3Index$Header[2], table3Index$Start[2], table3Index$End[2]) %>%
+  group_rows(table3Index$Header[3], table3Index$Start[3], table3Index$End[3]) %>%
+  group_rows(table3Index$Header[4], table3Index$Start[4], table3Index$End[4]) %>%
+  group_rows(table3Index$Header[5], table3Index$Start[5], table3Index$End[5]) %>%
+  group_rows(table3Index$Header[6], table3Index$Start[6], table3Index$End[6]) %>%
+  group_rows(table3Index$Header[7], table3Index$Start[7], table3Index$End[7])
+```
+
+```{r saveWorkbook, eval = FALSE}
+wb <- loadWorkbook("DHSB Tables.xlsx")
+
+removeWorksheet(wb, "Table 3")
+addWorksheet(wb, "Table 3")
+writeData(wb, sheet = "Table 3", table3 %>% select(-Header))
+setColWidths(wb, sheet = "Table 3", cols = 1:(ncol(table3) - 1), widths = "auto")
+
+saveWorkbook(wb, "DHSB Tables.xlsx", overwrite = TRUE)
+```
+

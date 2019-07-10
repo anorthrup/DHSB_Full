@@ -1,0 +1,143 @@
+---
+title: "Digitial Health-Seeking Behaviors Figures"
+author: "Adam Northrup, Data Manager, ETAC"
+date: "June 6, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, include = FALSE, 
+                      warning = FALSE, message = FALSE)
+#####Read libraries
+if (!require("pacman")) install.packages("pacman", repos='http://cran.us.r-project.org')
+p_load("tidyverse", "RColorBrewer", "openxlsx", "gridExtra")
+
+#####Load data
+load("acasi.RData")
+# load("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/acasi.RData")
+
+#####Create new Excel workbook
+# wb <- createWorkbook()
+# wb <- loadWorkbook("DHSB Figure Data.xlsx")
+
+#####Source functions for summaries
+source("DHSB Figure Functions.R")
+# source("Analyses/Digital Health-Seeking Behaviors/ETAC_DHSB/DHSB Figure Functions.R")
+```
+
+```{r}
+#####Create AgeGroup variable
+figData <- acasi %>%
+  filter(Set == 1) %>% #Remove participants without 06m assessment
+  filter(!(is.na(HE_RC_HAL) | is.na(HE_RC_HSE))) %>%
+  filter(AGE >= 18) %>%
+  mutate(AgeGroup = as.factor(case_when(AGE < 25 ~ "18-24 Years",
+                                        AGE >= 25 ~ "25-34 Years"))) %>%
+  unite("SitePID", SITE1, PID, sep = "_") %>%
+  mutate(
+    S56_25L = replace(S56_25L, str_which(S56_25S, "NONE"), 0),
+    S56_26N = replace(S56_26N, str_which(S56_26S, "NONE|NOTHING|HIV"), 0),
+    S56_26E = replace(S56_26E, str_which(S56_26S, "HIV"), 1)
+  )
+```
+
+### Health-Seeking Behaviors
+```{r include = TRUE}
+#####Summarize health information sought on internet
+hsCat <- hlthSeekCat(figData)
+hsCatAge <- hlthSeekCat(figData, AgeGroup)
+hsSum <- hlthSeekSum(figData)
+hsSumAge <- hlthSeekSum(figData, AgeGroup)
+#Plot proportions for Health Seeking Categories
+fig1 <- plotCat(hsCat %>%
+          filter(Timeframe == "Last 6 Months"),
+        fillVar = "Timeframe", facetCVar = "`Health Category`",
+        title = "Proportion of Respondents Seeking Health Information Online",
+        subtitle = "Last 6 Months",
+        caption = "Data from internet searches excluding social networking activity",
+        colors = c(6)) +
+  theme(legend.position = "none")
+fig1
+# ##By age
+# plotCat(hsCatAge, fillVar = "AgeGroup", facetRVar = "Timeframe", facetCVar = "`Health Category`",
+#         title = "Figure 2. Proportion of Respondents Searching Internet for Health Information (By Age Group)",
+#         subtitle = "",
+#         caption = "Data from internet searches excluding social networking activity",
+#         colors = c(6, 8))
+#Plot proportions for Health Seeking Summary
+plotSum(hsSum, fillVar = "Timeframe", colors = c(6, 8),
+        title = "Proportion of Respondents Searching Internet\nfor Health Information",
+        subtitle = "Variables: S56_24X, S56_25, S56_26",
+        caption = "Data from internet searches excluding social networking activity")
+# ##By age
+# plotSumGroup(hsSumAge, fillVar = "AgeGroup", fillVarTitle = "Age Group", facetRVar = "Timeframe",
+#              title = "Proportion of Respondents Searching Internet\nfor Health Information",
+#              subtitle = "",
+#              caption = "Data from internet searches excluding social networking activity",
+#              colors = c(6, 8))
+# grid.arrange(p1, p2, nrow = 1)
+#Write table to workbook
+removeWorksheet(wb, "Figure 1")
+addWorksheet(wb, "Figure 1")
+writeData(wb, "Figure 1", hsCat %>%
+          filter(Timeframe == "Last 6 Months"))
+setColWidths(wb, sheet = "Figure 1", cols = 1:ncol(hsCat), widths = "auto")
+```
+
+### Different Communication Methods
+```{r include = TRUE}
+#####Summarize social networking, private messaging, texting, email activity
+snCat <- socNetworkCat(figData)
+snCatAge <- socNetworkCat(figData, AgeGroup)
+snSum <- socNetworkSum(figData)
+snSumAge <- socNetworkSum(figData, AgeGroup)
+#Plot proportions
+plotCat(snCat, fillVar = "Platform", facetCVar = "Category", colors = c(4, 6, 8, 9),
+        title = "Communications and Social Network Activity Among Respondents",
+        subtitle = "",
+        caption = "* Question was only asked with regards to Social Networking Apps")
+# ##By Age
+# plotCat(snCatAge %>% mutate(Platform = case_when(Platform == "Private Messaging" ~ "PM Apps",
+#                                                  Platform == "Social Media" ~ "Social Media",
+#                                                  Platform == "Text Messaging" ~ "Texting",
+#                                                  Platform == "Email" ~ "Email")),
+#         fillVar = "AgeGroup", facetRVar = "Platform", facetCVar = "Category", colors = c(4, 6, 8, 9),
+#         title = "Communications and Social Network Activity Among Respondents (By Age Group)",
+#         subtitle = "Variables: S56_6, S56_9, S56_12, S56_15, S56_18 (6 Months)",
+#         caption = "* Question was only asked with regards to Social Networking Apps")
+#Plot proportions for Social Networking Summary
+fig2 <- plotSum(snSum %>%
+                  mutate(Platform = fct_relevel(as.factor(Platform),
+                                                "Private\nMessaging",
+                                                "Social\nMedia",
+                                                "Text\nMessaging")),
+                fillVar = "Platform", colors = c(4, 6, 8, 9),
+                title = "Communications and Social Network Activity",
+                subtitle = "Variables: S56_6, S56_9, S56_15, S56_18 (6 Months)")
+fig2
+# ##By age
+# plotSumGroup(snSumAge %>%
+#                mutate(Platform = fct_relevel(as.factor(Platform),
+#                                              "Email",
+#                                              "Text\nMessaging",
+#                                              "Social\nMedia",
+#                                              "Private\nMessaging")),
+#              fillVar = "AgeGroup", fillVarTitle = "Age Group", facetRVar = "Platform",
+#              title = "Communications and Social Network Activity\nAmong Respondents (By Age Group)",
+#              subtitle = "",
+#              caption = "",
+#              colors = c(6, 8))
+# grid.arrange(p1, p2, nrow = 1)
+#Write table to workbook
+removeWorksheet(wb, "Figure 2")
+addWorksheet(wb, "Figure 2")
+writeData(wb, "Figure 2", snSum)
+setColWidths(wb, sheet = "Figure 2", cols = 1:ncol(snSum), widths = "auto")
+```
+
+```{r eval = FALSE}
+#####Export to XLSX
+save(fig1, fig2, file = "Figures 1 and 2.RData")
+saveWorkbook(wb, "DHSB Figure Data.xlsx", overwrite = TRUE)
+```
+
